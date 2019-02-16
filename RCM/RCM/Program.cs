@@ -18,7 +18,7 @@ namespace RCM
         }
 
         public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
-            WebHost.CreateDefaultBuilder(args)
-                .UseStartup<Startup>();
+            WebHost.CreateDefaultBuilder(args).UseSetting(WebHostDefaults.DetailedErrorsKey, "true")
+                .UseStartup<Startup>().CaptureStartupErrors(true);
     }
 }

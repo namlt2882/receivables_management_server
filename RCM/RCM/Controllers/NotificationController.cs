@@ -68,6 +68,7 @@ namespace RCM.Controllers
             return Ok();
         }
 
+        [HttpPost("SendNotiAsync")]
         public async Task SendNotiAsync(int permissionId, NotificationCM model)
         {
             List<string> connections = new List<string>();
@@ -129,8 +130,8 @@ namespace RCM.Controllers
         }
 
         [Authorize]
-        [HttpGet]
-        public async Task<IActionResult> GetNotis()
+        [HttpGet("GetNotifications")]
+        public async Task<IActionResult> GetNotifications()
         {
             var user = await _userManager.FindByNameAsync(User.Identity.Name);
             if (user == null) return BadRequest();

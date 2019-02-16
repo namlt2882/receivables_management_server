@@ -36,7 +36,7 @@ namespace RCM.Controllers
                 UserName = model.Username,
                 FirstName = model.FirstName,
                 LastName = model.LastName,
-                IsEnabled = true,
+                IsBanned = true,
             };
             var result = await _userManager.CreateAsync(userIdentity, model.Password);
             if (!result.Succeeded)

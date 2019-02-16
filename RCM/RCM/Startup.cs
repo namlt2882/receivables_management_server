@@ -33,6 +33,7 @@ using RCM.Service;
 using static RCM.Helpers.String;
 using Microsoft.AspNetCore.Http;
 using RCM.Data.Repositories;
+using NSwag;
 
 namespace RCM
 {
@@ -59,6 +60,10 @@ namespace RCM
             services.AddTransient<IUnitOfWork, UnitOfWork>();
             services.AddSingleton<IJwtFactory, JwtFactory>();
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+
+            //Customer
+            services.AddTransient<ICustomerRepository, CustomerRepository>();
+            services.AddTransient<ICustomerService, CustomerService>();
 
 
             //Notification
@@ -124,9 +129,9 @@ namespace RCM
             services.AddCors(options => options.AddPolicy("AllowAll", builder =>
                 builder.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin().AllowCredentials()
             ));
-           
+
             // other
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1).AddJsonOptions(options =>
+            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2).AddJsonOptions(options =>
             {
                 options.SerializerSettings.ContractResolver = new DefaultContractResolver();
                 options.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
@@ -137,9 +142,23 @@ namespace RCM
 
             });
             // Register the Swagger services
-            services.AddSwaggerDocument();
-            services.AddHangfire(x => x.UseSqlServerStorage(@"Server=.\THONGVHSE61933;Database=rcm-hangfire;user id=sa;password=zaq@123;Trusted_Connection=True;Integrated Security=false;"));
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+            services.AddSwaggerDocument(c =>
+            {
+                c.DocumentName = "RCM-Api-Docs";
+                c.Title = "RCM-API";
+                c.Version = "v3";
+                c.Description = "The RCM API documentation description.";
+                c.DocumentProcessors.Add(new SecurityDefinitionAppender("JWT token", new SwaggerSecurityScheme
+                {
+                    Type = SwaggerSecuritySchemeType.ApiKey,
+                    Name = "Authorization",
+                    Description = "Copy 'Bearer ' + valid JWT token into field",
+                    In = SwaggerSecurityApiKeyLocation.Header
+
+                }));
+                c.OperationProcessors.Add(new OperationSecurityScopeProcessor("JWT token"));
+            });
+            services.AddHangfire(x => x.UseSqlServerStorage(@"Server=202.78.227.91;Database=rcm-hangfire;user id=rcm;password=zaq@123;Trusted_Connection=True;Integrated Security=false;"));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -153,17 +172,18 @@ namespace RCM
             {
                 app.UseHsts();
             }
+            app.UseDeveloperExceptionPage();
             app.UseAuthentication();
             app.UseDefaultFiles();
             app.UseStaticFiles();
 
             // Register the Swagger generator and the Swagger UI middlewares
 
+
+
             app.UseSwagger(settings =>
             {
-
                 new NSwag.SwaggerGeneration.SwaggerJsonSchemaGenerator(new NJsonSchema.Generation.JsonSchemaGeneratorSettings());
-
                 //settings.GeneratorSettings.DocumentProcessors.Add(new SecurityDefinitionAppender("apiKey", new NSwag.SwaggerSecurityScheme()
                 //{
                 //    Type = NSwag.SwaggerSecuritySchemeType.ApiKey,
@@ -172,6 +192,7 @@ namespace RCM
                 //    Description = "Bearer token"
                 //}));
             });
+            app.UseSwaggerUi3();
 
             app.UseCors("AllowAll");
             app.UseCors("CorsPolicy");
