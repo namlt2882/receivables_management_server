@@ -61,18 +61,65 @@ namespace RCM
             services.AddSingleton<IJwtFactory, JwtFactory>();
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
+            //AssignedCollector
+            services.AddTransient<IAssignedCollectorRepository, AssignedCollectorRepository>();
+            services.AddTransient<IAssignedCollectorService, AssignedCollectorService>();
+
+            //CollectionProgress
+            services.AddTransient<ICollectionProgressRepository, CollectionProgressRepository>();
+            services.AddTransient<ICollectionProgressService, CollectionProgressService>();
+
+            //Contact
+            services.AddTransient<IContactRepository, ContactRepository>();
+            services.AddTransient<IContactService, ContactService>();
+
             //Customer
             services.AddTransient<ICustomerRepository, CustomerRepository>();
             services.AddTransient<ICustomerService, CustomerService>();
 
+            //HubUserConnection
+            services.AddTransient<IHubUserConnectionRepository, HubUserConnectionRepository>();
+            services.AddTransient<IHubUserConnectionService, HubUserConnectionService>();
+
+            //Location
+            services.AddTransient<ILocationRepository, LocationRepository>();
+            services.AddTransient<ILocationService, LocationService>();
 
             //Notification
             services.AddTransient<INotificationRepository, NotificationRepository>();
             services.AddTransient<INotificationService, NotificationService>();
 
-            //HubUserConnection
-            services.AddTransient<IHubUserConnectionRepository, HubUserConnectionRepository>();
-            services.AddTransient<IHubUserConnectionService, HubUserConnectionService>();
+            //Profile
+            services.AddTransient<IProfileRepository, ProfileRepository>();
+            services.AddTransient<IProfileService, ProfileService>();
+
+            //ProfileStage
+            services.AddTransient<IProfileStageRepository, ProfileStageRepository>();
+            services.AddTransient<IProfileStageService, ProfileStageService>();
+
+            //ProfileStageAction
+            services.AddTransient<IProfileStageActionRepository, ProfileStageActionRepository>();
+            services.AddTransient<IProfileStageActionService, ProfileStageActionService>();
+
+            //ProfileMessageForm
+            services.AddTransient<IProfileMessageFormRepository, ProfileMessageFormRepository>();
+            services.AddTransient<IProfileMessageFormService, ProfileMessageFormService>();
+
+            //ProgressStage
+            services.AddTransient<IProgressStageRepository, ProgressStageRepository>();
+            services.AddTransient<IProgressStageService, ProgressStageService>();
+
+            //ProgressStageAction
+            services.AddTransient<IProgressStageActionRepository, ProgressStageActionRepository>();
+            services.AddTransient<IProgressStageActionService, ProgressStageActionService>();
+
+            //ProgressMessageForm
+            services.AddTransient<IProgressMessageFormRepository, ProgressMessageFormRepository>();
+            services.AddTransient<IProgressMessageFormService, ProgressMessageFormService>();
+
+            //Receivable
+            services.AddTransient<IReceivableRepository, ReceivableRepository>();
+            services.AddTransient<IReceivableService, ReceivableService>();
 
 
             //Mail 

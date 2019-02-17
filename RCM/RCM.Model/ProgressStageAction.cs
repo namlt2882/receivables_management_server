@@ -10,12 +10,11 @@ namespace RCM.Model
     {
         [MaxLength(100)]
         public string Name { get; set; }
-        public int Status { get; set; }
         public int StartTime { get; set; }
+        public int Type { get; set; }
+        public int Status { get; set; }
         public int ExcutionDay { get; set; }
         public int? DoneAt { get; set; }
-        
-
         public int ProgressStageId { get; set; }
         [ForeignKey("ProgressStageId")]
         public virtual ProgressStage ProgressStage { get; set; }

@@ -9,7 +9,9 @@ namespace RCM.Model
     public class ProgressStage : BaseEntity
     {
         [MaxLength(100)]
-        public int Stage{ get; set; }
+        public string Name { get; set; }
+        public int Duration { get; set; }
+        public int Sequence { get; set; }
         public int Status { get; set; }
         public string CollectorComment { get; set; }
         public int CollectionProgressId { get; set; }

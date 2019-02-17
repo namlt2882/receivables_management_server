@@ -8,9 +8,10 @@ namespace RCM.Model
 {
     public class ProfileStage : BaseEntity
     {
-        //[MaxLength(100)]
-        //public string Name { get; set; }
-        public int Stage { get; set; }
+        [MaxLength(100)]
+        public string Name { get; set; }
+        public int Duration { get; set; }
+        public int Sequence { get; set; }
         public int ProfileId { get; set; }
         [ForeignKey("ProfileId")]
         public virtual Profile Profile { get; set; }

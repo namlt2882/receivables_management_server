@@ -13,60 +13,64 @@ namespace RCM.Service
         IEnumerable<Customer> GetCustomers();
         IEnumerable<Customer> GetCustomers(Expression<Func<Customer, bool>> where);
         Customer GetCustomer(int id);
-        void CreateCustomer(Customer Customer);
-        void EditCustomer(Customer Customer);
+        void CreateCustomer(Customer customer);
+        void EditCustomer(Customer customer);
         void RemoveCustomer(int id);
-        void RemoveCustomer(Customer Customer);
+        void RemoveCustomer(Customer customer);
         void SaveCustomer();
     }
 
     public class CustomerService : ICustomerService
     {
-        private readonly ICustomerRepository _CustomerRepository;
+        private readonly ICustomerRepository _customerRepository;
         private readonly IUnitOfWork _unitOfWork;
 
-        public CustomerService(ICustomerRepository CustomerRepository, IUnitOfWork unitOfWork)
+        public CustomerService(ICustomerRepository customerRepository, IUnitOfWork unitOfWork)
         {
-            this._CustomerRepository = CustomerRepository;
+            this._customerRepository = customerRepository;
             this._unitOfWork = unitOfWork;
         }
 
-        public void CreateCustomer(Customer Customer)
+        public void CreateCustomer(Customer customer)
         {
-            _CustomerRepository.Add(Customer);
+            customer.CreatedDate = DateTime.Now;
+            _customerRepository.Add(customer);
         }
 
-        public void EditCustomer(Customer Customer)
+        public void EditCustomer(Customer customer)
         {
-            var entity = _CustomerRepository.GetById(Customer.Id);
-            entity = Customer;
-            _CustomerRepository.Update(entity);
+            var entity = _customerRepository.GetById(customer.Id);
+            entity = customer;
+            entity.UpdatedDate= DateTime.Now;
+            _customerRepository.Update(entity);
         }
 
         public Customer GetCustomer(int id)
         {
-            return _CustomerRepository.GetById(id);
+            return _customerRepository.GetById(id);
         }
 
         public IEnumerable<Customer> GetCustomers()
         {
-            return _CustomerRepository.GetAll();
+            return _customerRepository.GetAll();
         }
 
         public IEnumerable<Customer> GetCustomers(Expression<Func<Customer, bool>> where)
         {
-            return _CustomerRepository.GetMany(where);
+            return _customerRepository.GetMany(where);
         }
 
         public void RemoveCustomer(int id)
         {
-            var entity = _CustomerRepository.GetById(id);
-            _CustomerRepository.Delete(entity);
+            var entity = _customerRepository.GetById(id);
+            _customerRepository.Delete(entity);
         }
 
-        public void RemoveCustomer(Customer Customer)
+        public void RemoveCustomer(Customer customer)
         {
-            _CustomerRepository.Delete(Customer);
+            customer.IsDeleted = true;
+            customer.UpdatedDate = DateTime.Now;
+            _customerRepository.Delete(customer);
         }
 
         public void SaveCustomer()
