@@ -13,60 +13,62 @@ namespace RCM.Service
         IEnumerable<Notification> GetNotifications();
         IEnumerable<Notification> GetNotifications(Expression<Func<Notification, bool>> where);
         Notification GetNotification(int id);
-        void CreateNotification(Notification Notification);
-        void EditNotification(Notification Notification);
+        void CreateNotification(Notification notification);
+        void EditNotification(Notification notification);
         void RemoveNotification(int id);
-        void RemoveNotification(Notification Notification);
+        void RemoveNotification(Notification notification);
         void SaveNotification();
     }
 
     public class NotificationService : INotificationService
     {
-        private readonly INotificationRepository _NotificationRepository;
+        private readonly INotificationRepository _notificationRepository;
         private readonly IUnitOfWork _unitOfWork;
 
-        public NotificationService(INotificationRepository NotificationRepository, IUnitOfWork unitOfWork)
+        public NotificationService(INotificationRepository notificationRepository, IUnitOfWork unitOfWork)
         {
-            this._NotificationRepository = NotificationRepository;
+            this._notificationRepository = notificationRepository;
             this._unitOfWork = unitOfWork;
         }
 
-        public void CreateNotification(Notification Notification)
+        public void CreateNotification(Notification notification)
         {
-            _NotificationRepository.Add(Notification);
+            notification.CreatedDate = DateTime.Now;
+            _notificationRepository.Add(notification);
         }
 
-        public void EditNotification(Notification Notification)
+        public void EditNotification(Notification notification)
         {
-            var entity = _NotificationRepository.GetById(Notification.Id);
-            entity = Notification;
-            _NotificationRepository.Update(entity);
+            var entity = _notificationRepository.GetById(notification.Id);
+            entity = notification;
+            entity.UpdatedDate = DateTime.Now;
+            _notificationRepository.Update(entity);
         }
 
         public Notification GetNotification(int id)
         {
-            return _NotificationRepository.GetById(id);
+            return _notificationRepository.GetById(id);
         }
 
         public IEnumerable<Notification> GetNotifications()
         {
-            return _NotificationRepository.GetAll();
+            return _notificationRepository.GetAll();
         }
 
         public IEnumerable<Notification> GetNotifications(Expression<Func<Notification, bool>> where)
         {
-            return _NotificationRepository.GetMany(where);
+            return _notificationRepository.GetMany(where);
         }
 
         public void RemoveNotification(int id)
         {
-            var entity = _NotificationRepository.GetById(id);
-            _NotificationRepository.Delete(entity);
+            var entity = _notificationRepository.GetById(id);
+            _notificationRepository.Delete(entity);
         }
 
-        public void RemoveNotification(Notification Notification)
+        public void RemoveNotification(Notification notification)
         {
-            _NotificationRepository.Delete(Notification);
+            _notificationRepository.Delete(notification);
         }
 
         public void SaveNotification()

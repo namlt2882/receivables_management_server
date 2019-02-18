@@ -48,7 +48,6 @@ namespace RCM.Controllers
                     UserId = _user.Id,
                     NData = model.NData == null ? null : JsonConvert.SerializeObject(model.NData),
                     IsSeen = false,
-                    DateCreated = DateTime.Now
                 };
                 _notiService.CreateNotification(notification);
                 _notiService.SaveNotification();
@@ -109,7 +108,6 @@ namespace RCM.Controllers
                 Body = model.Body,
                 NData = model.NData == null ? null : JsonConvert.SerializeObject(model.NData),
                 IsSeen = false,
-                DateCreated = DateTime.Now
             };
 
             _hubContext.Clients.Clients(connections)
@@ -125,7 +123,6 @@ namespace RCM.Controllers
                 UserId = userId,
                 NData = model.NData == null ? null : JsonConvert.SerializeObject(model.NData),
                 IsSeen = false,
-                DateCreated = DateTime.Now
             };
         }
 
@@ -135,7 +132,7 @@ namespace RCM.Controllers
         {
             var user = await _userManager.FindByNameAsync(User.Identity.Name);
             if (user == null) return BadRequest();
-            var data = _notiService.GetNotifications(_ => _.UserId.Equals(user.Id)).OrderByDescending(_ => _.DateCreated);
+            var data = _notiService.GetNotifications(_ => _.UserId.Equals(user.Id)).OrderByDescending(_ => _.CreatedDate);
             List<NotificationVM> result = new List<NotificationVM>();
             foreach (var item in data)
             {

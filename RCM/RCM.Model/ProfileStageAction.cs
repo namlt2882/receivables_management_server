@@ -10,13 +10,12 @@ namespace RCM.Model
     {
         [MaxLength(100)]
         public string Name { get; set; }
-        public short Frequency { get; set; }
         public int StartTime { get; set; }
-
+        public int Type { get; set; }
+        public short Frequency { get; set; }
         public int ProfileStageId { get; set; }
         [ForeignKey("ProfileStageId")]
         public virtual ProfileStage ProfileStage { get; set; }
-
         public int? ProfileMessageFormId { get; set; }
         [ForeignKey("ProfileMessageFormId")]
         public virtual ProfileMessageForm ProfileMessageForm { get; set; }

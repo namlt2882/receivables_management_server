@@ -8,14 +8,12 @@ namespace RCM.Model
 {
     public class Receivable : BaseEntity
     {
-        public int ClosedDay { get; set; }
-        public int PayableDay { get; set; }
+        public int? ClosedDay { get; set; }
         public long PrepaidAmount { get; set; }
         public long DebtAmount { get; set; }
         public int CustomerId { get; set; }
         [ForeignKey("CustomerId")]
         public virtual Customer Customer { get; set; }
-
         public int? LocationId { get; set; }
         [ForeignKey("LocationId")]
         public virtual Location Location { get; set; }
