@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Claims;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using RCM.Auth;
@@ -12,6 +6,9 @@ using RCM.Helpers;
 using RCM.JWT;
 using RCM.Model;
 using RCM.ViewModels;
+using System.Linq;
+using System.Security.Claims;
+using System.Threading.Tasks;
 
 namespace RCM.Controllers
 {
@@ -47,6 +44,7 @@ namespace RCM.Controllers
                 return BadRequest(Errors.AddErrorToModelState("login_failure", "Invalid username or password.", ModelState));
             }
             var jwt = await Tokens.GenerateJwt(identity, _jwtFactory, credentials.UserName, _jwtOptions);
+
             return new OkObjectResult(jwt);
         }
 
