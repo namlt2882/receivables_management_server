@@ -15,8 +15,10 @@ namespace RCM.JWT
             var response = new
             {
                 id = identity.Claims.Single(c => c.Type == "id").Value,
+                username = userName,
+                role = identity.Claims.Single(c => c.Type == "role").Value,
                 access_token = await jwtFactory.GenerateEncodedToken(userName, identity),
-                expires_in = (int)jwtOptions.ValidFor.TotalSeconds
+                expires_in = (int)jwtOptions.ValidFor.TotalSeconds,
             };
 
             return response;
