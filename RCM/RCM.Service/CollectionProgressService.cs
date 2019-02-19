@@ -35,7 +35,7 @@ namespace RCM.Service
         {
             collectionProgress.CreatedDate = DateTime.Now;
             collectionProgress.IsDeleted = false;
-            collectionProgress.Status = Constant.COLLECTION1_CODE;
+            collectionProgress.Status = 0;
             _collectionProgressRepository.Add(collectionProgress);
         }
 
