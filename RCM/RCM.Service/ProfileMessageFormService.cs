@@ -34,6 +34,7 @@ namespace RCM.Service
         public void CreateProfileMessageForm(ProfileMessageForm profileMessageForm)
         {
             profileMessageForm.CreatedDate = DateTime.Now;
+            profileMessageForm.IsDeleted = false;
             _profileMessageFormRepository.Add(profileMessageForm);
         }
 

@@ -34,6 +34,7 @@ namespace RCM.Service
         public void CreateProfileStage(ProfileStage profileStage)
         {
             profileStage.CreatedDate = DateTime.Now;
+            profileStage.IsDeleted = false;
             _profileStageRepository.Add(profileStage);
         }
 
