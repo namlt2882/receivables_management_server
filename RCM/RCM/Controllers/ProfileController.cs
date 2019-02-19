@@ -23,7 +23,7 @@ namespace RCM.Controllers
             _profileStageService = profileStageService;
         }
 
-        [HttpGet("GetProfile")]
+        [HttpGet("{id}")]
         public IActionResult GetProfile(int? id)
         {
             if (id == null)
@@ -87,20 +87,20 @@ namespace RCM.Controllers
             return result;
         }
 
-        [HttpGet("Delete")]
+        [HttpDelete("{id}")]
         public IActionResult Delete(int id)
         {
             return Ok();
         }
 
-        [HttpGet("GetProfiles")]
+        [HttpGet]
         public IActionResult GetProfiles()
         {
             var profiles = _profileService.GetProfiles();
             return Ok(profiles);
         }
 
-        [HttpPost("AddProfile")]
+        [HttpPost]
         public IActionResult Create([FromBody]ProfileIM profileVM)
         {
             if (!ModelState.IsValid)
