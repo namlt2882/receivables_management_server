@@ -36,6 +36,18 @@ namespace RCM.Controllers
             return Ok(result);
         }
 
+        [HttpGet("GetCollector")]
+        public async Task<IActionResult> GetCollectorAsync()
+        {
+            List<UserVM> result = new List<UserVM>();
+            var data = await _userManager.GetUsersInRoleAsync("Collector");
+            foreach (var item in data)
+            {
+                result.Add(item.Adapt<UserVM>());
+            }
+            return Ok(result);
+        }
+
         [HttpGet("GetByUsername")]
         public async Task<IActionResult> Get(String username)
         {
@@ -55,12 +67,20 @@ namespace RCM.Controllers
         {
             try
             {
-                var userIdentity = userCM.Adapt<User>();
+                var userIdentity = new User()
+                {
+                    UserName = userCM.UserName,
+                    FirstName = userCM.FirstName,
+                    LastName = userCM.LastName,
+                    IsBanned = false,
+                    Address = userCM.Address,
+                    LocationId = userCM.LocationId,
+                };
                 userIdentity.IsBanned = false;
-                var currentUser = await _userManager.CreateAsync(userCM.Adapt<User>(), userCM.Password);
+                var currentUser = await _userManager.CreateAsync(userIdentity, userCM.Password);
                 if (currentUser.Succeeded)
                 {
-                    await _userManager.AddToRoleAsync(userIdentity, "Collector");
+                    await _userManager.AddToRoleAsync(userIdentity, "Manager");
                     return StatusCode(201);
                 }
                 else

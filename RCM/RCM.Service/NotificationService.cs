@@ -34,6 +34,7 @@ namespace RCM.Service
         public void CreateNotification(Notification notification)
         {
             notification.CreatedDate = DateTime.Now;
+            notification.IsDeleted = false;
             _notificationRepository.Add(notification);
         }
 

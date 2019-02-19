@@ -34,6 +34,7 @@ namespace RCM.Service
         public void CreateAssignedCollector(AssignedCollector assignedCollector)
         {
             assignedCollector.CreatedDate = DateTime.Now;
+            assignedCollector.IsDeleted = false;
             _assignedCollectorRepository.Add(assignedCollector);
         }
 

@@ -34,6 +34,8 @@ namespace RCM.Service
         public void CreateProgressStageAction(ProgressStageAction progressStageAction)
         {
             progressStageAction.CreatedDate = DateTime.Now;
+            progressStageAction.IsDeleted = false;
+            progressStageAction.Status = 0;
             _progressStageActionRepository.Add(progressStageAction);
         }
 

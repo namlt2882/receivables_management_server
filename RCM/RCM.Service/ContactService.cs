@@ -34,6 +34,7 @@ namespace RCM.Service
         public void CreateContact(Contact contact)
         {
             contact.CreatedDate = DateTime.Now;
+            contact.IsDeleted = false;
             _contactRepository.Add(contact);
         }
 

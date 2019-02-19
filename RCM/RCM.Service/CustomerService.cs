@@ -34,6 +34,7 @@ namespace RCM.Service
         public void CreateCustomer(Customer customer)
         {
             customer.CreatedDate = DateTime.Now;
+            customer.IsDeleted = false;
             _customerRepository.Add(customer);
         }
 

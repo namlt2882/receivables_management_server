@@ -34,6 +34,7 @@ namespace RCM.Service
         public void CreateProgressMessageForm(ProgressMessageForm progressMessageForm)
         {
             progressMessageForm.CreatedDate = DateTime.Now;
+            progressMessageForm.IsDeleted = false;
             _progressMessageFormRepository.Add(progressMessageForm);
         }
 

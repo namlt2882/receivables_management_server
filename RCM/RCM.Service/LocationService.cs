@@ -34,6 +34,7 @@ namespace RCM.Service
         public void CreateLocation(Location entity)
         {
             entity.CreatedDate = DateTime.Now;
+            entity.IsDeleted = false;
             _locationRepository.Add(entity);
         }
 
