@@ -1,13 +1,25 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Text;
 
 namespace RCM.Model
 {
     public class ProfileStageAction : BaseEntity
     {
+
+        public ProfileStageAction()
+        {
+
+        }
+        public ProfileStageAction(int _profileStageId, string _name, short _frequency, int _startTime, int _type, int _profileMessageFormId)
+        {
+            ProfileStageId = _profileStageId;
+            Name = _name;
+            Frequency = _frequency;
+            StartTime = _startTime;
+            Type = _type;
+            ProfileMessageFormId = _profileMessageFormId;
+        }
+
         [MaxLength(100)]
         public string Name { get; set; }
         public int StartTime { get; set; }

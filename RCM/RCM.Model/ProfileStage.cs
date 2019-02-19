@@ -1,13 +1,24 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Text;
 
 namespace RCM.Model
 {
     public class ProfileStage : BaseEntity
     {
+
+        public ProfileStage()
+        {
+
+        }
+        public ProfileStage(int _profileId, string _name, int _duration, int _sequence)
+        {
+            ProfileId = _profileId;
+            Name = _name;
+            Duration = _duration;
+            Sequence = _sequence;
+        }
+
         [MaxLength(100)]
         public string Name { get; set; }
         public int Duration { get; set; }
