@@ -35,7 +35,6 @@ namespace RCM.Service
         {
             profile.CreatedDate = DateTime.Now;
             profile.IsDeleted = false;
-            profile.IsDisable = false;
             _profileRepository.Add(profile);
         }
 
@@ -65,10 +64,8 @@ namespace RCM.Service
         public void RemoveProfile(int id)
         {
             Profile profile = _profileRepository.GetById(id);
-            profile.IsDisable = true;
+            profile.IsDeleted = true;
             EditProfile(profile);
-            
-            
         }
 
         public void RemoveProfile(Profile profile)

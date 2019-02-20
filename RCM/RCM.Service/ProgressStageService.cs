@@ -4,6 +4,7 @@ using System.Linq.Expressions;
 using System.Text;
 using CRM.Data.Infrastructure;
 using RCM.Data.Repositories;
+using RCM.Helper;
 using RCM.Model;
 
 namespace RCM.Service
@@ -35,7 +36,7 @@ namespace RCM.Service
         {
             progressStage.CreatedDate = DateTime.Now;
             progressStage.IsDeleted = false;
-            progressStage.Status = 0;
+            progressStage.Status = Constant.COLLECTION_STATUS_COLLECTION_CODE;
             _progressStageRepository.Add(progressStage);
         }
 

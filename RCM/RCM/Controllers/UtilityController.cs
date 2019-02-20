@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using RCM.Model;
+using RCM.Helper;
 
 namespace RCM.Controllers
 {
@@ -19,13 +20,13 @@ namespace RCM.Controllers
             {
                 new
                 {
-                    Id = Constant.DEBTOR_CODE,
-                    Name =Constant.DEBTOR
+                    Id = Constant.CONTACT_RELATION_CODE,
+                    Name =Constant.CONTACT_RELATION
                 },
                 new
                 {
-                    Id = Constant.RELATION_CODE,
-                    Name =Constant.RELATION
+                    Id = Constant.CONTACT_RELATION_CODE,
+                    Name =Constant.CONTACT_RELATION
                 }
             };
             return Ok(list);
@@ -38,23 +39,23 @@ namespace RCM.Controllers
             {
                 new
                 {
-                    Id = Constant.SMS_CODE,
-                    Name =Constant.SMS
+                    Id = Constant.ACTION_SMS_CODE,
+                    Name =Constant.ACTION_SMS
                 },
                 new
                 {
-                    Id = Constant.PHONECLASS_CODE,
-                    Name =Constant.PHONECALL
+                    Id = Constant.ACTION_PHONECALL_CODE,
+                    Name =Constant.ACTION_PHONECALL
                 },
                 new
                 {
-                    Id = Constant.NOTIFICATION_CODE,
-                    Name =Constant.NOTIFICATION
+                    Id = Constant.ACTION_NOTIFICATION_CODE,
+                    Name =Constant.ACTION_NOTIFICATION
                 },
                 new
                 {
-                    Id = Constant.REPORT_CODE,
-                    Name =Constant.REPORT
+                    Id = Constant.ACTION_REPORT_CODE,
+                    Name =Constant.ACTION_REPORT
                 }
             };
             return Ok(list);
@@ -67,18 +68,18 @@ namespace RCM.Controllers
             {
                 new
                 {
-                    Id = Constant.COLLECTION1_CODE,
-                    Name =Constant.COLLECTION1
+                    Id = Constant.COLLECTION_STATUS_COLLECTION_CODE,
+                    Name =Constant.COLLECTION_STATUS_COLLECTION
                 },
                 new
                 {
-                    Id = Constant.COLLECTION2_CODE,
-                    Name =Constant.COLLECTION2
+                    Id = Constant.COLLECTION_STATUS_CANCEL_CODE,
+                    Name =Constant.COLLECTION_STATUS_CANCEL
                 },
                 new
                 {
-                    Id = Constant.COLLECTION3_CODE,
-                    Name =Constant.COLLECTION2
+                    Id = Constant.COLLECTION_STATUS_DONE_CODE,
+                    Name =Constant.COLLECTION_STATUS_DONE
                 }
             };
             return Ok(list);

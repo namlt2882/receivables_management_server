@@ -34,6 +34,7 @@ namespace RCM.Service
         public void CreateReceivable(Receivable receivable)
         {
             receivable.CreatedDate = DateTime.Now;
+            receivable.IsDeleted = false;
             _receivableRepository.Add(receivable);
         }
 

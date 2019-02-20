@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 namespace RCM.ViewModels
 {
@@ -11,6 +8,7 @@ namespace RCM.ViewModels
         public int Id { get; set; }
         public int? ClosedDay { get; set; }
         public int? PayableDay { get; set; }
+        public IEnumerable<ContactVM> Contacts { get; set; }
     }
     public class ReceivableCM
     {
@@ -21,5 +19,13 @@ namespace RCM.ViewModels
     }
     public class ReceivableUM : ReceivableVM
     {
+    }
+
+    public class ReceivableIM : ReceivableCM
+    {
+        public IEnumerable<ContactIM> Contacts { get; set; }
+        public int PayableDay { get; set; }
+        public int ProfileId { get; set; }
+        public string CollectorId { get; set; }
     }
 }

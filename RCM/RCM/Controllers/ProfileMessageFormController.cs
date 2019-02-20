@@ -16,13 +16,13 @@ namespace RCM.Controllers
             _profileMessageFormService = profileMessageFormService;
         }
 
-        [HttpGet("GetAll")]
+        [HttpGet]
         public IActionResult GetAll()
         {
             return Ok(_profileMessageFormService.GetProfileMessageForms());
         }
 
-        [HttpPost("Create")]
+        [HttpPost]
         public IActionResult Create([FromBody] ProfileMessageFormIM profileMessageFrom)
         {
             if (!ModelState.IsValid)

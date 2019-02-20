@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace RCM.Data.Migrations
 {
-    public partial class Initial : Migration
+    public partial class Init : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -89,8 +89,7 @@ namespace RCM.Data.Migrations
                     IsDeleted = table.Column<bool>(nullable: false),
                     Name = table.Column<string>(maxLength: 100, nullable: true),
                     DebtAmountTo = table.Column<long>(nullable: false),
-                    DebtAmountFrom = table.Column<long>(nullable: false),
-                    IsDisable = table.Column<bool>(nullable: false)
+                    DebtAmountFrom = table.Column<long>(nullable: false)
                 },
                 constraints: table =>
                 {
@@ -182,7 +181,7 @@ namespace RCM.Data.Migrations
                     UpdatedDate = table.Column<DateTime>(nullable: true),
                     CreatedDate = table.Column<DateTime>(nullable: false),
                     IsDeleted = table.Column<bool>(nullable: false),
-                    ClosedDay = table.Column<int>(nullable: false),
+                    ClosedDay = table.Column<int>(nullable: true),
                     PayableDay = table.Column<int>(nullable: false),
                     PrepaidAmount = table.Column<long>(nullable: false),
                     DebtAmount = table.Column<long>(nullable: false),
@@ -215,7 +214,9 @@ namespace RCM.Data.Migrations
                     UpdatedDate = table.Column<DateTime>(nullable: true),
                     CreatedDate = table.Column<DateTime>(nullable: false),
                     IsDeleted = table.Column<bool>(nullable: false),
-                    Stage = table.Column<int>(nullable: false),
+                    Name = table.Column<string>(maxLength: 100, nullable: true),
+                    Duration = table.Column<int>(nullable: false),
+                    Sequence = table.Column<int>(nullable: false),
                     ProfileId = table.Column<int>(nullable: false)
                 },
                 constraints: table =>
@@ -340,12 +341,14 @@ namespace RCM.Data.Migrations
                 {
                     Id = table.Column<int>(nullable: false)
                         .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
+                    UpdatedDate = table.Column<DateTime>(nullable: true),
+                    CreatedDate = table.Column<DateTime>(nullable: false),
+                    IsDeleted = table.Column<bool>(nullable: false),
                     Type = table.Column<string>(nullable: true),
                     Title = table.Column<string>(nullable: true),
                     Body = table.Column<string>(nullable: true),
                     NData = table.Column<string>(nullable: true),
                     IsSeen = table.Column<bool>(nullable: false),
-                    DateCreated = table.Column<DateTime>(nullable: false),
                     UserId = table.Column<string>(nullable: true)
                 },
                 constraints: table =>
@@ -428,7 +431,7 @@ namespace RCM.Data.Migrations
                     UpdatedDate = table.Column<DateTime>(nullable: true),
                     CreatedDate = table.Column<DateTime>(nullable: false),
                     IsDeleted = table.Column<bool>(nullable: false),
-                    Type = table.Column<string>(nullable: true),
+                    Type = table.Column<int>(nullable: false),
                     IdNo = table.Column<string>(maxLength: 15, nullable: true),
                     Name = table.Column<string>(maxLength: 100, nullable: true),
                     Phone = table.Column<string>(maxLength: 15, nullable: true),
@@ -456,8 +459,9 @@ namespace RCM.Data.Migrations
                     CreatedDate = table.Column<DateTime>(nullable: false),
                     IsDeleted = table.Column<bool>(nullable: false),
                     Name = table.Column<string>(maxLength: 100, nullable: true),
-                    Frequency = table.Column<short>(nullable: false),
                     StartTime = table.Column<int>(nullable: false),
+                    Type = table.Column<int>(nullable: false),
+                    Frequency = table.Column<short>(nullable: false),
                     ProfileStageId = table.Column<int>(nullable: false),
                     ProfileMessageFormId = table.Column<int>(nullable: true)
                 },
@@ -487,7 +491,9 @@ namespace RCM.Data.Migrations
                     UpdatedDate = table.Column<DateTime>(nullable: true),
                     CreatedDate = table.Column<DateTime>(nullable: false),
                     IsDeleted = table.Column<bool>(nullable: false),
-                    Stage = table.Column<int>(maxLength: 100, nullable: false),
+                    Name = table.Column<string>(maxLength: 100, nullable: true),
+                    Duration = table.Column<int>(nullable: false),
+                    Sequence = table.Column<int>(nullable: false),
                     Status = table.Column<int>(nullable: false),
                     CollectorComment = table.Column<string>(nullable: true),
                     CollectionProgressId = table.Column<int>(nullable: false)
@@ -513,8 +519,9 @@ namespace RCM.Data.Migrations
                     CreatedDate = table.Column<DateTime>(nullable: false),
                     IsDeleted = table.Column<bool>(nullable: false),
                     Name = table.Column<string>(maxLength: 100, nullable: true),
-                    Status = table.Column<int>(nullable: false),
                     StartTime = table.Column<int>(nullable: false),
+                    Type = table.Column<int>(nullable: false),
+                    Status = table.Column<int>(nullable: false),
                     ExcutionDay = table.Column<int>(nullable: false),
                     DoneAt = table.Column<int>(nullable: true),
                     ProgressStageId = table.Column<int>(nullable: false),

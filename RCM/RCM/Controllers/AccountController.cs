@@ -37,7 +37,7 @@ namespace RCM.Controllers
                 FirstName = model.FirstName,
                 LastName = model.LastName,
                 IsBanned = false,
-                Address="",
+                Address= model.Address,
             };
             var result = await _userManager.CreateAsync(userIdentity, model.Password);
             if (!result.Succeeded)

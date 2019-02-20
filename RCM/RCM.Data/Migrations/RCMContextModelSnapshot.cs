@@ -337,8 +337,6 @@ namespace RCM.Data.Migrations
 
                     b.Property<bool>("IsDeleted");
 
-                    b.Property<bool>("IsDisable");
-
                     b.Property<string>("Name")
                         .HasMaxLength(100);
 
@@ -547,7 +545,7 @@ namespace RCM.Data.Migrations
 
                     b.Property<int?>("LocationId");
 
-                    b.Property<int?>("PayableDay");
+                    b.Property<int>("PayableDay");
 
                     b.Property<long>("PrepaidAmount");
 

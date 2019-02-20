@@ -23,42 +23,49 @@ namespace RCM.Controllers
             _profileStageService = profileStageService;
         }
 
-        [HttpGet("GetProfile")]
-        public IActionResult GetProfile(int? id)
+        [HttpGet("{id}")]
+        public IActionResult GetProfile(int id)
         {
-            if (id == null)
+            if (!ModelState.IsValid)
             {
-                return BadRequest("Id cannot be empty");
+                return BadRequest(ModelState);
             }
 
-            //Get raw profile from DB, doesnt include Stages and Action.
-            var rawProfile = _profileService.GetProfile((int)id);
-
-            //Get Profile including Stages and Actions.
-            var profile = GetProfileForViewModel(rawProfile);
-
+            var profile = GetProfileDetail(id);
             if (profile == null)
             {
-                return BadRequest("Not found");
+                return NotFound();
             }
 
             return Ok(profile);
         }
 
-        private ProfileVM GetProfileForViewModel(Profile rawProfile)
+        //Get profile from DB and transform to VM.
+        private ProfileVM GetProfileDetail(int id)
         {
-
-            ProfileVM profile = new ProfileVM()
+            var profileDBM = _profileService.GetProfile(id);
+            if (profileDBM != null)
             {
-                Id = rawProfile.Id,
-                DebtAmountFrom = rawProfile.DebtAmountFrom,
-                DebtAmountTo = rawProfile.DebtAmountTo,
-                Name = rawProfile.Name,
-                Stages = GetProfileStageForViewModel(rawProfile.Id)
-            };
-            return profile;
+                var stagesVM = GetProfileStageForViewModel(profileDBM.Id);
+                if (stagesVM != null)
+                {
+                    ProfileVM profile = new ProfileVM()
+                    {
+                        Id = profileDBM.Id,
+                        DebtAmountFrom = profileDBM.DebtAmountFrom,
+                        DebtAmountTo = profileDBM.DebtAmountTo,
+                        Name = profileDBM.Name,
+                        Stages = stagesVM
+                    };
+                    return profile;
+                }
+
+            }
+
+            return null;
         }
 
+        //Get profile stages from DB and transform to VM.
         private IEnumerable<ProfileStageVM> GetProfileStageForViewModel(int profileId)
         {
             //Get raw data from DB
@@ -73,6 +80,7 @@ namespace RCM.Controllers
             return result;
         }
 
+        //Get profile stage actions from DB and transform to VM
         private IEnumerable<ProfileStageActionVM> GetProfileStageActionsForViewModel(int stageId)
         {
             //Get raw data from DB
@@ -87,20 +95,20 @@ namespace RCM.Controllers
             return result;
         }
 
-        [HttpGet("Delete")]
+        [HttpDelete("{id}")]
         public IActionResult Delete(int id)
         {
             return Ok();
         }
 
-        [HttpGet("GetProfiles")]
+        [HttpGet]
         public IActionResult GetProfiles()
         {
             var profiles = _profileService.GetProfiles();
             return Ok(profiles);
         }
 
-        [HttpPost("AddProfile")]
+        [HttpPost]
         public IActionResult Create([FromBody]ProfileIM profileVM)
         {
             if (!ModelState.IsValid)
@@ -125,7 +133,7 @@ namespace RCM.Controllers
             AddStage(profileId, Stages);
 
 
-            return Ok();
+            return Ok(profileId);
         }
 
         private void AddStage(int profileId, IEnumerable<ProfileStageIM> stages)
