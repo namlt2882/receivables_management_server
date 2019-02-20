@@ -12,7 +12,6 @@ namespace RCM.Model
         public string Name { get; set; }
         public long DebtAmountTo { get; set; }
         public long DebtAmountFrom { get; set; }
-        public bool IsDisable { get; set; }
         public virtual ICollection<ProfileStage> ProfileStages { get; set; }
     }
 }

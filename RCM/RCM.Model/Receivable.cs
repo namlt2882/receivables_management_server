@@ -9,6 +9,7 @@ namespace RCM.Model
     public class Receivable : BaseEntity
     {
         public int? ClosedDay { get; set; }
+        public int PayableDay { get; set; }
         public long PrepaidAmount { get; set; }
         public long DebtAmount { get; set; }
         public int CustomerId { get; set; }
