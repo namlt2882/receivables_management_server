@@ -23,7 +23,10 @@
     <script type="text/javascript">
         "use strict";
 
-        var connection = new signalR.HubConnectionBuilder().withUrl("/centerHub").build();
+        //var connection = new signalR.HubConnectionBuilder().withUrl("/centerHub").build();
+        var connection = new signalR.HubConnectionBuilder()
+            .withUrl("/centerHub?access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJSQ00tQVBJIiwianRpIjoiYmQyNGEyZjAtYzNiMy00YWI0LWIzMGYtNzBiNDYxZmEwODAzIiwidW5pcXVlX25hbWUiOiJzYSIsInJvbGUiOiJBZG1pbiIsImlkIjoiOTI0YzZlMDYtNDJkNi00YmZhLTkwNTctN2MxNGVjZDM2YmYzIiwiZXhwIjoxNTUwNjU0MzM5LCJpc3MiOiJ3ZWJBcGkiLCJhdWQiOiJodHRwOi8vcmNtLWFwaS1nYXRld2F5LmNvbSJ9.zal9JeRUb3Z3vhFvo6cAy6I8QQQG9f2B_T1AfaUbnvk")
+            .build();
 
         //Disable send button until connection is established
         document.getElementById("sendButton").disabled = true;
@@ -34,6 +37,10 @@
             var li = document.createElement("li");
             li.textContent = encodedMsg;
             document.getElementById("messagesList").appendChild(li);
+        });
+
+        connection.on("Notify", function (notification) {
+            alert(notification);
         });
 
         connection.start().then(function () {

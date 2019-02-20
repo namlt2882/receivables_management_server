@@ -153,6 +153,32 @@ namespace RCM
                             ValidAudience = jwtAppSettingOptions[nameof(JwtIssuerOptions.Audience)],
                             IssuerSigningKey = _signingKey
                         };
+                        options.Events = new JwtBearerEvents
+                        {
+                            OnAuthenticationFailed = context =>
+                            {
+                                Console.WriteLine("OnAuthenticationFailed: " + context.Exception.Message);
+                                return Task.CompletedTask;
+                            },
+                            OnTokenValidated = context =>
+                            {
+                                Console.WriteLine("OnTokenValidated: " + context.SecurityToken);
+                                return Task.CompletedTask;
+                            },
+                            OnMessageReceived = context =>
+                            {
+                                var accessToken = context.Request.Query["access_token"];
+
+                                // If the request is for our hub...
+                                var path = context.HttpContext.Request.Path;
+                                if (path.StartsWithSegments("/centerHub"))
+                                {
+                                    // Read the token out of the query string
+                                    context.Token = accessToken;
+                                }
+                                return Task.CompletedTask;
+                            }
+                        };
                     });
 
             // api user claim policy
@@ -262,7 +288,8 @@ namespace RCM
             new InitIdentity().CreateRoles(serviceProvider, Configuration).Wait();
 
             app.UseHangfireServer();
-            app.UseHangfireDashboard();
+            app.UseHangfireDashboard("/hangfire");
+
         }
     }
 }

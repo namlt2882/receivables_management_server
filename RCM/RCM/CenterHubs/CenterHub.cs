@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.SignalR;
 
 namespace RCM.CenterHubs
 {
-    //[Authorize]
+    [Authorize]
     public class CenterHub : Hub
     {
         private IHttpContextAccessor _contextAccessor;
@@ -28,34 +28,37 @@ namespace RCM.CenterHubs
 
         public override async Task OnConnectedAsync()
         {
-            //var username = _context.User.Identity.Name;
-            //var _user = _userManager.FindByNameAsync(username).Result;
-            //if (_user != null)
-            //{
-            //    var connectionId = Context.ConnectionId;
-            //    _hubService.CreateHubUserConnection(new HubUserConnection
-            //    {
-            //        UserId = _user.Id,
-            //        Connection = connectionId
-            //    });
-            //    _hubService.SaveHubUserConnection();
-            //    await base.OnConnectedAsync();
-        //    }
-        //await base.OnConnectedAsync();
-
+            var username = _context.User.Identity.Name;
+            var _user = _userManager.FindByNameAsync(username).Result;
+            if (_user != null)
+            {
+                var connectionId = Context.ConnectionId;
+                _hubService.CreateHubUserConnection(new HubUserConnection
+                {
+                    UserId = _user.Id,
+                    Connection = connectionId
+                });
+                _hubService.SaveHubUserConnection();
+                await base.OnConnectedAsync();
+            }
+            //await base.OnConnectedAsync();
         }
 
-        //public override async Task OnDisconnectedAsync(Exception exception)
-        //{
-        //    //var user = _context.User;
-        //    //_hubService.RemoveHubUserConnection(_ => _.Connection.Equals(Context.ConnectionId));
-        //    //_hubService.SaveHubUserConnection();
-        //    await base.OnDisconnectedAsync(exception);
-        //}
+        public override async Task OnDisconnectedAsync(Exception exception)
+        {
+            var user = _context.User;
+            _hubService.RemoveHubUserConnection(_ => _.Connection.Equals(Context.ConnectionId));
+            _hubService.SaveHubUserConnection();
+            await base.OnDisconnectedAsync(exception);
+        }
 
         public async Task SendMessage(string user, string message)
         {
             await Clients.All.SendAsync("ReceiveMessage", user, message);
         }
+
+
+
+
     }
 }

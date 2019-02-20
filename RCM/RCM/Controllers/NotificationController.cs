@@ -48,6 +48,7 @@ namespace RCM.Controllers
                     UserId = _user.Id,
                     NData = model.NData == null ? null : JsonConvert.SerializeObject(model.NData),
                     IsSeen = false,
+                    CreatedDate = DateTime.Now
                 };
                 _notiService.CreateNotification(notification);
                 _notiService.SaveNotification();
@@ -59,60 +60,84 @@ namespace RCM.Controllers
             return Ok();
         }
 
-        [HttpPost("SendNotiByPermission")]
-        public IActionResult SendNotiByPermission([FromQuery]int permissionId, [FromBody]NotificationCM model)
+
+
+        [HttpPost("SendNotificationFromSecond")]
+        public IActionResult SendNotificationFromSecond([FromQuery]string userName, [FromBody]NotificationCM model, [FromQuery]double second)
         {
-            var jobId = BackgroundJob.Enqueue(
-                    () => SendNotiAsync(permissionId, model));
+            //var jobId = BackgroundJob.Enqueue(
+            //        () => SendNotiAsync(username, model));
+            BackgroundJob.Schedule(() => SendNotiAsync(userName, model), TimeSpan.FromSeconds(second));
             return Ok();
         }
 
         [HttpPost("SendNotiAsync")]
-        public async Task SendNotiAsync(int permissionId, NotificationCM model)
+        public async Task SendNotiAsync(string userName, NotificationCM model)
         {
-            List<string> connections = new List<string>();
-            //try
-            //{
-            //    var permission = _permissionService.GetPermission(permissionId);
-            //    if (permission == null)
-            //    {
-            //        return;
-            //    }
-
-            //    var userIds = _permissionService.GetUsersByPermission(permissionId);
-
-            //    foreach (var userId in userIds)
-            //    {
-            //        try
-            //        {
-            //            var notification = CreateNotification(userId, model);
-            //            _notiService.CreateNotification(notification);
-            //            _notiService.SaveNotification();
-
-            //            connections = connections.Union(_hubService.GetHubUserConnections(_ => _.UserId.Equals(userId))
-            //                            .Select(_ => _.Connection).ToList()).ToList();
-            //        }
-            //        catch { continue; }
-            //    }
-            //}
-            //catch (Exception e)
-            //{
-            //    throw;
-            //}
-
-            //Send notification
-            var _notification = new NotificationVM
+            var _user = _userManager.FindByNameAsync(userName).Result;
+            if (_user != null)
             {
-                Title = model.Title,
-                Type = model.Type,
-                Body = model.Body,
-                NData = model.NData == null ? null : JsonConvert.SerializeObject(model.NData),
-                IsSeen = false,
-            };
+                var notification = new Notification
+                {
+                    Title = model.Title,
+                    Type = model.Type,
+                    Body = model.Body,
+                    UserId = _user.Id,
+                    NData = model.NData == null ? null : JsonConvert.SerializeObject(model.NData),
+                    IsSeen = false,
+                    CreatedDate = DateTime.Now
+                };
+                _notiService.CreateNotification(notification);
+                _notiService.SaveNotification();
 
-            _hubContext.Clients.Clients(connections)
-                            .SendAsync("Notify", JsonConvert.SerializeObject(_notification.Adapt<NotificationVM>()));
+                var connections = _hubService.GetHubUserConnections(_ => _.UserId.Equals(_user.Id));
+                await _hubContext.Clients.Clients(connections.Select(_ => _.Connection).ToList())
+                            .SendAsync("Notify", JsonConvert.SerializeObject(notification.Adapt<NotificationVM>()));
+            }
+            //List<string> connections = new List<string>();
+            ////try
+            ////{
+            ////    var permission = _permissionService.GetPermission(permissionId);
+            ////    if (permission == null)
+            ////    {
+            ////        return;
+            ////    }
+
+            ////    var userIds = _permissionService.GetUsersByPermission(permissionId);
+
+            ////    foreach (var userId in userIds)
+            ////    {
+            ////        try
+            ////        {
+            ////            var notification = CreateNotification(userId, model);
+            ////            _notiService.CreateNotification(notification);
+            ////            _notiService.SaveNotification();
+
+            ////            connections = connections.Union(_hubService.GetHubUserConnections(_ => _.UserId.Equals(userId))
+            ////                            .Select(_ => _.Connection).ToList()).ToList();
+            ////        }
+            ////        catch { continue; }
+            ////    }
+            ////}
+            ////catch (Exception e)
+            ////{
+            ////    throw;
+            ////}
+
+            ////Send notification
+            //var _notification = new NotificationVM
+            //{
+            //    Title = model.Title,
+            //    Type = model.Type,
+            //    Body = model.Body,
+            //    NData = model.NData == null ? null : JsonConvert.SerializeObject(model.NData),
+            //    IsSeen = false,
+            //};
+
+            //_hubContext.Clients.Clients(connections)
+            //                .SendAsync("Notify", JsonConvert.SerializeObject(_notification.Adapt<NotificationVM>()));
         }
+
         private Notification CreateNotification(string userId, NotificationCM model)
         {
             return new Notification

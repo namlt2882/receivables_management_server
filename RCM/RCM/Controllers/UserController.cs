@@ -80,7 +80,7 @@ namespace RCM.Controllers
                 var currentUser = await _userManager.CreateAsync(userIdentity, userCM.Password);
                 if (currentUser.Succeeded)
                 {
-                    await _userManager.AddToRoleAsync(userIdentity, "Manager");
+                    await _userManager.AddToRoleAsync(userIdentity, "Collector");
                     return StatusCode(201);
                 }
                 else
