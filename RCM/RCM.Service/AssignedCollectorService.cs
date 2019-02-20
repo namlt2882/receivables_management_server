@@ -4,6 +4,7 @@ using System.Linq.Expressions;
 using System.Text;
 using CRM.Data.Infrastructure;
 using RCM.Data.Repositories;
+using RCM.Helper;
 using RCM.Model;
 
 namespace RCM.Service
@@ -34,6 +35,7 @@ namespace RCM.Service
         public void CreateAssignedCollector(AssignedCollector assignedCollector)
         {
             assignedCollector.CreatedDate = DateTime.Now;
+            assignedCollector.Status = Constant.ASSIGNED_STATUS_ACTIVE_CODE;
             assignedCollector.IsDeleted = false;
             _assignedCollectorRepository.Add(assignedCollector);
         }

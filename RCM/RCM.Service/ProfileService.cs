@@ -64,9 +64,8 @@ namespace RCM.Service
         public void RemoveProfile(int id)
         {
             Profile profile = _profileRepository.GetById(id);
+            profile.IsDeleted = true;
             EditProfile(profile);
-            
-            
         }
 
         public void RemoveProfile(Profile profile)

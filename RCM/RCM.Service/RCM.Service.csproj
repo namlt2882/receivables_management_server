@@ -5,6 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Helper\RCM.Helper.csproj" />
     <ProjectReference Include="..\RCM.Data\RCM.Data.csproj" />
     <ProjectReference Include="..\RCM.Model\RCM.Model.csproj" />
   </ItemGroup>

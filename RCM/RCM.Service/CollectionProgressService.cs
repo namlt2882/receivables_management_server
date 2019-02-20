@@ -1,10 +1,10 @@
-﻿using System;
+﻿using CRM.Data.Infrastructure;
+using RCM.Data.Repositories;
+using RCM.Helper;
+using RCM.Model;
+using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
-using System.Text;
-using CRM.Data.Infrastructure;
-using RCM.Data.Repositories;
-using RCM.Model;
 
 namespace RCM.Service
 {
@@ -27,15 +27,15 @@ namespace RCM.Service
 
         public CollectionProgressService(ICollectionProgressRepository collectionProgressRepository, IUnitOfWork unitOfWork)
         {
-            this._collectionProgressRepository = collectionProgressRepository;
-            this._unitOfWork = unitOfWork;
+            _collectionProgressRepository = collectionProgressRepository;
+            _unitOfWork = unitOfWork;
         }
 
         public void CreateCollectionProgress(CollectionProgress collectionProgress)
         {
             collectionProgress.CreatedDate = DateTime.Now;
             collectionProgress.IsDeleted = false;
-            collectionProgress.Status = 0;
+            collectionProgress.Status = Constant.COLLECTION_STATUS_COLLECTION_CODE;
             _collectionProgressRepository.Add(collectionProgress);
         }
 
