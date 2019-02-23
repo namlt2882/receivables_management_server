@@ -22,7 +22,7 @@ namespace RCM.Controllers
             _profileStageActionService = profileStageActionService;
             _profileStageService = profileStageService;
         }
-
+        [HttpGet("{id}")]
         public IActionResult GetProfile(int id)
         {
             if (!ModelState.IsValid)

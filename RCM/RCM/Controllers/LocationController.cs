@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using Mapster;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using RCM.Model;
 using RCM.Service;
 using RCM.ViewModels;
@@ -123,6 +126,19 @@ namespace RCM.Controllers
             _locationService.RemoveLocation(location);
             _locationService.SaveLocation();
             return Ok();
+        }
+
+        [HttpGet("GeoLocation")]
+        public async Task<IActionResult> GetGeoLocation(string address)
+        {
+            HttpClient client = new HttpClient();
+            client.DefaultRequestHeaders.Accept.Clear();
+            client.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+            client.DefaultRequestHeaders.Add("cache-control", "no-cache");
+            var stringTask = await client.GetAsync($"https://maps.googleapis.com/maps/api/geocode/json?address={address}&key=AIzaSyCnGXe4qfEcdEnRncxuoJX7--rW1hlb0Mo");
+            var geolocationInfo = stringTask.Content.ReadAsStringAsync().Result;
+            return Ok(JsonConvert.DeserializeObject(geolocationInfo));
         }
     }
 }

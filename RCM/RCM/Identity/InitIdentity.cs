@@ -46,6 +46,24 @@ namespace RCM.Identity
                     await UserManager.AddToRoleAsync(sa, "Admin");
                 }
             }
+            string userNameManager = "manager";
+            //Here you could create a super user who will maintain the web app
+            var manager = new User
+            {
+                UserName = userNameManager,
+            };
+            //Ensure you have these values in your appsettings.json file
+            var _userManager = await UserManager.FindByNameAsync(userNameManager);
+
+            if (_userManager == null)
+            {
+                var createSuperAdmin = await UserManager.CreateAsync(manager, "zaq@123");
+                if (createSuperAdmin.Succeeded)
+                {
+                    //here we tie the new user to the role
+                    await UserManager.AddToRoleAsync(manager, "Manager");
+                }
+            }
         }
 
     }
