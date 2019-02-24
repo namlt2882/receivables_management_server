@@ -13,7 +13,7 @@ namespace RCM.Service
         IEnumerable<ProgressMessageForm> GetProgressMessageForms();
         IEnumerable<ProgressMessageForm> GetProgressMessageForms(Expression<Func<ProgressMessageForm, bool>> where);
         ProgressMessageForm GetProgressMessageForm(int id);
-        void CreateProgressMessageForm(ProgressMessageForm progressMessageForm);
+        ProgressMessageForm CreateProgressMessageForm(ProgressMessageForm progressMessageForm);
         void EditProgressMessageForm(ProgressMessageForm progressMessageForm);
         void RemoveProgressMessageForm(int id);
         void RemoveProgressMessageForm(ProgressMessageForm progressMessageForm);
@@ -31,11 +31,11 @@ namespace RCM.Service
             this._unitOfWork = unitOfWork;
         }
 
-        public void CreateProgressMessageForm(ProgressMessageForm progressMessageForm)
+        public ProgressMessageForm CreateProgressMessageForm(ProgressMessageForm progressMessageForm)
         {
             progressMessageForm.CreatedDate = DateTime.Now;
             progressMessageForm.IsDeleted = false;
-            _progressMessageFormRepository.Add(progressMessageForm);
+            return _progressMessageFormRepository.Add(progressMessageForm);
         }
 
         public void EditProgressMessageForm(ProgressMessageForm progressMessageForm)

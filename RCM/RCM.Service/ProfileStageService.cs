@@ -13,7 +13,7 @@ namespace RCM.Service
         IEnumerable<ProfileStage> GetProfileStages();
         IEnumerable<ProfileStage> GetProfileStages(Expression<Func<ProfileStage, bool>> where);
         ProfileStage GetProfileStage(int id);
-        void CreateProfileStage(ProfileStage profileStage);
+        ProfileStage CreateProfileStage(ProfileStage profileStage);
         void EditProfileStage(ProfileStage profileStage);
         void RemoveProfileStage(int id);
         void RemoveProfileStage(ProfileStage profileStage);
@@ -31,11 +31,11 @@ namespace RCM.Service
             this._unitOfWork = unitOfWork;
         }
 
-        public void CreateProfileStage(ProfileStage profileStage)
+        public ProfileStage CreateProfileStage(ProfileStage profileStage)
         {
             profileStage.CreatedDate = DateTime.Now;
             profileStage.IsDeleted = false;
-            _profileStageRepository.Add(profileStage);
+            return _profileStageRepository.Add(profileStage);
         }
 
         public void EditProfileStage(ProfileStage profileStage)

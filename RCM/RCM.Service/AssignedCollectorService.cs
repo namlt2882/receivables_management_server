@@ -14,7 +14,7 @@ namespace RCM.Service
         IEnumerable<AssignedCollector> GetAssignedCollectors();
         IEnumerable<AssignedCollector> GetAssignedCollectors(Expression<Func<AssignedCollector, bool>> where);
         AssignedCollector GetAssignedCollector(int id);
-        void CreateAssignedCollector(AssignedCollector assignedCollector);
+        AssignedCollector CreateAssignedCollector(AssignedCollector assignedCollector);
         void EditAssignedCollector(AssignedCollector assignedCollector);
         void RemoveAssignedCollector(int id);
         void RemoveAssignedCollector(AssignedCollector assignedCollector);
@@ -32,12 +32,12 @@ namespace RCM.Service
             this._unitOfWork = unitOfWork;
         }
 
-        public void CreateAssignedCollector(AssignedCollector assignedCollector)
+        public AssignedCollector CreateAssignedCollector(AssignedCollector assignedCollector)
         {
             assignedCollector.CreatedDate = DateTime.Now;
             assignedCollector.Status = Constant.ASSIGNED_STATUS_ACTIVE_CODE;
             assignedCollector.IsDeleted = false;
-            _assignedCollectorRepository.Add(assignedCollector);
+            return _assignedCollectorRepository.Add(assignedCollector);
         }
 
         public void EditAssignedCollector(AssignedCollector assignedCollector)

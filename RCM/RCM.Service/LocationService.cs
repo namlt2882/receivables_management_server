@@ -13,7 +13,7 @@ namespace RCM.Service
         IEnumerable<Location> GetLocations();
         IEnumerable<Location> GetLocations(Expression<Func<Location, bool>> where);
         Location GetLocation(int id);
-        void CreateLocation(Location location);
+        Location CreateLocation(Location location);
         void EditLocation(Location location);
         void RemoveLocation(int id);
         void RemoveLocation(Location location);
@@ -31,7 +31,7 @@ namespace RCM.Service
             this._unitOfWork = unitOfWork;
         }
 
-        public void CreateLocation(Location entity)
+        public Location CreateLocation(Location entity)
         {
             entity.CreatedDate = DateTime.Now;
             entity.IsDeleted = false;

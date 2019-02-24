@@ -33,14 +33,21 @@ namespace CRM.Data.Infrastructure
         }
 
         #region Implementation
-        public virtual void Add(T entity)
+        public virtual T Add(T entity)
         {
             dbSet.Add(entity);
+            return entity;
+        }
+
+        public virtual List<T> Add(List<T> entities)
+        {
+            dbSet.AddRange(entities);
+            return entities;
         }
 
         public virtual void Update(T entity)
         {
-            
+
             dbSet.Attach(entity);
             dataContext.Entry(entity).State = EntityState.Modified;
         }

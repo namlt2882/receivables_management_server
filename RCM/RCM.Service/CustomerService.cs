@@ -13,7 +13,7 @@ namespace RCM.Service
         IEnumerable<Customer> GetCustomers();
         IEnumerable<Customer> GetCustomers(Expression<Func<Customer, bool>> where);
         Customer GetCustomer(int id);
-        void CreateCustomer(Customer customer);
+        Customer CreateCustomer(Customer customer);
         void EditCustomer(Customer customer);
         void RemoveCustomer(int id);
         void RemoveCustomer(Customer customer);
@@ -31,11 +31,11 @@ namespace RCM.Service
             this._unitOfWork = unitOfWork;
         }
 
-        public void CreateCustomer(Customer customer)
+        public Customer CreateCustomer(Customer customer)
         {
             customer.CreatedDate = DateTime.Now;
             customer.IsDeleted = false;
-            _customerRepository.Add(customer);
+            return _customerRepository.Add(customer);
         }
 
         public void EditCustomer(Customer customer)

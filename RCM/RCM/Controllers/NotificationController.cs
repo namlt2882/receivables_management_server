@@ -25,7 +25,7 @@ namespace RCM.Controllers
         private readonly UserManager<User> _userManager;
         private readonly IHubUserConnectionService _hubService;
         private readonly INotificationService _notiService;
-        
+
         public NotificationController(IHubContext<CenterHub> hubContext, UserManager<User> userManager, IHubUserConnectionService hubService, INotificationService notiService)
         {
             _hubContext = hubContext;
@@ -34,10 +34,11 @@ namespace RCM.Controllers
             _notiService = notiService;
         }
 
+        [Authorize]
         [HttpPost]
-        public IActionResult Post([FromQuery]string userName, [FromBody]NotificationCM model)
+        public async Task<IActionResult> PostAsync([FromBody]NotificationCM model)
         {
-            var _user = _userManager.FindByNameAsync(userName).Result;
+            var _user = await _userManager.FindByNameAsync(User.Identity.Name);
             if (_user != null)
             {
                 var notification = new Notification
@@ -54,35 +55,34 @@ namespace RCM.Controllers
                 _notiService.SaveNotification();
 
                 var connections = _hubService.GetHubUserConnections(_ => _.UserId.Equals(_user.Id));
-                _hubContext.Clients.Clients(connections.Select(_ => _.Connection).ToList())
+                await _hubContext.Clients.Clients(connections.Select(_ => _.Connection).ToList())
                             .SendAsync("Notify", JsonConvert.SerializeObject(notification.Adapt<NotificationVM>()));
             }
             return Ok();
         }
 
 
-
+        [Authorize]
         [HttpPost("SendNotificationFromSecond")]
-        public IActionResult SendNotificationFromSecond([FromQuery]string userName, [FromBody]NotificationCM model, [FromQuery]double second)
+        public async Task<IActionResult> SendNotificationFromSecondAsync([FromBody]NotificationCM model, [FromQuery]double second)
         {
-            //var jobId = BackgroundJob.Enqueue(
-            //        () => SendNotiAsync(username, model));
-            BackgroundJob.Schedule(() => SendNotiAsync(userName, model), TimeSpan.FromSeconds(second));
+            var user = await _userManager.FindByNameAsync(User.Identity.Name);
+            BackgroundJob.Schedule(() => SendNotiAsync(user, model), TimeSpan.FromSeconds(second));
             return Ok();
         }
 
+        [Authorize]
         [HttpPost("SendNotiAsync")]
-        public async Task SendNotiAsync(string userName, NotificationCM model)
+        public async Task SendNotiAsync(User user, NotificationCM model)
         {
-            var _user = _userManager.FindByNameAsync(userName).Result;
-            if (_user != null)
+            if (user != null)
             {
                 var notification = new Notification
                 {
                     Title = model.Title,
                     Type = model.Type,
                     Body = model.Body,
-                    UserId = _user.Id,
+                    UserId = user.Id,
                     NData = model.NData == null ? null : JsonConvert.SerializeObject(model.NData),
                     IsSeen = false,
                     CreatedDate = DateTime.Now
@@ -90,7 +90,7 @@ namespace RCM.Controllers
                 _notiService.CreateNotification(notification);
                 _notiService.SaveNotification();
 
-                var connections = _hubService.GetHubUserConnections(_ => _.UserId.Equals(_user.Id));
+                var connections = _hubService.GetHubUserConnections(_ => _.UserId.Equals(user.Id));
                 await _hubContext.Clients.Clients(connections.Select(_ => _.Connection).ToList())
                             .SendAsync("Notify", JsonConvert.SerializeObject(notification.Adapt<NotificationVM>()));
             }

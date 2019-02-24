@@ -13,7 +13,7 @@ namespace RCM.Service
         IEnumerable<ProgressStageAction> GetProgressStageActions();
         IEnumerable<ProgressStageAction> GetProgressStageActions(Expression<Func<ProgressStageAction, bool>> where);
         ProgressStageAction GetProgressStageAction(int id);
-        void CreateProgressStageAction(ProgressStageAction progressStageAction);
+        ProgressStageAction CreateProgressStageAction(ProgressStageAction progressStageAction);
         void EditProgressStageAction(ProgressStageAction progressStageAction);
         void RemoveProgressStageAction(int id);
         void RemoveProgressStageAction(ProgressStageAction progressStageAction);
@@ -31,12 +31,12 @@ namespace RCM.Service
             this._unitOfWork = unitOfWork;
         }
 
-        public void CreateProgressStageAction(ProgressStageAction progressStageAction)
+        public ProgressStageAction CreateProgressStageAction(ProgressStageAction progressStageAction)
         {
             progressStageAction.CreatedDate = DateTime.Now;
             progressStageAction.IsDeleted = false;
             progressStageAction.Status = 0;
-            _progressStageActionRepository.Add(progressStageAction);
+            return _progressStageActionRepository.Add(progressStageAction);
         }
 
         public void EditProgressStageAction(ProgressStageAction progressStageAction)

@@ -13,7 +13,7 @@ namespace RCM.Service
         IEnumerable<CollectionProgress> GetCollectionProgresss();
         IEnumerable<CollectionProgress> GetCollectionProgresss(Expression<Func<CollectionProgress, bool>> where);
         CollectionProgress GetCollectionProgress(int id);
-        void CreateCollectionProgress(CollectionProgress collectionProgress);
+        CollectionProgress CreateCollectionProgress(CollectionProgress collectionProgress);
         void EditCollectionProgress(CollectionProgress collectionProgress);
         void RemoveCollectionProgress(int id);
         void RemoveCollectionProgress(CollectionProgress collectionProgress);
@@ -31,12 +31,12 @@ namespace RCM.Service
             _unitOfWork = unitOfWork;
         }
 
-        public void CreateCollectionProgress(CollectionProgress collectionProgress)
+        public CollectionProgress CreateCollectionProgress(CollectionProgress collectionProgress)
         {
             collectionProgress.CreatedDate = DateTime.Now;
             collectionProgress.IsDeleted = false;
             collectionProgress.Status = Constant.COLLECTION_STATUS_COLLECTION_CODE;
-            _collectionProgressRepository.Add(collectionProgress);
+            return _collectionProgressRepository.Add(collectionProgress);
         }
 
         public void EditCollectionProgress(CollectionProgress collectionProgress)

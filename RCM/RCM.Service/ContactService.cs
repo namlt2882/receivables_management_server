@@ -13,7 +13,7 @@ namespace RCM.Service
         IEnumerable<Contact> GetContacts();
         IEnumerable<Contact> GetContacts(Expression<Func<Contact, bool>> where);
         Contact GetContact(int id);
-        void CreateContact(Contact contact);
+        Contact CreateContact(Contact contact);
         void EditContact(Contact contact);
         void RemoveContact(int id);
         void RemoveContact(Contact contact);
@@ -31,11 +31,11 @@ namespace RCM.Service
             this._unitOfWork = unitOfWork;
         }
 
-        public void CreateContact(Contact contact)
+        public Contact CreateContact(Contact contact)
         {
             contact.CreatedDate = DateTime.Now;
             contact.IsDeleted = false;
-            _contactRepository.Add(contact);
+            return _contactRepository.Add(contact);
         }
 
         public void EditContact(Contact contact)

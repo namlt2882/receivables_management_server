@@ -13,7 +13,7 @@ namespace RCM.Service
         IEnumerable<ProfileMessageForm> GetProfileMessageForms();
         IEnumerable<ProfileMessageForm> GetProfileMessageForms(Expression<Func<ProfileMessageForm, bool>> where);
         ProfileMessageForm GetProfileMessageForm(int id);
-        void CreateProfileMessageForm(ProfileMessageForm profileMessageForm);
+        ProfileMessageForm CreateProfileMessageForm(ProfileMessageForm profileMessageForm);
         void EditProfileMessageForm(ProfileMessageForm profileMessageForm);
         void RemoveProfileMessageForm(int id);
         void RemoveProfileMessageForm(ProfileMessageForm profileMessageForm);
@@ -31,7 +31,7 @@ namespace RCM.Service
             this._unitOfWork = unitOfWork;
         }
 
-        public void CreateProfileMessageForm(ProfileMessageForm profileMessageForm)
+        public ProfileMessageForm CreateProfileMessageForm(ProfileMessageForm profileMessageForm)
         {
             profileMessageForm.CreatedDate = DateTime.Now;
             profileMessageForm.IsDeleted = false;

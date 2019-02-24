@@ -13,7 +13,7 @@ namespace RCM.Service
         IEnumerable<Profile> GetProfiles();
         IEnumerable<Profile> GetProfiles(Expression<Func<Profile, bool>> where);
         Profile GetProfile(int id);
-        void CreateProfile(Profile profile);
+        Profile CreateProfile(Profile profile);
         void EditProfile(Profile profile);
         void RemoveProfile(int id);
         void RemoveProfile(Profile profile);
@@ -31,11 +31,11 @@ namespace RCM.Service
             this._unitOfWork = unitOfWork;
         }
 
-        public void CreateProfile(Profile profile)
+        public Profile CreateProfile(Profile profile)
         {
             profile.CreatedDate = DateTime.Now;
             profile.IsDeleted = false;
-            _profileRepository.Add(profile);
+            return _profileRepository.Add(profile);
         }
 
         public void EditProfile(Profile profile)

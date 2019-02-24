@@ -13,7 +13,7 @@ namespace RCM.Service
         IEnumerable<Notification> GetNotifications();
         IEnumerable<Notification> GetNotifications(Expression<Func<Notification, bool>> where);
         Notification GetNotification(int id);
-        void CreateNotification(Notification notification);
+        Notification CreateNotification(Notification notification);
         void EditNotification(Notification notification);
         void RemoveNotification(int id);
         void RemoveNotification(Notification notification);
@@ -31,11 +31,11 @@ namespace RCM.Service
             this._unitOfWork = unitOfWork;
         }
 
-        public void CreateNotification(Notification notification)
+        public Notification CreateNotification(Notification notification)
         {
             notification.CreatedDate = DateTime.Now;
             notification.IsDeleted = false;
-            _notificationRepository.Add(notification);
+            return _notificationRepository.Add(notification);
         }
 
         public void EditNotification(Notification notification)

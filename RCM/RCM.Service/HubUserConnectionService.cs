@@ -13,7 +13,7 @@ namespace RCM.Service
         IEnumerable<HubUserConnection> GetHubUserConnections();
         IEnumerable<HubUserConnection> GetHubUserConnections(Expression<Func<HubUserConnection, bool>> where);
         HubUserConnection GetHubUserConnection(int id);
-        void CreateHubUserConnection(HubUserConnection HubUserConnection);
+        HubUserConnection CreateHubUserConnection(HubUserConnection HubUserConnection);
         void EditHubUserConnection(HubUserConnection HubUserConnection);
         void RemoveHubUserConnection(int id);
         void RemoveHubUserConnection(Expression<Func<HubUserConnection, bool>> where);
@@ -31,9 +31,9 @@ namespace RCM.Service
             this._unitOfWork = unitOfWork;
         }
 
-        public void CreateHubUserConnection(HubUserConnection HubUserConnection)
+        public HubUserConnection CreateHubUserConnection(HubUserConnection HubUserConnection)
         {
-            _HubUserConnectionRepository.Add(HubUserConnection);
+            return _HubUserConnectionRepository.Add(HubUserConnection);
         }
 
         public void EditHubUserConnection(HubUserConnection HubUserConnection)

@@ -13,7 +13,7 @@ namespace RCM.Service
         IEnumerable<Receivable> GetReceivables();
         IEnumerable<Receivable> GetReceivables(Expression<Func<Receivable, bool>> where);
         Receivable GetReceivable(int id);
-        void CreateReceivable(Receivable receivable);
+        Receivable CreateReceivable(Receivable receivable);
         void EditReceivable(Receivable receivable);
         void RemoveReceivable(int id);
         void RemoveReceivable(Receivable receivable);
@@ -31,11 +31,11 @@ namespace RCM.Service
             this._unitOfWork = unitOfWork;
         }
 
-        public void CreateReceivable(Receivable receivable)
+        public Receivable CreateReceivable(Receivable receivable)
         {
             receivable.CreatedDate = DateTime.Now;
             receivable.IsDeleted = false;
-            _receivableRepository.Add(receivable);
+            return _receivableRepository.Add(receivable);
         }
 
         public void EditReceivable(Receivable receivable)
