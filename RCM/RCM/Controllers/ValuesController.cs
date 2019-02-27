@@ -9,7 +9,6 @@ using RCM.Data;
 namespace RCM.Controllers
 {
     [Route("api/[controller]")]
-    [Authorize]
     [ApiController]
     public class ValuesController : ControllerBase
     {
@@ -24,6 +23,10 @@ namespace RCM.Controllers
         [HttpGet]
         public ActionResult<IEnumerable<string>> Get()
         {
+
+            //JobScheduler jobScheduler = new JobScheduler();
+            //jobScheduler.Start();
+
             return new string[] { "value1", "value2" };
         }
 

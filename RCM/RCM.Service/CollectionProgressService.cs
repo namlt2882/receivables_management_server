@@ -4,6 +4,7 @@ using RCM.Helper;
 using RCM.Model;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 
 namespace RCM.Service
@@ -18,6 +19,7 @@ namespace RCM.Service
         void RemoveCollectionProgress(int id);
         void RemoveCollectionProgress(CollectionProgress collectionProgress);
         void SaveCollectionProgress();
+        void MarkAsDone(CollectionProgress collectionProgress);
     }
 
     public class CollectionProgressService : ICollectionProgressService
@@ -60,6 +62,15 @@ namespace RCM.Service
         public IEnumerable<CollectionProgress> GetCollectionProgresss(Expression<Func<CollectionProgress, bool>> where)
         {
             return _collectionProgressRepository.GetMany(where);
+        }
+
+        public void MarkAsDone(CollectionProgress collectionProgress)
+        {
+            if (!collectionProgress.ProgressStages.Any(x => x.Status != Constant.COLLECTION_STATUS_DONE_CODE))
+            {
+                collectionProgress.Status = Constant.COLLECTION_STATUS_DONE_CODE;
+                EditCollectionProgress(collectionProgress);
+            }
         }
 
         public void RemoveCollectionProgress(int id)

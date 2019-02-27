@@ -19,4 +19,9 @@ namespace RCM.ViewModels
     public class CollectionProgressUM : CollectionProgressVM
     {
     }
+
+    public class CollectionProgressDM : CollectionProgressVM
+    {
+        public IEnumerable<ProgressStageDM> Stages;
+    }
 }

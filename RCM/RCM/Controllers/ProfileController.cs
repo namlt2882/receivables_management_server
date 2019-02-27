@@ -2,6 +2,7 @@
 using RCM.Model;
 using RCM.Service;
 using RCM.ViewModels;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -40,6 +41,152 @@ namespace RCM.Controllers
             return Ok(profile);
         }
 
+        [HttpGet("Disable")]
+        public IActionResult DisableProfile(int id)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var profile = _profileService.GetProfile(id);
+            if (profile == null)
+            {
+                return NotFound();
+            }
+
+            profile.IsDeleted = true;
+            _profileService.EditProfile(profile);
+            _profileService.SaveProfile();
+
+            return Ok(profile);
+        }
+
+        [HttpGet("Enable")]
+        public IActionResult EnableProfile(int id)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var profile = _profileService.GetProfile(id);
+            if (profile == null)
+            {
+                return NotFound();
+            }
+
+            profile.IsDeleted = false;
+            _profileService.EditProfile(profile);
+            _profileService.SaveProfile();
+
+            return Ok(profile);
+        }
+
+        [HttpPut]
+        public IActionResult UpdateProfile([FromBody] ProfileUM profileUM)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var profile = new Profile()
+            {
+                Id = profileUM.Id,
+                Name = profileUM.Name,
+                DebtAmountFrom = profileUM.DebtAmountFrom,
+                DebtAmountTo = profileUM.DebtAmountTo
+            };
+            _profileService.EditProfile(profile);
+            _profileService.SaveProfile();
+
+            return Ok(profile);
+        }
+
+        [HttpGet]
+        public IActionResult GetAll()
+        {
+            var profiles = GetProfiles();
+            return Ok(profiles);
+        }
+
+        public IEnumerable<ProfileUM> GetProfiles()
+        {
+            var profiles = _profileService.GetProfiles();
+            if (profiles.Any())
+            {
+                var result = profiles.Select(x => new ProfileUM()
+                {
+                    Id = x.Id,
+                    DebtAmountFrom = x.DebtAmountFrom,
+                    DebtAmountTo = x.DebtAmountTo,
+                    Name = x.Name
+                });
+                return result;
+            }
+            return null;
+        }
+
+        //[HttpPost]
+        //public IActionResult Create([FromBody]ProfileIM profileVM)
+        //{
+        //    if (!ModelState.IsValid)
+        //    {
+        //        return BadRequest(ModelState);
+        //    }
+
+        //    //Add Profile to DB
+        //    var profile = new Profile()
+        //    {
+        //        Name = profileVM.Name,
+        //        DebtAmountFrom = profileVM.DebtAmountFrom,
+        //        DebtAmountTo = profileVM.DebtAmountTo,
+
+        //    };
+
+        //    _profileService.CreateProfile(profile);
+        //    _profileService.SaveProfile();
+
+        //    //Add Profile Stage to corresponding Profile.
+        //    int profileId = _profileService.GetProfiles().LastOrDefault().Id;
+        //    IEnumerable<ProfileStageVM> Stages = profileVM.Stages;
+        //    ImportStageToDB(profileId, Stages);
+
+
+        //    return Ok(profileId);
+        //}
+
+        [HttpPost]
+        public IActionResult Create([FromBody]ProfileIM profileVM)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            //Add Profile to DB
+            var stages = TransformStagesToDBM(profileVM.Stages).ToList();
+            if (stages != null)
+            {
+                var profile = new Profile()
+                {
+                    Name = profileVM.Name,
+                    DebtAmountFrom = profileVM.DebtAmountFrom,
+                    DebtAmountTo = profileVM.DebtAmountTo,
+                    ProfileStages = stages.ToList()
+                };
+
+                _profileService.CreateProfile(profile);
+                _profileService.SaveProfile();
+
+                return Ok(profile);
+            }
+
+
+            return BadRequest();
+        }
+
         //Get profile from DB and transform to VM.
         private ProfileVM GetProfileDetail(int id)
         {
@@ -74,8 +221,13 @@ namespace RCM.Controllers
             //Tranform to view model
             IEnumerable<ProfileStageVM> result = stagesFromDB
                 .Select(x => new ProfileStageVM()
-                { Id = x.Id, Name = x.Name, Duration = x.Duration, Sequence = x.Sequence, Actions = GetProfileStageActionsForViewModel(x.Id) }
-                );
+                {
+                    Id = x.Id,
+                    Name = x.Name,
+                    Duration = x.Duration,
+                    Sequence = x.Sequence,
+                    Actions = GetProfileStageActionsForViewModel(x.Id)
+                });
 
             return result;
         }
@@ -95,70 +247,67 @@ namespace RCM.Controllers
             return result;
         }
 
-        [HttpDelete("{id}")]
-        public IActionResult Delete(int id)
-        {
-            return Ok();
-        }
+        //private void ImportStageToDB(int profileId, IEnumerable<ProfileStageIM> stages)
+        //{
+        //    foreach (var stage in stages)
+        //    {
+        //        ProfileStage _stage = new ProfileStage(profileId, stage.Name, stage.Duration, stage.Sequence);
+        //        _profileStageService.CreateProfileStage(_stage);
+        //        _profileStageService.SaveProfileStage();
 
-        [HttpGet]
-        public IActionResult GetProfiles()
-        {
-            var profiles = _profileService.GetProfiles();
-            return Ok(profiles);
-        }
 
-        [HttpPost]
-        public IActionResult Create([FromBody]ProfileIM profileVM)
+        //        //Add Action to corresponding Stage.
+        //        int stageId = _profileStageService.GetProfileStages().LastOrDefault().Id;
+        //        ImportActionToDB(stageId, stage.Actions);
+        //    }
+        //}
+
+        //private void ImportActionToDB(int stageId, IEnumerable<ProfileStageActionIM> actions)
+        //{
+        //    foreach (var action in actions)
+        //    {
+        //        ProfileStageAction _action = new ProfileStageAction(stageId, action.Name, action.Frequency, action.StartTime, action.Type, action.ProfileMessageFormId);
+        //        _profileStageActionService.CreateProfileStageAction(_action);
+        //        _profileStageActionService.SaveProfileStageAction();
+        //    }
+        //}
+
+        private IEnumerable<ProfileStage> TransformStagesToDBM(IEnumerable<ProfileStageIM> stages)
         {
-            if (!ModelState.IsValid)
+            if (stages != null)
             {
-                return BadRequest(ModelState);
+                var result = stages.Select(x => new ProfileStage()
+                {
+                    Name = x.Name,
+                    Duration = x.Duration,
+                    Sequence = x.Sequence,
+                    ProfileStageActions = TransformActionToDBM(x.Actions).ToList(),
+                    CreatedDate = DateTime.Now,
+                    IsDeleted = false
+                });
+                return result;
             }
-
-            //Add Profile to DB
-            var profile = new Profile()
-            {
-                Name = profileVM.Name,
-                DebtAmountFrom = profileVM.DebtAmountFrom,
-                DebtAmountTo = profileVM.DebtAmountTo,
-            };
-
-            _profileService.CreateProfile(profile);
-            _profileService.SaveProfile();
-
-            //Add Profile Stage to corresponding Profile.
-            int profileId = _profileService.GetProfiles().LastOrDefault().Id;
-            IEnumerable<ProfileStageVM> Stages = profileVM.Stages;
-            AddStage(profileId, Stages);
-
-
-            return Ok(profileId);
+            return null;
         }
 
-        private void AddStage(int profileId, IEnumerable<ProfileStageIM> stages)
+        private IEnumerable<ProfileStageAction> TransformActionToDBM(IEnumerable<ProfileStageActionVM> actions)
         {
-            foreach (var stage in stages)
+            if (actions != null)
             {
-                ProfileStage _stage = new ProfileStage(profileId, stage.Name, stage.Duration, stage.Sequence);
-                _profileStageService.CreateProfileStage(_stage);
-                _profileStageService.SaveProfileStage();
-
-
-                //Add Action to corresponding Stage.
-                int stageId = _profileStageService.GetProfileStages().LastOrDefault().Id;
-                AddAction(stageId, stage.Actions);
+                var result = actions.Select(x => new ProfileStageAction()
+                {
+                    Name = x.Name,
+                    Frequency = x.Frequency,
+                    StartTime = x.StartTime,
+                    Type = x.Type,
+                    ProfileMessageFormId = x.ProfileMessageFormId,
+                    CreatedDate = DateTime.Now,
+                    IsDeleted = false
+                });
+                return result;
             }
+            return null;
         }
 
-        private void AddAction(int stageId, IEnumerable<ProfileStageActionIM> actions)
-        {
-            foreach (var action in actions)
-            {
-                ProfileStageAction _action = new ProfileStageAction(stageId, action.Name, action.Frequency, action.StartTime, action.Type, action.ProfileMessageFormId);
-                _profileStageActionService.CreateProfileStageAction(_action);
-                _profileStageActionService.SaveProfileStageAction();
-            }
-        }
     }
 }
