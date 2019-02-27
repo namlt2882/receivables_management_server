@@ -10,7 +10,7 @@ using RCM.Data;
 namespace RCM.Data.Migrations
 {
     [DbContext(typeof(RCMContext))]
-    [Migration("20190220123709_Init")]
+    [Migration("20190227102640_Init")]
     partial class Init
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -280,9 +280,9 @@ namespace RCM.Data.Migrations
 
                     b.Property<bool>("IsDeleted");
 
-                    b.Property<decimal>("Latitude");
+                    b.Property<double>("Latitude");
 
-                    b.Property<decimal>("Longitude");
+                    b.Property<double>("Longitude");
 
                     b.Property<string>("Name")
                         .HasMaxLength(100);

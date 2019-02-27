@@ -52,8 +52,8 @@ namespace RCM.Data.Migrations
                     IsDeleted = table.Column<bool>(nullable: false),
                     Name = table.Column<string>(maxLength: 100, nullable: true),
                     Description = table.Column<string>(maxLength: 100, nullable: true),
-                    Longitude = table.Column<decimal>(nullable: false),
-                    Latitude = table.Column<decimal>(nullable: false)
+                    Longitude = table.Column<double>(nullable: false),
+                    Latitude = table.Column<double>(nullable: false)
                 },
                 constraints: table =>
                 {

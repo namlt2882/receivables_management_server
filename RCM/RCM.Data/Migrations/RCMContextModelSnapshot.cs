@@ -278,9 +278,9 @@ namespace RCM.Data.Migrations
 
                     b.Property<bool>("IsDeleted");
 
-                    b.Property<decimal>("Latitude");
+                    b.Property<double>("Latitude");
 
-                    b.Property<decimal>("Longitude");
+                    b.Property<double>("Longitude");
 
                     b.Property<string>("Name")
                         .HasMaxLength(100);

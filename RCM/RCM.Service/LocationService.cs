@@ -13,6 +13,7 @@ namespace RCM.Service
         IEnumerable<Location> GetLocations();
         IEnumerable<Location> GetLocations(Expression<Func<Location, bool>> where);
         Location GetLocation(int id);
+        Location GetLocation(double longitude, double latitude);
         Location CreateLocation(Location location);
         void EditLocation(Location location);
         void RemoveLocation(int id);
@@ -42,13 +43,18 @@ namespace RCM.Service
         {
             var entity = _locationRepository.GetById(location.Id);
             entity = location;
-            location.UpdatedDate= DateTime.Now;
+            location.UpdatedDate = DateTime.Now;
             _locationRepository.Update(entity);
         }
 
         public Location GetLocation(int id)
         {
             return _locationRepository.GetById(id);
+        }
+
+        public Location GetLocation(double longitude, double latitude)
+        {
+            return _locationRepository.Get(_ => _.Longitude == longitude && _.Latitude == latitude);
         }
 
         public IEnumerable<Location> GetLocations()

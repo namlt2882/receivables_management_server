@@ -51,6 +51,16 @@ namespace RCM.Controllers
             return Ok(location.Adapt<LocationVM>());
         }
 
+        [HttpGet("GetByLongLat")]
+        public IActionResult GetByLongLat(double longitude, double latitude)
+        {
+            var location = _locationService.GetLocation(longitude, latitude);
+            if (location == null)
+            {
+                return NotFound();
+            }
+            return Ok(location.Adapt<LocationVM>());
+        }
         [HttpGet("{id}/Receivables")]
         public IActionResult GetReceivables(int id)
         {
@@ -72,14 +82,15 @@ namespace RCM.Controllers
         {
             try
             {
-                _locationService.CreateLocation(location.Adapt<Location>());
+                var model = _locationService.CreateLocation(location.Adapt<Location>());
                 _locationService.SaveLocation();
+                return CreatedAtAction("Create", location);
             }
             catch (Exception e)
             {
                 return BadRequest(e.Message);
             }
-            return StatusCode(201);
+
         }
 
         //[HttpPost("AddReceivables")]

@@ -23,6 +23,7 @@ namespace RCM.Controllers
             _profileStageActionService = profileStageActionService;
             _profileStageService = profileStageService;
         }
+
         [HttpGet("{id}")]
         public IActionResult GetProfile(int id)
         {
@@ -40,7 +41,7 @@ namespace RCM.Controllers
             return Ok(profile);
         }
 
-        [HttpGet("Disable")]
+        [HttpPut("Disable")]
         public IActionResult DisableProfile(int id)
         {
             if (!ModelState.IsValid)
@@ -61,7 +62,7 @@ namespace RCM.Controllers
             return Ok(profile);
         }
 
-        [HttpGet("Enable")]
+        [HttpPut("Enable")]
         public IActionResult EnableProfile(int id)
         {
             if (!ModelState.IsValid)
@@ -110,7 +111,7 @@ namespace RCM.Controllers
             return Ok(profiles);
         }
 
-        public IEnumerable<ProfileUM> GetProfiles()
+        private IEnumerable<ProfileUM> GetProfiles()
         {
             var profiles = _profileService.GetProfiles();
             if (profiles.Any())

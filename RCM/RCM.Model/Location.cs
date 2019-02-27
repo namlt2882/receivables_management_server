@@ -11,8 +11,8 @@ namespace RCM.Model
         public string Name { get; set; }
         [MaxLength(100)]
         public string Description { get; set; }
-        public decimal Longitude { get; set; }
-        public decimal Latitude { get; set; }
+        public double Longitude { get; set; }
+        public double Latitude { get; set; }
         public virtual ICollection<User> Users { get; set; }
         public virtual ICollection<Receivable> Receivables { get; set; }
 
