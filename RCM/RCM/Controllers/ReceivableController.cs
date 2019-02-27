@@ -6,6 +6,7 @@ using RCM.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 namespace RCM.Controllers
 {
@@ -15,48 +16,35 @@ namespace RCM.Controllers
     public class ReceivableController : ControllerBase
     {
         private readonly IReceivableService _receivableService;
-        private readonly IContactService _contactService;
-
-        private readonly ICollectionProgressService _collectionProgressService;
-        private readonly IProgressStageService _progressStageService;
-        private readonly IProgressStageActionService _progressStageActionService;
-        private readonly IProgressMessageFormService _progressMessageFormService;
-
         private readonly IProfileService _profileService;
-        private readonly IProfileStageService _profileStageService;
-        private readonly IProfileStageActionService _profileStageActionService;
         private readonly IProfileMessageFormService _profileMessageFormService;
 
-        private readonly IAssignedCollectorService _assignedCollectorService;
-
-        public ReceivableController(IReceivableService receivableService, IContactService contactService,
-            ICollectionProgressService collectionProgressService, IProgressStageService progressStageService, IProgressStageActionService progressStageActionService, IProgressMessageFormService progressMessageFormService,
-            IProfileService profileService, IProfileStageService profileStageService, IProfileStageActionService profileStageActionService, IProfileMessageFormService profileMessageFormService,
-            IAssignedCollectorService assignedCollectorService)
+        public ReceivableController(IReceivableService receivableService, IProfileService profileService, IProfileMessageFormService profileMessageFormService)
         {
             _receivableService = receivableService;
-            _contactService = contactService;
-
-            _collectionProgressService = collectionProgressService;
-            _progressStageService = progressStageService;
-            _progressStageActionService = progressStageActionService;
-            _progressMessageFormService = progressMessageFormService;
-
             _profileService = profileService;
-            _profileStageService = profileStageService;
-            _profileStageActionService = profileStageActionService;
             _profileMessageFormService = profileMessageFormService;
 
-            _assignedCollectorService = assignedCollectorService;
         }
 
         [HttpGet]
         public IActionResult GetAll()
         {
-            return Ok(_receivableService.GetReceivables());
+            var result = _receivableService.GetReceivables().Select(x => new ReceivableLM()
+            {
+                Id = x.Id,
+                ClosedDay = x.ClosedDay,
+                CustomerId = x.CustomerId,
+                DebtAmount = x.DebtAmount,
+                LocationId = x.LocationId,
+                PayableDay = x.PayableDay,
+                PrepaidAmount = x.PrepaidAmount,
+                CollectioProgressStatus = x.CollectionProgress.Status
+            });
+            return Ok(result);
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("GetReceivable")]
         public IActionResult GetReceivableDetail(int id)
         {
             if (!ModelState.IsValid)
@@ -74,7 +62,7 @@ namespace RCM.Controllers
         }
 
         [HttpPost("Validate")]
-        public IActionResult ValidateReceivables([FromBody] IEnumerable<ReceivableIM> receivableIMs)
+        public IActionResult ValidateAndMakeForReceivables([FromBody] IEnumerable<ReceivableIM> receivableIMs)
         {
             if (!ModelState.IsValid)
             {
@@ -104,222 +92,133 @@ namespace RCM.Controllers
                 return BadRequest(ModelState);
             }
 
-            ImportReceivablesToDB(receivableIMs);
-            return Ok(receivableIMs);
+            var receivablesDBM = TransformReceivablesToDBM(receivableIMs);
+            if (receivablesDBM.Any())
+            {
+                foreach (var receivableDBM in receivablesDBM)
+                {
+                    _receivableService.CreateReceivable(receivableDBM);
+                    _receivableService.SaveReceivable();
+                }
+
+                var importedReceivables = _receivableService.GetReceivables().OrderByDescending(x => x.Id).Take(receivablesDBM.Count());
+                return Ok(importedReceivables);
+            }
+
+            return BadRequest(new { Message = "Error when trying to import" });
         }
 
-        //Get receivable from DB and transform to VM.
-        private ReceivableVM GetReceivable(int id)
+        [HttpPut]
+        public IActionResult UpdateReceivable([FromBody] ReceivableUM receivableIM)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var receivable = new Receivable()
+            {
+                Id = receivableIM.Id,
+                DebtAmount = receivableIM.DebtAmount,
+                PrepaidAmount = receivableIM.PrepaidAmount,
+            };
+
+            _receivableService.EditReceivable(receivable);
+            _receivableService.SaveReceivable();
+
+            return Ok(receivable);
+        }
+
+        private ReceivableDM GetReceivable(int id)
         {
             var receivableDBM = _receivableService.GetReceivable(id);
             if (receivableDBM != null)
             {
-                var contacts = GetReceivableContacts(receivableDBM.Id);
-                if (contacts != null)
+                var receivableVM = new ReceivableDM()
                 {
-                    var receivableVM = new ReceivableVM()
-                    {
-                        Id = receivableDBM.Id,
-                        DebtAmount = receivableDBM.DebtAmount,
-                        PayableDay = receivableDBM.PayableDay,
-                        PrepaidAmount = receivableDBM.PrepaidAmount,
-                        CustomerId = receivableDBM.CustomerId,
-                        LocationId = receivableDBM.LocationId,
-                        ClosedDay = receivableDBM.ClosedDay,
-                        Contacts = contacts
-                    };
-                    return receivableVM;
-                }
-
-            }
-            return null;
-        }
-
-        //Get contacts from DB and transform to VM.
-        private IEnumerable<ContactVM> GetReceivableContacts(int receivableId)
-        {
-            var contactsDBM = _contactService.GetContacts().Where(x => x.Id == receivableId);
-            if (contactsDBM != null)
-            {
-                IEnumerable<ContactVM> result = contactsDBM
-                    .Select(x => new ContactVM()
-                    {
-                        Id = x.Id,
-                        Address = x.Address,
-                        IdNo = x.IdNo,
-                        Name = x.Name,
-                        Phone = x.Phone,
-                        Type = x.Type
-                    });
-
-                return result;
-            }
-            return null;
-        }
-
-        //Transform to DBM and import.
-        private void ImportReceivablesToDB(IEnumerable<ReceivableIM> receivableIMs)
-        {
-            foreach (var item in receivableIMs)
-            {
-                var receivable = new Receivable()
-                {
-                    DebtAmount = item.DebtAmount,
-                    PrepaidAmount = item.PrepaidAmount,
-                    CustomerId = item.CustomerId,
-                    PayableDay = item.PayableDay
+                    Id = receivableDBM.Id,
+                    DebtAmount = receivableDBM.DebtAmount,
+                    PayableDay = receivableDBM.PayableDay,
+                    PrepaidAmount = receivableDBM.PrepaidAmount,
+                    CustomerId = receivableDBM.CustomerId,
+                    LocationId = receivableDBM.LocationId,
+                    ClosedDay = receivableDBM.ClosedDay,
+                    Contacts = GetReceivableContactsForDetailView(receivableDBM.Contacts),
+                    CollectionProgress = GetCollectionProgressForDetailView(receivableDBM.CollectionProgress),
+                    assignedCollector = GetAssignedCollectorForDetailView(receivableDBM.AssignedCollectors.Where(x => x.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE).FirstOrDefault())
                 };
+                return receivableVM;
 
-                int receivableId = ImportReceivableToDB(receivable);
-                ImportContactsToDB(receivableId, item.Contacts);
-                ImportCollectionProgress(receivableId, item.ProfileId, item.PayableDay);
-                ImportAssginedCollector(receivableId, item.CollectorId);
             }
+            return null;
         }
 
-        //Create Assigned Collector.
-        private void ImportAssginedCollector(int receivableId, string collectorId)
+        private AssignedCollectorVM GetAssignedCollectorForDetailView(AssignedCollector assignedCollector)
         {
-            var assignedCollector = new AssignedCollector()
+            return new AssignedCollectorVM()
             {
-                UserId = collectorId,
-                ReceivableId = receivableId
+                Id = assignedCollector.Id,
+                ReceivableId = assignedCollector.ReceivableId,
+                CollectorId = assignedCollector.UserId,
+                Status = assignedCollector.Status
             };
-            _assignedCollectorService.CreateAssignedCollector(assignedCollector);
-            _assignedCollectorService.SaveAssignedCollector();
         }
 
-        //Create collection progress
-        private void ImportCollectionProgress(int receivableId, int profileId, int payableDay)
+        private IEnumerable<ContactVM> GetReceivableContactsForDetailView(IEnumerable<Contact> contacts)
         {
-            var Profile = GetProfileFromDB(profileId);
-            if (Profile != null)
-            {
-                // Create collection Progress
-                var CollectionProgress = new CollectionProgress()
+            return contacts
+                .Select(x => new ContactVM()
                 {
-                    ReceivableId = receivableId,
-                    ProfileId = profileId
-                };
-                _collectionProgressService.CreateCollectionProgress(CollectionProgress);
-                _collectionProgressService.SaveCollectionProgress();
-
-                //Copy Stage from Profile to Progress
-                int collectionId = _collectionProgressService.GetCollectionProgresss().LastOrDefault().Id;
-                var profileStages = GetProfileStagesFromDB(profileId);
-                if (profileStages != null)
-                {
-                    ImportProgressStagesToDB(profileStages, collectionId, payableDay);
-                }
-                //End if Profilestages != null
-            }
-            else
-            {
-                return;
-            }
-            //end if Profile != null
+                    Id = x.Id,
+                    Address = x.Address,
+                    IdNo = x.IdNo,
+                    Name = x.Name,
+                    Phone = x.Phone,
+                    Type = x.Type
+                });
         }
 
-        //Create progress stages
-        private void ImportProgressStagesToDB(IEnumerable<ProfileStage> profileStages, int collectionId, int payableDay)
+        private CollectionProgressDM GetCollectionProgressForDetailView(CollectionProgress collectionProgress)
         {
-            if (profileStages != null)
+            return new CollectionProgressDM()
             {
-                foreach (var stage in profileStages)
-                {
-                    var progressStage = new ProgressStage()
-                    {
-                        Duration = stage.Duration,
-                        Name = stage.Name,
-                        Sequence = stage.Sequence,
-                        CollectionProgressId = collectionId
-                    };
-                    _progressStageService.CreateProgressStage(progressStage);
-                    _progressStageService.SaveProgressStage();
-
-                    //Copy Action from Profile to Progress
-                    int progressStageId = _progressStageService.GetProgressStages().LastOrDefault().Id;
-                    var profileStageActions = GetProfileStageActionFromDB(stage.Id);
-                    if (profileStageActions != null)
-                    {
-                        ImportProgressMessageToDB(profileStageActions, stage.Duration, payableDay, progressStageId);
-                    }
-                    //End if profileStageActions != null
-                }
-                //End for each
-            }
-            //End if profileStages != null
+                Id = collectionProgress.Id,
+                ProfileId = collectionProgress.ProfileId,
+                ReceivableId = collectionProgress.Receivable.Id,
+                Status = collectionProgress.Status,
+                Stages = GetProgressStagesForDetailView(collectionProgress),
+            };
         }
 
-        //Create stage actions
-        private void ImportProgressMessageToDB(IEnumerable<ProfileStageAction> profileStageActions, int stageDuration, int payableDay, int stageId)
+        private IEnumerable<ProgressStageDM> GetProgressStagesForDetailView(CollectionProgress collectionProgress)
         {
-            if (profileStageActions != null)
+            return collectionProgress.ProgressStages.Select(x => new ProgressStageDM()
             {
-                foreach (var profileAction in profileStageActions)
-                {
-                    int? profileMessageFormId = profileAction.ProfileMessageFormId;
-                    if (profileMessageFormId != null)
-                    {
-                        //First, create message form.
-                        var profileMessageForm = GetProfileMessageFormFromDB((int)profileMessageFormId);
-                        if (profileMessageForm != null)
-                        {
-                            var progressMessageForm = new ProgressMessageForm()
-                            {
-                                Content = profileMessageForm.Content,
-                                Type = profileMessageForm.Type,
-                                Name = profileMessageForm.Name
-                            };
-                            _progressMessageFormService.CreateProgressMessageForm(progressMessageForm);
-                            _progressMessageFormService.SaveProgressMessageForm();
-
-                            //Second, create action.
-                            int messageId = _progressMessageFormService.GetProgressMessageForms().LastOrDefault().Id;
-                            SplitProfileStageAction(profileAction, stageDuration, payableDay, messageId, stageId);
-
-                        }
-                        //End if profilesMessageForm != null
-                    }
-                    //End if profileMessageFormId != null
-                }
-                //End for each
-            }
-            //End if profileStageActions != null
+                Id = x.Id,
+                Actions = GetProgressStageActionsForDetailView(x.ProgressStageAction),
+                CollectionProgressId = x.CollectionProgressId,
+                CollectorComment = x.CollectorComment,
+                Duration = x.Duration,
+                Name = x.Name,
+                Sequence = x.Sequence,
+                Status = x.Status
+            });
         }
 
-        private void SplitProfileStageAction(ProfileStageAction profileStageAction, int stageDuration, int payableDay, int messageId, int stageId)
+        private IEnumerable<ProgressStageActionDM> GetProgressStageActionsForDetailView(IEnumerable<ProgressStageAction> progressStageActions)
         {
-            IEnumerable<ProgressStageAction> result = new List<ProgressStageAction>();
-
-            //Get how many times action will be executed.
-            var Frequency =  stageDuration / profileStageAction.Frequency ;
-
-            //Convert data from DB to Datetime
-            DateTime startDate = Utility.ConvertIntToDatetime(payableDay);
-
-            for (int i = 0; i < Frequency; i++)
+            return progressStageActions.Select(x => new ProgressStageActionDM()
             {
-                //Calculate execution date.
-                DateTime newDate = startDate.AddDays(profileStageAction.Frequency);
-                startDate = newDate;
-
-                var progressStageAction = new ProgressStageAction()
-                {
-                    Name = profileStageAction.Name,
-                    Type = profileStageAction.Type,
-                    ProgressMessageFormId = messageId,
-                    ProgressStageId = stageId,
-                    ExcutionDay = Int32.Parse(Utility.ConvertDatetimeToString(startDate)),
-                    StartTime = profileStageAction.StartTime,
-                };
-
-                //Add action to result list.
-                _progressStageActionService.CreateProgressStageAction(progressStageAction);
-                _progressStageActionService.SaveProgressStageAction();
-            }
-
-
+                Id = x.Id,
+                Name = x.Name,
+                StartTime = x.StartTime,
+                DoneAt = x.DoneAt,
+                ExcutionDay = x.ExcutionDay,
+                Status = x.Status,
+                Type = x.ProgressStageId,
+                ProgressStageId = x.ProgressStageId,
+                ProgressMessageFormId = x.ProgressMessageFormId
+            });
         }
 
         private Profile GetProfileFromDB(int profileId)
@@ -328,26 +227,6 @@ namespace RCM.Controllers
             if (Profile != null && Profile.IsDeleted == false)
             {
                 return Profile;
-            }
-            return null;
-        }
-
-        private IEnumerable<ProfileStage> GetProfileStagesFromDB(int profileId)
-        {
-            var stages = _profileStageService.GetProfileStages().Where(x => (x.ProfileId == profileId && x.IsDeleted == false));
-            if (stages != null)
-            {
-                return stages;
-            }
-            return null;
-        }
-
-        private IEnumerable<ProfileStageAction> GetProfileStageActionFromDB(int stageId)
-        {
-            var actions = _profileStageActionService.GetProfileStageActions().Where(x => (x.ProfileStageId == stageId && x.IsDeleted == false));
-            if (actions != null)
-            {
-                return actions;
             }
             return null;
         }
@@ -362,45 +241,8 @@ namespace RCM.Controllers
             return null;
         }
 
-        //Import receivable to DB.
-        private int ImportReceivableToDB(Receivable receivable)
-        {
-            _receivableService.CreateReceivable(receivable);
-            _receivableService.SaveReceivable();
-
-            var Id = _receivableService.GetReceivables().LastOrDefault().Id;
-
-            return Id;
-        }
-
-        //Transform to DBM and import.
-        private void ImportContactsToDB(int receivableId, IEnumerable<ContactIM> contacts)
-        {
-            foreach (var contactIM in contacts)
-            {
-                var contact = new Contact()
-                {
-                    Name = contactIM.Name,
-                    IdNo = contactIM.IdNo,
-                    Address = contactIM.Address,
-                    Phone = contactIM.Phone,
-                    Type = contactIM.Type,
-                    ReceivableId = receivableId
-                };
-
-                ImportContactToDB(contact);
-
-            }
-        }
-
-        //Import contact to DB.
-        private void ImportContactToDB(Contact contact)
-        {
-            _contactService.CreateContact(contact);
-            _contactService.SaveContact();
-        }
-
-        //Validate input receivable.
+        //Validate receivable
+        //===================
         private ReceivableIM ValidateImportReceivable(ReceivableIM receivableIM)
         {
             //First, check debt amount
@@ -450,5 +292,277 @@ namespace RCM.Controllers
             return true;
         }
 
+        //Suggest profile for receivable
+        private int SuggestProfile(Receivable receivable)
+        {
+            var debt = receivable.DebtAmount;
+            var sugguestedProfiles = _profileService.GetProfiles().Where(x => (x.DebtAmountFrom <= debt && x.DebtAmountTo >= debt));
+
+            //If there is one matched profile
+            if (sugguestedProfiles.Count() == 1)
+            {
+                return sugguestedProfiles.LastOrDefault().Id;
+            }
+
+            //If there is more than one matched profile
+            if (sugguestedProfiles.Count() > 1)
+            {
+                return sugguestedProfiles.OrderByDescending(x => x.DebtAmountFrom).First().Id;
+            }
+
+            //No profile matched.
+            return -1;
+        }
+
+
+        //Import to receivable to Database
+        //===============================
+        private IEnumerable<Receivable> TransformReceivablesToDBM(IEnumerable<ReceivableIM> receivableIMs)
+        {
+            if (receivableIMs.Any())
+            {
+                var result = new List<Receivable>();
+                foreach (var receivable in receivableIMs)
+                {
+                    var contacts = TransformContactToDBM(receivable.Contacts);
+                    if (!contacts.Any())
+                    {
+                        return null;
+                    }
+                    //End if !contacts.Any()
+
+                    var assignedCollector = TransformAssignedCollectorToDBM(receivable.CollectorId);
+                    if (assignedCollector == null)
+                    {
+                        return null;
+                    }
+                    //End if !assignedCollector.Any()
+                    var assignedCollectors = new List<AssignedCollector>();
+                    assignedCollectors.Add(assignedCollector);
+
+                    var collectionProgress = TransformCollectionProgressToDBM(receivable.ProfileId, receivable.PayableDay, receivable.DebtAmount, GetDebtorName(receivable.Contacts));
+                    if (collectionProgress == null)
+                    {
+                        return null;
+                    }
+                    //End if !collectionProgress.Any()
+
+                    var receivableDBM = new Receivable()
+                    {
+                        AssignedCollectors = assignedCollectors,
+                        CollectionProgress = collectionProgress,
+                        Contacts = contacts.ToList(),
+                        CreatedDate = DateTime.Now,
+                        CustomerId = receivable.CustomerId,
+                        DebtAmount = receivable.DebtAmount,
+                        IsDeleted = false,
+                        PrepaidAmount = receivable.PrepaidAmount,
+                        PayableDay = receivable.PayableDay,
+                    };
+                    result.Add(receivableDBM);
+                }
+
+                if (result.Any())
+                {
+                    return result;
+                }
+                //End if result.Any()
+            }
+            return null;
+        }
+
+        private IEnumerable<Contact> TransformContactToDBM(IEnumerable<ContactIM> contacts)
+        {
+            if (contacts.Any())
+            {
+                var result = contacts.Select(x => new Contact()
+                {
+                    Name = x.Name,
+                    IdNo = x.IdNo,
+                    Address = x.Address,
+                    Phone = x.Phone,
+                    Type = x.Type,
+                    IsDeleted = false,
+                    CreatedDate = DateTime.Now
+                });
+                return result;
+
+            }
+            return null;
+        }
+
+        private string GetDebtorName(IEnumerable<ContactIM> contacts)
+        {
+            var result = contacts.Where(x => x.Type == Constant.CONTACT_DEBTOR_CODE).FirstOrDefault().Name;
+            return result;
+        }
+
+        private AssignedCollector TransformAssignedCollectorToDBM(string collectorId)
+        {
+            if (collectorId != null)
+            {
+                var assignedCollector = new AssignedCollector()
+                {
+                    UserId = collectorId,
+                    Status = Constant.ASSIGNED_STATUS_ACTIVE_CODE,
+                    IsDeleted = false,
+                    CreatedDate = DateTime.Now,
+                };
+                return assignedCollector;
+            }
+            //End if collectorId != null
+            return null;
+        }
+
+        private CollectionProgress TransformCollectionProgressToDBM(int profileId, int payableDay, long debtAmount, string debtorName)
+        {
+            if (debtorName != null)
+            {
+                var profile = GetProfileFromDB(profileId);
+                if (profile != null)
+                {
+                    var stages = TransformProgressStageToDBM(profile.ProfileStages, payableDay, debtorName, debtAmount);
+                    if (stages.Any())
+                    {
+                        var collectionProgress = new CollectionProgress()
+                        {
+                            Profile = profile,
+                            Status = Constant.COLLECTION_STATUS_COLLECTION_CODE,
+                            IsDeleted = false,
+                            CreatedDate = DateTime.Now,
+                            ProgressStages = stages.ToList()
+                        };
+                        return collectionProgress;
+                    }
+                    // End if stages.Any()
+                }
+                //end if Profile != null
+            }
+            //end if receivable != null
+            return null;
+        }
+
+        private IEnumerable<ProgressStage> TransformProgressStageToDBM(IEnumerable<ProfileStage> profileStages, int payableDay, string debtorName, long debtAmount)
+        {
+            if (profileStages.Any())
+            {
+                var result = profileStages.Select(x => new ProgressStage()
+                {
+                    Duration = x.Duration,
+                    Name = x.Name,
+                    Sequence = x.Sequence,
+                    Status = Constant.COLLECTION_STATUS_COLLECTION_CODE,
+                    IsDeleted = false,
+                    CreatedDate = DateTime.Now,
+                    ProgressStageAction = TransformProgressStageActionToDBM(x.ProfileStageActions, x.Duration, payableDay, debtorName, debtAmount).ToList()
+                });
+                return result.ToList();
+            }
+            //end if collectionProgress != null && profileStages.Any()
+            return null;
+        }
+
+        private IEnumerable<ProgressStageAction> TransformProgressStageActionToDBM(IEnumerable<ProfileStageAction> profileStageActions, int stageDuration, int payableDay, string debtorName, long debtAmount)
+        {
+            if (profileStageActions.Any())
+            {
+                var result = new List<ProgressStageAction>();
+                foreach (var action in profileStageActions)
+                {
+                    var tmp = SplitProfileStageAction(action, stageDuration, payableDay, debtorName, debtAmount);
+                    if (tmp.Any())
+                    {
+                        foreach (var item in tmp)
+                        {
+                            result.Add(item);
+                        }
+                    }
+                }
+
+                if (result.Any())
+                {
+                    return result;
+                }
+                //End if result.Any()
+            }
+            //End if profileStageActions.Any()
+            return null;
+        }
+
+        //Change 2 paramater [NAME] and [AMOUNT] to curernt context
+        private string FillData(string content, string debtorName, long debtAmount)
+        {
+            StringBuilder builder = new StringBuilder(content.Trim());
+            builder.Replace(Constant.MESSAGE_PARAMETER_NAME, debtorName);
+            builder.Replace(Constant.MESSAGE_PARAMETER_DEBTAMOUNT, debtAmount.ToString());
+
+            return builder.ToString();
+        }
+
+        private ProgressMessageForm TransformProfileMessageFormToDBM(int? profileMessageFormId, string debtorName, long debtAmount)
+        {
+            if (profileMessageFormId != null)
+            {
+                var profileMessageForm = GetProfileMessageFormFromDB((int)profileMessageFormId);
+                if (profileMessageForm != null)
+                {
+                    var progressMessageForm = new ProgressMessageForm()
+                    {
+                        Content = FillData(profileMessageForm.Content, debtorName, debtAmount),
+                        Type = profileMessageForm.Type,
+                        Name = profileMessageForm.Name
+                    };
+                    return progressMessageForm;
+                }
+            }
+            return null;
+        }
+
+        private IEnumerable<ProgressStageAction> SplitProfileStageAction(ProfileStageAction profileStageAction, int stageDuration, int payableDay, string debtorName, long debtAmount)
+        {
+            if (profileStageAction != null)
+            {
+                var result = new List<ProgressStageAction>();
+
+                //Get how many times action will be executed.
+                var Frequency = stageDuration / profileStageAction.Frequency;
+
+                //Convert data from DB to Datetime
+                DateTime startDate = Utility.ConvertIntToDatetime(payableDay);
+
+                //Get profile message form
+                var progressMessageForm = TransformProfileMessageFormToDBM(profileStageAction.ProfileMessageFormId, debtorName, debtAmount);
+
+                for (int i = 0; i < Frequency; i++)
+                {
+                    //Calculate execution date.
+                    DateTime newDate = startDate.AddDays(profileStageAction.Frequency);
+                    startDate = newDate;
+
+                    var progressStageAction = new ProgressStageAction()
+                    {
+                        Name = profileStageAction.Name,
+                        Type = profileStageAction.Type,
+                        ProgressMessageForm = progressMessageForm,
+                        ExcutionDay = Int32.Parse(Utility.ConvertDatetimeToString(startDate)),
+                        StartTime = profileStageAction.StartTime,
+                        IsDeleted = false,
+                        CreatedDate = DateTime.Now,
+                        Status = Constant.COLLECTION_STATUS_COLLECTION_CODE
+                    };
+
+                    //Add action to result list.
+                    result.Add(progressStageAction);
+                }
+                //End for
+                if (result.Any())
+                {
+                    return result;
+                }
+                //End if result.Any()
+            }
+            //End if profileStageAction != null
+            return null;
+        }
     }
 }

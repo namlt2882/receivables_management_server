@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using RCM.Helper;
 using RCM.Model;
 using RCM.Service;
 using RCM.ViewModels;
+using System.Linq;
 
 namespace RCM.Controllers
 {
@@ -27,20 +29,26 @@ namespace RCM.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(profileMessageFrom);
+                return BadRequest(ModelState);
+            }
+
+            if (!profileMessageFrom.Content.Contains(Constant.MESSAGE_PARAMETER_DEBTAMOUNT) || !profileMessageFrom.Content.Contains(Constant.MESSAGE_PARAMETER_NAME))
+            {
+                return BadRequest(new { Message = "Message form must contain " + Constant.MESSAGE_PARAMETER_DEBTAMOUNT + " and " + Constant.MESSAGE_PARAMETER_NAME + "." });
             }
 
             //Add messge to Db
             var message = new ProfileMessageForm()
             {
                 Name = profileMessageFrom.Name,
-                Content = profileMessageFrom.Content,
+                Content = profileMessageFrom.Content.Trim(),
                 Type = profileMessageFrom.Type
             };
             _profileMessageFormService.CreateProfileMessageForm(message);
             _profileMessageFormService.SaveProfileMessageForm();
 
-            return Ok();
+            var result = _profileMessageFormService.GetProfileMessageForms().LastOrDefault();
+            return Ok(result);
         }
     }
 }

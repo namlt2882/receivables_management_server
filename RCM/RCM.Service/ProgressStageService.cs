@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
-using System.Text;
+using System.Linq;
 using CRM.Data.Infrastructure;
 using RCM.Data.Repositories;
 using RCM.Helper;
@@ -19,6 +19,7 @@ namespace RCM.Service
         void RemoveProgressStage(int id);
         void RemoveProgressStage(ProgressStage progressStage);
         void SaveProgressStage();
+        void MarkAsDone(ProgressStage progressStage);
     }
 
     public class ProgressStageService : IProgressStageService
@@ -26,10 +27,13 @@ namespace RCM.Service
         private readonly IProgressStageRepository _progressStageRepository;
         private readonly IUnitOfWork _unitOfWork;
 
-        public ProgressStageService(IProgressStageRepository progressStageRepository, IUnitOfWork unitOfWork)
+        private readonly ICollectionProgressService _collectionProgressService;
+
+        public ProgressStageService(IProgressStageRepository progressStageRepository, IUnitOfWork unitOfWork, ICollectionProgressService collectionProgressService)
         {
             this._progressStageRepository = progressStageRepository;
             this._unitOfWork = unitOfWork;
+            _collectionProgressService = collectionProgressService;
         }
 
         public ProgressStage CreateProgressStage(ProgressStage progressStage)
@@ -61,6 +65,17 @@ namespace RCM.Service
         public IEnumerable<ProgressStage> GetProgressStages(Expression<Func<ProgressStage, bool>> where)
         {
             return _progressStageRepository.GetMany(where);
+        }
+
+        public void MarkAsDone(ProgressStage progressStage)
+        {
+            progressStage.Status = Constant.COLLECTION_STATUS_DONE_CODE;
+            EditProgressStage(progressStage);
+
+            if (!progressStage.CollectionProgress.ProgressStages.Any(x => x.Status != Constant.COLLECTION_STATUS_DONE_CODE))
+            {
+                _collectionProgressService.MarkAsDone(progressStage.CollectionProgress);
+            }
         }
 
         public void RemoveProgressStage(int id)

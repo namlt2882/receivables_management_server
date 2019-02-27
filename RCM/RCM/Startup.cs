@@ -1,39 +1,30 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using CRM.Data.Infrastructure;
+﻿using CRM.Data.Infrastructure;
 using Hangfire;
-using Mapster;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
+using NSwag;
 using NSwag.AspNetCore;
 using NSwag.SwaggerGeneration.Processors.Security;
 using RCM.Auth;
-using RCM.Data;
 using RCM.CenterHubs;
+using RCM.Data;
+using RCM.Data.Repositories;
+using RCM.Helpers;
 using RCM.Identity;
 using RCM.JWT;
 using RCM.Mapster;
 using RCM.Model;
 using RCM.Service;
-using static RCM.Helpers.String;
-using Microsoft.AspNetCore.Http;
-using RCM.Data.Repositories;
-using NSwag;
+using System;
 
 namespace RCM
 {
@@ -237,6 +228,11 @@ namespace RCM
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, IServiceProvider serviceProvider)
         {
+            ServiceLocator.Instance = app.ApplicationServices;
+
+            //JobScheduler jobScheduler = new JobScheduler();
+            //jobScheduler.Start();
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -280,7 +276,7 @@ namespace RCM
             {
                 routes.MapRoute(
                     name: "default",
-                    template: "{controller=Home}/{action=Index}/{id?}");
+                    template: "{controller=Values}/{action=Index}/{id?}");
             });
 
             MapsterConfig map = new MapsterConfig();

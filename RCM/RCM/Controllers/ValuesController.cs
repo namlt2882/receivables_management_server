@@ -27,9 +27,8 @@ namespace RCM.Controllers
         [HttpGet]
         public ActionResult<IEnumerable<string>> Get()
         {
-
-            var a = _receivableService.GetReceivable(1);
-            return Ok(_receivableService.GetReceivables());
+            //JobScheduler jobScheduler = new JobScheduler();
+            //jobScheduler.Start();
             return new string[] { "value1", "value2" };
         }
 

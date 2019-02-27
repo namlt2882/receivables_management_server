@@ -34,7 +34,6 @@ namespace RCM.Controllers
             return Ok(result);
         }
 
-
         [HttpGet("{id}")]
         public IActionResult GetById(int id)
         {

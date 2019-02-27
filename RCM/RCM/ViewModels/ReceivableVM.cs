@@ -10,6 +10,13 @@ namespace RCM.ViewModels
         public int? PayableDay { get; set; }
         public IEnumerable<ContactVM> Contacts { get; set; }
     }
+
+    public class ReceivableDM : ReceivableVM
+    {
+        public CollectionProgressDM CollectionProgress { get; set; }
+
+        public AssignedCollectorVM assignedCollector { get; set; }
+    }
     public class ReceivableCM
     {
         public long PrepaidAmount { get; set; }
@@ -17,8 +24,9 @@ namespace RCM.ViewModels
         public int CustomerId { get; set; }
         public int? LocationId { get; set; }
     }
-    public class ReceivableUM : ReceivableVM
+    public class ReceivableUM : ReceivableCM
     {
+        public int Id { get; set; }
     }
 
     public class ReceivableIM : ReceivableCM
@@ -27,5 +35,13 @@ namespace RCM.ViewModels
         public int PayableDay { get; set; }
         public int ProfileId { get; set; }
         public string CollectorId { get; set; }
+    }
+
+    public class ReceivableLM : ReceivableCM
+    {
+        public int Id { get; set; }
+        public int CollectioProgressStatus { get; set; }
+        public int PayableDay { get; set; }
+        public int? ClosedDay { get; set; }
     }
 }

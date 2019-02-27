@@ -1,10 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq.Expressions;
-using System.Text;
-using CRM.Data.Infrastructure;
+﻿using CRM.Data.Infrastructure;
 using RCM.Data.Repositories;
+using RCM.Helper;
 using RCM.Model;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Linq.Expressions;
 
 namespace RCM.Service
 {
@@ -18,6 +19,7 @@ namespace RCM.Service
         void RemoveProgressStageAction(int id);
         void RemoveProgressStageAction(ProgressStageAction progressStageAction);
         void SaveProgressStageAction();
+        void MarkAsDone(ProgressStageAction progressStageAction);
     }
 
     public class ProgressStageActionService : IProgressStageActionService
@@ -25,10 +27,13 @@ namespace RCM.Service
         private readonly IProgressStageActionRepository _progressStageActionRepository;
         private readonly IUnitOfWork _unitOfWork;
 
-        public ProgressStageActionService(IProgressStageActionRepository progressStageActionRepository, IUnitOfWork unitOfWork)
+        private readonly IProgressStageService _progressStageService;
+
+        public ProgressStageActionService(IProgressStageActionRepository progressStageActionRepository, IUnitOfWork unitOfWork, IProgressStageService progressStageService)
         {
-            this._progressStageActionRepository = progressStageActionRepository;
-            this._unitOfWork = unitOfWork;
+            _progressStageActionRepository = progressStageActionRepository;
+            _unitOfWork = unitOfWork;
+            _progressStageService = progressStageService;
         }
 
         public ProgressStageAction CreateProgressStageAction(ProgressStageAction progressStageAction)
@@ -60,6 +65,18 @@ namespace RCM.Service
         public IEnumerable<ProgressStageAction> GetProgressStageActions(Expression<Func<ProgressStageAction, bool>> where)
         {
             return _progressStageActionRepository.GetMany(where);
+        }
+
+        public void MarkAsDone(ProgressStageAction progressStageAction)
+        {
+            progressStageAction.DoneAt = Int32.Parse(DateTime.Now.ToString("HHmm"));
+            progressStageAction.Status = Constant.COLLECTION_STATUS_DONE_CODE;
+            EditProgressStageAction(progressStageAction);
+
+            if (!progressStageAction.ProgressStage.ProgressStageAction.Any(x => x.Status != Constant.COLLECTION_STATUS_DONE_CODE))
+            {
+                _progressStageService.MarkAsDone(progressStageAction.ProgressStage);
+            }
         }
 
         public void RemoveProgressStageAction(int id)

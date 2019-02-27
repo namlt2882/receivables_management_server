@@ -88,5 +88,28 @@ namespace RCM.Controllers
 
             return Ok();
         }
+
+        [HttpPut]
+        public IActionResult Update([FromBody] ContactVM contactVM)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var contact = new Contact()
+            {
+                Id = contactVM.Id,
+                Address = contactVM.Address,
+                IdNo = contactVM.IdNo,
+                Name = contactVM.Name,
+                Phone = contactVM.Phone,
+            };
+
+            _contactService.EditContact(contact);
+            _contactService.SaveContact();
+
+            return Ok(contact);
+        }
     }
 }

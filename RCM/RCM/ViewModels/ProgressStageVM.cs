@@ -22,4 +22,9 @@ namespace RCM.ViewModels
     public class ProgressStageUM : ProgressStageVM
     {
     }
+
+    public class ProgressStageDM : ProgressStageVM
+    {
+        public IEnumerable<ProgressStageActionDM> Actions;
+    }
 }
