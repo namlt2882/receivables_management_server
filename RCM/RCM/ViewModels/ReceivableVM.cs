@@ -43,5 +43,6 @@ namespace RCM.ViewModels
         public int CollectioProgressStatus { get; set; }
         public int PayableDay { get; set; }
         public int? ClosedDay { get; set; }
+        public string AssignedCollectorId { get; set; }
     }
 }
