@@ -71,9 +71,9 @@ namespace RCM.Controllers
             return Ok();
         }
 
-        [Authorize]
-        [HttpPost("SendNotiAsync")]
-        public async Task SendNotiAsync(User user, NotificationCM model)
+        //[Authorize]
+        //[HttpPost("SendNotiAsync")]
+        private async Task SendNotiAsync(User user, NotificationCM model)
         {
             if (user != null)
             {
