@@ -184,5 +184,23 @@ namespace RCM.Controllers
             }
             return Ok();
         }
+
+        [HttpDelete]
+        public ActionResult Delete(int id)
+        {
+            try
+            {
+                var noti = _notiService.GetNotification(id);
+                if (noti == null) return NotFound();
+                noti.IsSeen = !noti.IsSeen;
+                _notiService.RemoveNotification(noti);
+                _notiService.SaveNotification();
+            }
+            catch (Exception e)
+            {
+                return BadRequest(e.Message);
+            }
+            return Ok();
+        }
     }
 }
