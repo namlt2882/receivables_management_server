@@ -152,7 +152,7 @@ namespace RCM.Controllers
         }
 
         [Authorize]
-        [HttpGet("GetNotifications")]
+        [HttpGet]
         public async Task<IActionResult> GetNotifications()
         {
             var user = await _userManager.FindByNameAsync(User.Identity.Name);
@@ -166,6 +166,15 @@ namespace RCM.Controllers
             return Ok(result);
         }
 
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetNotificationById(int id)
+        {
+            var user = await _userManager.FindByNameAsync(User.Identity.Name);
+            if (user == null) return BadRequest();
+            var noti = _notiService.GetNotification(id);
+            if (noti == null) return NotFound();
+            return Ok(noti.Adapt<NotificationVM>());
+        }
         [Authorize]
         [HttpPut("ToggleSeen/{id}")]
         public ActionResult SwapIsSeen(int id)
