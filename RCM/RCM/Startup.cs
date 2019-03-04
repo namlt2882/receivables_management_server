@@ -14,6 +14,7 @@ using Newtonsoft.Json.Serialization;
 using NSwag;
 using NSwag.AspNetCore;
 using NSwag.SwaggerGeneration.Processors.Security;
+using Quartz.Spi;
 using RCM.Auth;
 using RCM.CenterHubs;
 using RCM.Data;
@@ -117,6 +118,9 @@ namespace RCM
             //Mail 
             services.AddTransient<IEmailService, EmailService>();
             #endregion
+
+            services.AddTransient<IJobFactory, NotifyJobFactory>((provider) => new NotifyJobFactory(services.BuildServiceProvider()));
+            services.AddTransient<NotifyJob>();
 
             #region Auth
             var jwtAppSettingOptions = Configuration.GetSection(nameof(JwtIssuerOptions));
@@ -229,10 +233,6 @@ namespace RCM
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, IServiceProvider serviceProvider)
         {
-            ServiceLocator.Instance = app.ApplicationServices;
-
-            //JobScheduler jobScheduler = new JobScheduler();
-            //jobScheduler.Start();
 
             if (env.IsDevelopment())
             {
@@ -286,7 +286,7 @@ namespace RCM
 
             app.UseHangfireServer();
             app.UseHangfireDashboard("/hangfire");
-
+            app.UseQuartz((quartz) => quartz.AddJob<NotifyJob>("SendNotify", "Notify"));
         }
     }
 }

@@ -25,20 +25,34 @@
         public const string ACTION_REPORT = "Report";
         public const int ACTION_REPORT_CODE = 3;
 
+        //Action is executed but response result is bad.
         public const string COLLECTION_STATUS_CANCEL = "Cancel";
         public const int COLLECTION_STATUS_CANCEL_CODE = 0;
 
+        //Action is in order to be executed.
+        //Stage is in order to be executed.
+        //Collection Progress is in order to be done.
         public const string COLLECTION_STATUS_COLLECTION = "Collection";
         public const int COLLECTION_STATUS_COLLECTION_CODE = 1;
 
+        //Action is executed.
+        //Stage's actions are all executed.
+        //All stages of Collection Progress are executed.
         public const string COLLECTION_STATUS_DONE = "Done";
         public const int COLLECTION_STATUS_DONE_CODE = 2;
 
+        //Action is not executed on time.
         public const string COLLECTION_STATUS_LATE = "Late";
         public const int COLLECTION_STATUS_LATE_CODE = 3;
 
+
+        //Collection progress is still pending for assgined.
         public const string COLLECTION_STATUS_WAIT = "Wait";
         public const int COLLECTION_STATUS_WAIT_CODE = 4;
+
+        //Collection progress is closed, debt has been recovered.
+        public const string COLLECTION_STATUS_CLOSED = "Closed";
+        public const int COLLECTION_STATUS_CLOSED_CODE = 5;
 
         public const string ASSIGNED_STATUS_ACTIVE = "Active";
         public const int ASSIGNED_STATUS_ACTIVE_CODE = 1;

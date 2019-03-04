@@ -1,10 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq.Expressions;
-using System.Text;
-using CRM.Data.Infrastructure;
+﻿using CRM.Data.Infrastructure;
 using RCM.Data.Repositories;
 using RCM.Model;
+using System;
+using System.Collections.Generic;
+using System.Linq.Expressions;
 
 namespace RCM.Service
 {
@@ -18,17 +17,20 @@ namespace RCM.Service
         void RemoveReceivable(int id);
         void RemoveReceivable(Receivable receivable);
         void SaveReceivable();
+        void CloseReceivable(Receivable receivable);
     }
 
     public class ReceivableService : IReceivableService
     {
         private readonly IReceivableRepository _receivableRepository;
+        private readonly ICollectionProgressService _collectionProgressService;
         private readonly IUnitOfWork _unitOfWork;
 
-        public ReceivableService(IReceivableRepository receivableRepository, IUnitOfWork unitOfWork)
+        public ReceivableService(IReceivableRepository receivableRepository, ICollectionProgressService collectionProgressService, IUnitOfWork unitOfWork)
         {
-            this._receivableRepository = receivableRepository;
-            this._unitOfWork = unitOfWork;
+            _receivableRepository = receivableRepository;
+            _collectionProgressService = collectionProgressService;
+            _unitOfWork = unitOfWork;
         }
 
         public Receivable CreateReceivable(Receivable receivable)
@@ -59,6 +61,11 @@ namespace RCM.Service
         public IEnumerable<Receivable> GetReceivables(Expression<Func<Receivable, bool>> where)
         {
             return _receivableRepository.GetMany(where);
+        }
+
+        public void CloseReceivable(Receivable receivable)
+        {
+            _collectionProgressService.CloseReceivable(receivable.CollectionProgress);
         }
 
         public void RemoveReceivable(int id)

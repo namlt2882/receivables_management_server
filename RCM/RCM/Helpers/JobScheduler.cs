@@ -1,7 +1,9 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using Quartz;
 using Quartz.Impl;
+using Quartz.Spi;
 using RCM.Helper;
 using RCM.Model;
 using RCM.Service;
@@ -12,49 +14,48 @@ using System.Threading.Tasks;
 
 namespace RCM.Helpers
 {
-    public class JobScheduler
+    public class NotifyJobFactory : IJobFactory, IDisposable
     {
-        public JobScheduler()
-        {
+        private readonly IServiceScope serviceScope;
 
+        public NotifyJobFactory(IServiceProvider serviceProvider)
+        {
+            serviceScope = serviceProvider.CreateScope();
         }
 
-        public async void Start()
+        public void Dispose()
         {
-            ISchedulerFactory schedulerFactory = new StdSchedulerFactory();
-            IScheduler scheduler = await schedulerFactory.GetScheduler();
-            await scheduler.Start();
-
-            IJobDetail job = JobBuilder.Create<Notify>().Build();
-
-
-            ITrigger triggerForNotifyJob = TriggerBuilder.Create()
-
-                .WithIdentity("Notify ", "Group")
-                .StartNow()
-                .WithPriority(1)
-                //This line is for testing purpose
-                //.WithSimpleSchedule(x => x.WithIntervalInSeconds(30))
-                //Main time line is here
-                .WithCronSchedule(Constant.SCHEDULER_CRON, x => x.InTimeZone(TimeZoneInfo.Local))
-                .Build();
-
-            await scheduler.ScheduleJob(job, triggerForNotifyJob);
-
+            serviceScope.Dispose();
         }
 
+        public IJob NewJob(TriggerFiredBundle bundle, IScheduler scheduler)
+        {
+            var jobDetail = bundle.JobDetail;
+
+            var job = (IJob)serviceScope.ServiceProvider.GetService(jobDetail.JobType);
+            return job;
+        }
+
+        public void ReturnJob(IJob job)
+        {
+            var disposable = job as IDisposable;
+            disposable?.Dispose();
+        }
     }
-    public class Notify : IJob
+
+    public class NotifyJob : IJob
     {
         private IProgressStageActionService _progressStageActionService;
 
+        public NotifyJob(IProgressStageActionService progressStageActionService)
+        {
+            _progressStageActionService = progressStageActionService;
+        }
+
         public void SendNotify()
         {
-
-            _progressStageActionService = ServiceLocator.Instance.GetService<IProgressStageActionService>();
-
             //Example: 07:00 => 0700.
-            int time = Int32.Parse(DateTime.Now.ToString("HHmm"));
+            int time = Int32.Parse(DateTime.Now.ToString(Constant.TIME_FORMAT));
 
             //Example 14/02/1997 => 19970214.
             long date = Int64.Parse(Utility.ConvertDatetimeToString(DateTime.Now.Date));
@@ -64,10 +65,13 @@ namespace RCM.Helpers
                 x.IsDeleted == false
                 && x.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE
                 && x.ExcutionDay <= date
-                && x.StartTime < time));
+                && x.StartTime < time
+                && x.ProgressStage.CollectionProgress.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE
+                ));
 
+            return;
             //Execute action.
-            ExecuteAction(actions);
+            //ExecuteAction(actions);
         }
 
         private void ExecuteAction(IEnumerable<ProgressStageAction> actions)
@@ -163,5 +167,76 @@ namespace RCM.Helpers
         public int tranId { get; set; }
         public string phone { get; set; }
         public int status { get; set; }
+    }
+
+    public class Quartz
+    {
+        private IScheduler _scheduler;
+        public static IScheduler Scheduler { get { return Instance._scheduler; } }
+        private static Quartz _instance = null;
+
+        public static Quartz Instance
+        {
+            get
+            {
+                if (_instance == null)
+                {
+                    _instance = new Quartz();
+                }
+                return _instance;
+            }
+        }
+
+        private Quartz()
+        {
+            Init();
+        }
+
+        private async void Init()
+        {
+            _scheduler = await new StdSchedulerFactory().GetScheduler();
+        }
+
+        public IScheduler UseJobFactory(IJobFactory jobFactory)
+        {
+            Scheduler.JobFactory = jobFactory;
+            return Scheduler;
+        }
+
+        public async void AddJob<T>(string name, string group)
+            where T : IJob
+        {
+            IJobDetail job = JobBuilder.Create<T>()
+                .WithIdentity(name, group)
+                .Build();
+
+            ITrigger jobTrigger = TriggerBuilder.Create()
+                .WithIdentity(name + "Trigger", group)
+                .StartNow()
+                //This line is for testing purpose
+                .WithSimpleSchedule(x => x.WithIntervalInSeconds(10).RepeatForever())
+                ////Main time line is here
+                //.WithCronSchedule(Constant.SCHEDULER_CRON, x => x.InTimeZone(TimeZoneInfo.Local))
+                .Build();
+
+            await Scheduler.ScheduleJob(job, jobTrigger);
+        }
+
+        public static async void Start()
+        {
+            await Scheduler.Start();
+        }
+    }
+
+    public static class UseQuartzExtension
+    {
+        public static void UseQuartz(this IApplicationBuilder app, Action<Quartz> configuration)
+        {
+            var jobFactory = new NotifyJobFactory(app.ApplicationServices);
+            Quartz.Instance.UseJobFactory(jobFactory);
+
+            configuration.Invoke(Quartz.Instance);
+            Quartz.Start();
+        }
     }
 }
