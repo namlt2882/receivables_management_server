@@ -40,7 +40,8 @@ namespace RCM.ViewModels
     public class ReceivableLM : ReceivableCM
     {
         public int Id { get; set; }
-        public int CollectioProgressStatus { get; set; }
+        public int CollectionProgressStatus { get; set; }
+        public int CollectionProgressId { get; set; }
         public int PayableDay { get; set; }
         public int? ClosedDay { get; set; }
         public string AssignedCollectorId { get; set; }

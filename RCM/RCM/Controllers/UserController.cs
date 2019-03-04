@@ -35,7 +35,13 @@ namespace RCM.Controllers
             }
             return Ok(result);
         }
-
+        [HttpGet("GetCollectorById/{id}")]
+        public async Task<IActionResult> GetCollectorById(string id)
+        {
+            var data = await _userManager.FindByIdAsync(id);
+            if (data == null) return NotFound();
+            return Ok(data.Adapt<UserVM>());
+        }
         [HttpGet("GetCollector")]
         public async Task<IActionResult> GetCollectorAsync()
         {

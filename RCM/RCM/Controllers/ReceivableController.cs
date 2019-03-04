@@ -39,7 +39,8 @@ namespace RCM.Controllers
                 LocationId = x.LocationId,
                 PayableDay = x.PayableDay,
                 PrepaidAmount = x.PrepaidAmount,
-                CollectioProgressStatus = x.CollectionProgress.Status,
+                CollectionProgressStatus = x.CollectionProgress.Status,
+                CollectionProgressId=x.CollectionProgress.Id,
                 AssignedCollectorId = x.AssignedCollectors.Where( assignedCollector => assignedCollector.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE).FirstOrDefault().UserId
             });
             return Ok(result);

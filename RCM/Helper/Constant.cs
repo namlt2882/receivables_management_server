@@ -37,6 +37,9 @@
         public const string COLLECTION_STATUS_LATE = "Late";
         public const int COLLECTION_STATUS_LATE_CODE = 3;
 
+        public const string COLLECTION_STATUS_WAIT = "Wait";
+        public const int COLLECTION_STATUS_WAIT_CODE = 4;
+
         public const string ASSIGNED_STATUS_ACTIVE = "Active";
         public const int ASSIGNED_STATUS_ACTIVE_CODE = 1;
 
