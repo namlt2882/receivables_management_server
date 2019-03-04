@@ -39,13 +39,63 @@ namespace RCM.Controllers
                 LocationId = x.LocationId,
                 PayableDay = x.PayableDay,
                 PrepaidAmount = x.PrepaidAmount,
-                CollectioProgressStatus = x.CollectionProgress.Status,
-                AssignedCollectorId = x.AssignedCollectors.Where( assignedCollector => assignedCollector.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE).FirstOrDefault().UserId
+                CollectionProgressStatus = x.CollectionProgress.Status,
+                CollectionProgressId = x.CollectionProgress.Id,
+                AssignedCollectorId = x.AssignedCollectors.Where(assignedCollector => assignedCollector.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE).FirstOrDefault().UserId
             });
             return Ok(result);
         }
 
-        [HttpGet("GetReceivable")]
+        [HttpGet("GetReceivaleByCollectorId")]
+        public IActionResult GetReceivableByCollectorId(string collectorId)
+        {
+            var rawList = _receivableService.GetReceivables().Select(x => new ReceivableLM()
+            {
+                Id = x.Id,
+                ClosedDay = x.ClosedDay,
+                CustomerId = x.CustomerId,
+                DebtAmount = x.DebtAmount,
+                LocationId = x.LocationId,
+                PayableDay = x.PayableDay,
+                PrepaidAmount = x.PrepaidAmount,
+                CollectionProgressStatus = x.CollectionProgress.Status,
+                CollectionProgressId = x.CollectionProgress.Id,
+                AssignedCollectorId = x.AssignedCollectors.Where(assignedCollector => assignedCollector.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE).FirstOrDefault().UserId
+            });
+
+            if (rawList.Any())
+            {
+                var result = rawList.Where(x => x.AssignedCollectorId == collectorId);
+                if (result.Any())
+                {
+                    return Ok(result);
+                }
+            }
+
+            return NotFound();
+        }
+
+        [HttpGet("CloseReceivable")]
+        public IActionResult CloseReceivable(int receivableId)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var receivable = _receivableService.GetReceivable(receivableId);
+            if (receivable == null)
+            {
+                return NotFound();
+            }
+
+            _receivableService.CloseReceivable(receivable);
+            _receivableService.SaveReceivable();
+
+            return Ok(receivable);
+        }
+
+        [HttpGet("{id}")]
         public IActionResult GetReceivableDetail(int id)
         {
             if (!ModelState.IsValid)
@@ -455,7 +505,7 @@ namespace RCM.Controllers
                     Status = Constant.COLLECTION_STATUS_COLLECTION_CODE,
                     IsDeleted = false,
                     CreatedDate = DateTime.Now,
-                    ProgressStageAction = TransformProgressStageActionToDBM(x.ProfileStageActions, x.Duration, payableDay, debtorName, debtAmount).ToList()
+                    ProgressStageAction = TransformProgressStageActionToDBM(x.ProfileStageActions, x.Duration, GetStageStartDay(payableDay, x.Sequence, profileStages), debtorName, debtAmount).ToList()
                 });
                 return result.ToList();
             }
@@ -463,14 +513,28 @@ namespace RCM.Controllers
             return null;
         }
 
-        private IEnumerable<ProgressStageAction> TransformProgressStageActionToDBM(IEnumerable<ProfileStageAction> profileStageActions, int stageDuration, int payableDay, string debtorName, long debtAmount)
+        private DateTime GetStageStartDay(int payableDay, int sequence, IEnumerable<ProfileStage> profileStages)
+        {
+            int day = 0;
+            for (int i = 0; i < sequence - 1; i++)
+            {
+                day += profileStages.ElementAt(i).Duration;
+            }
+
+            DateTime startDate = Utility.ConvertIntToDatetime(payableDay);
+            startDate = startDate.AddDays(day);
+
+            return startDate;
+        }
+
+        private IEnumerable<ProgressStageAction> TransformProgressStageActionToDBM(IEnumerable<ProfileStageAction> profileStageActions, int stageDuration, DateTime stageStartDate, string debtorName, long debtAmount)
         {
             if (profileStageActions.Any())
             {
                 var result = new List<ProgressStageAction>();
                 foreach (var action in profileStageActions)
                 {
-                    var tmp = SplitProfileStageAction(action, stageDuration, payableDay, debtorName, debtAmount);
+                    var tmp = SplitProfileStageAction(action, stageDuration, stageStartDate, debtorName, debtAmount);
                     if (tmp.Any())
                     {
                         foreach (var item in tmp)
@@ -519,7 +583,7 @@ namespace RCM.Controllers
             return null;
         }
 
-        private IEnumerable<ProgressStageAction> SplitProfileStageAction(ProfileStageAction profileStageAction, int stageDuration, int payableDay, string debtorName, long debtAmount)
+        private IEnumerable<ProgressStageAction> SplitProfileStageAction(ProfileStageAction profileStageAction, int stageDuration, DateTime startDate, string debtorName, long debtAmount)
         {
             if (profileStageAction != null)
             {
@@ -528,17 +592,12 @@ namespace RCM.Controllers
                 //Get how many times action will be executed.
                 var Frequency = stageDuration / profileStageAction.Frequency;
 
-                //Convert data from DB to Datetime
-                DateTime startDate = Utility.ConvertIntToDatetime(payableDay);
-
                 //Get profile message form
                 var progressMessageForm = TransformProfileMessageFormToDBM(profileStageAction.ProfileMessageFormId, debtorName, debtAmount);
 
                 for (int i = 0; i < Frequency; i++)
                 {
-                    //Calculate execution date.
-                    DateTime newDate = startDate.AddDays(profileStageAction.Frequency);
-                    startDate = newDate;
+
 
                     var progressStageAction = new ProgressStageAction()
                     {
@@ -551,6 +610,10 @@ namespace RCM.Controllers
                         CreatedDate = DateTime.Now,
                         Status = Constant.COLLECTION_STATUS_COLLECTION_CODE
                     };
+
+                    //Calculate execution date.
+                    DateTime newDate = startDate.AddDays(profileStageAction.Frequency);
+                    startDate = newDate;
 
                     //Add action to result list.
                     result.Add(progressStageAction);
