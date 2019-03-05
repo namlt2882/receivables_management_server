@@ -142,6 +142,11 @@ namespace RCM.Controllers
             return Ok(response);
         }
        
+        [HttpGet("GetServerDay")]
+        public IActionResult GetServerDay()
+        {
+            return Ok(Utility.ConvertDatetimeToString(DateTime.Now));
+        }
     }
 
 }

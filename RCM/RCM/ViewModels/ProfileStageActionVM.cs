@@ -16,6 +16,6 @@ namespace RCM.ViewModels
         public short Frequency { get; set; }
         public int StartTime { get; set; }
         public int Type { get; set; }
-        public int ProfileMessageFormId { get; set; }
+        public int? ProfileMessageFormId { get; set; }
     }
 }

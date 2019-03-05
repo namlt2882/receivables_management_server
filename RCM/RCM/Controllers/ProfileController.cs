@@ -241,7 +241,7 @@ namespace RCM.Controllers
             //Transform to view model
             IEnumerable<ProfileStageActionVM> result = actionsFromDB
                 .Select(x => new ProfileStageActionVM()
-                { Id = x.Id, Name = x.Name, Frequency = x.Frequency, ProfileMessageFormId = (int)x.ProfileMessageFormId, StartTime = x.StartTime, Type = x.Type }
+                { Id = x.Id, Name = x.Name, Frequency = x.Frequency, ProfileMessageFormId = x.ProfileMessageFormId, StartTime = x.StartTime, Type = x.Type }
                 );
 
             return result;

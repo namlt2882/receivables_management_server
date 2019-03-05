@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using RCM.Data;
 
 namespace RCM.Data.Migrations
 {
     [DbContext(typeof(RCMContext))]
-    partial class RCMContextModelSnapshot : ModelSnapshot
+    [Migration("20190305075123_UpdateReceivablePayable")]
+    partial class UpdateReceivablePayable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

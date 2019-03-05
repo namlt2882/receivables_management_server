@@ -413,7 +413,7 @@ namespace RCM.Controllers
                     var assignedCollectors = new List<AssignedCollector>();
                     assignedCollectors.Add(assignedCollector);
 
-                    var collectionProgress = TransformCollectionProgressToDBM(receivable.ProfileId, receivable.PayableDay, receivable.DebtAmount, GetDebtorName(receivable.Contacts));
+                    var collectionProgress = TransformCollectionProgressToDBM(receivable.ProfileId, (int)receivable.PayableDay, receivable.DebtAmount, GetDebtorName(receivable.Contacts));
                     if (collectionProgress == null)
                     {
                         return null;
