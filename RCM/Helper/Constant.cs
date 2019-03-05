@@ -2,6 +2,9 @@
 {
     public static class Constant
     {
+        public const string SPEEDSMS_TOKEN = "H-TVWpn8KOmBc_mO9D1WOTKkV0IDWexj";
+        public const string STRINGEE_TOKEN = "eyJjdHkiOiJzdHJpbmdlZS1hcGk7dj0xIiwidHlwIjoiSldUIiwiYWxnIjoiSFMyNTYifQ.eyJqdGkiOiJTSzhMa1FQVmVvcEdwSnY3UjdwanpsN3h3TG1iVkZVdDZZLTE1NTA2MDEyNjAiLCJpc3MiOiJTSzhMa1FQVmVvcEdwSnY3UjdwanpsN3h3TG1iVkZVdDZZIiwiZXhwIjoxNTUzMTkzMjYwLCJyZXN0X2FwaSI6dHJ1ZX0.fOcqwWeCpE53CAxTGmQzTVWAJdhF6yjMRhMGTTjl3qA";
+
         public const string SCHEDULER_CRON = "0 0/5 7-22 * * ?";
 
         public const string CONTACT_DEBTOR = "Debtor";

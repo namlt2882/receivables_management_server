@@ -64,7 +64,7 @@ namespace RCM.Helper
 
         public static string SendSMS(string phoneNo, string content)
         {
-            SpeedSMSAPI api = new SpeedSMSAPI("H-TVWpn8KOmBc_mO9D1WOTKkV0IDWexj");
+            SpeedSMSAPI api = new SpeedSMSAPI(Constant.SPEEDSMS_TOKEN);
             /**
             * Để lấy thông tin về tài khoản như: email, số dư tài khoản bạn sử dụng hàm getUserInfo()
             */
@@ -100,7 +100,7 @@ namespace RCM.Helper
             client.DefaultRequestHeaders.Accept.Add(
                 new MediaTypeWithQualityHeaderValue("application/json"));
             client.DefaultRequestHeaders.Add("cache-control", "no-cache");
-            client.DefaultRequestHeaders.Add("X-STRINGEE-AUTH", "eyJjdHkiOiJzdHJpbmdlZS1hcGk7dj0xIiwidHlwIjoiSldUIiwiYWxnIjoiSFMyNTYifQ.eyJqdGkiOiJTSzhMa1FQVmVvcEdwSnY3UjdwanpsN3h3TG1iVkZVdDZZLTE1NTA2MDEyNjAiLCJpc3MiOiJTSzhMa1FQVmVvcEdwSnY3UjdwanpsN3h3TG1iVkZVdDZZIiwiZXhwIjoxNTUzMTkzMjYwLCJyZXN0X2FwaSI6dHJ1ZX0.fOcqwWeCpE53CAxTGmQzTVWAJdhF6yjMRhMGTTjl3qA");
+            client.DefaultRequestHeaders.Add("X-STRINGEE-AUTH", Constant.STRINGEE_TOKEN);
             string data = "{\"from\":{\"type\":\"external\",\"number\":\"842471008859\",\"alias\":\"STRINGEE_NUMBER\"},\"to\":[{\"type\":\"external\",\"number\":\"" + phoneNo + "\",\"alias\":\"Thong\"}],\"answer_url\":\"https://example.com/answerurl\",\"actions\":[{\"action\":\"talk\",\"voice\":\"hatieumai\",\"text\":\"" + content + "\",\"speed\":-3,\"silenceTime\":1000}]}";
             var stringContent = new StringContent(data, Encoding.UTF8, "application/json");
             var stringTask = await client.PostAsync("https://api.stringee.com/v1/call2/callout", stringContent);
