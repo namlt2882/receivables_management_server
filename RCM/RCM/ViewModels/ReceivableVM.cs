@@ -45,5 +45,9 @@ namespace RCM.ViewModels
         public int? PayableDay { get; set; }
         public int? ClosedDay { get; set; }
         public string AssignedCollectorId { get; set; }
+        public string CustomerName { get; set; }
+        public string DebtorName { get; set; }
+        public int DebtorId { get; set; }
+
     }
 }

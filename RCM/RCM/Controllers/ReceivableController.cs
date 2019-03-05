@@ -52,7 +52,10 @@ namespace RCM.Controllers
                 PrepaidAmount = x.PrepaidAmount,
                 CollectionProgressStatus = x.CollectionProgress.Status,
                 CollectionProgressId = x.CollectionProgress.Id,
-                AssignedCollectorId = x.AssignedCollectors.Where(assignedCollector => assignedCollector.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE).FirstOrDefault().UserId
+                AssignedCollectorId = x.AssignedCollectors.Where(assignedCollector => assignedCollector.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE).FirstOrDefault().UserId,
+                CustomerName = x.Customer.Name,
+                DebtorName = x.Contacts.Where(contact => contact.Type == Constant.CONTACT_DEBTOR_CODE).SingleOrDefault().Name,
+                DebtorId = x.Contacts.Where(contact => contact.Type == Constant.CONTACT_DEBTOR_CODE).SingleOrDefault().Id,
             });
             return Ok(result);
         }
@@ -82,7 +85,10 @@ namespace RCM.Controllers
                 PrepaidAmount = x.PrepaidAmount,
                 CollectionProgressStatus = x.CollectionProgress.Status,
                 CollectionProgressId = x.CollectionProgress.Id,
-                AssignedCollectorId = x.AssignedCollectors.Where(assignedCollector => assignedCollector.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE).FirstOrDefault().UserId
+                AssignedCollectorId = x.AssignedCollectors.Where(assignedCollector => assignedCollector.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE).FirstOrDefault().UserId,
+                CustomerName = x.Customer.Name,
+                DebtorName = x.Contacts.Where(contact => contact.Type == Constant.CONTACT_DEBTOR_CODE).SingleOrDefault().Name,
+                DebtorId = x.Contacts.Where(contact => contact.Type == Constant.CONTACT_DEBTOR_CODE).SingleOrDefault().Id,
             });
 
             if (rawList.Any())
@@ -97,7 +103,7 @@ namespace RCM.Controllers
             return NotFound();
         }
 
-        [HttpGet("CloseReceivable")]
+        [HttpPost("CloseReceivable")]
         public IActionResult CloseReceivable(int receivableId)
         {
             if (!ModelState.IsValid)
@@ -179,6 +185,59 @@ namespace RCM.Controllers
             }
 
             return BadRequest(new { Message = "Error when trying to import" });
+        }
+
+        [HttpPost("ChangeAsignedCollector")]
+        public IActionResult ChangeAssignedCollector([FromBody]AssignedCollectorUM assignedCollectorUM)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var receivable = _receivableService.GetReceivable(assignedCollectorUM.ReceivableId);
+            receivable.AssignedCollectors.Select(x => { x.Status = Constant.ASSIGNED_STATUS_DEACTIVE_CODE; return x; }).ToList();
+
+            receivable.AssignedCollectors.Add(new AssignedCollector() {
+                Status = Constant.ASSIGNED_STATUS_ACTIVE_CODE,
+                UserId = assignedCollectorUM.CollectorId,
+                CreatedDate = DateTime.Now,
+                IsDeleted = false,
+            });
+
+            _receivableService.EditReceivable(receivable);
+            _receivableService.SaveReceivable();
+
+            return Ok();
+        }
+
+        [HttpGet("GetAssignedCollectorHistory")]
+        public IActionResult GetReceivableAssignedCollectorHisory(int receivableId)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var receivable = _receivableService.GetReceivable(receivableId);
+            if (receivable != null)
+            {
+                IEnumerable<AssignedCollectorHM> result = receivable.AssignedCollectors.Select(x => new AssignedCollectorHM()
+                {
+                    Id = x.Id,
+                    CollectorId = x.UserId,
+                    ReceivableId = x.ReceivableId,
+                    Status = x.Status,
+                    CreatedDate = x.CreatedDate
+
+                });
+                if (result.Any())
+                {
+                    return Ok(result);
+                }
+            }
+
+            return NotFound();
         }
 
         [HttpPut]

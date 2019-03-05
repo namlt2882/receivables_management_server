@@ -12,4 +12,15 @@ namespace RCM.ViewModels
         public int ReceivableId { get; set; }
         public int Status { get; set; }
     }
+
+    public class AssignedCollectorHM : AssignedCollectorVM
+    {
+        public DateTime CreatedDate;
+    }
+
+    public class AssignedCollectorUM
+    {
+        public string CollectorId { get; set; }
+        public int ReceivableId { get; set; }
+    }
 }
