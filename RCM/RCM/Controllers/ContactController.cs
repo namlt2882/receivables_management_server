@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using RCM.Helper;
 using RCM.Model;
 using RCM.Service;
 using RCM.ViewModels;
 using System.Linq;
-using RCM.Helper;
 
 namespace RCM.Controllers
 {
@@ -97,19 +97,23 @@ namespace RCM.Controllers
                 return BadRequest(ModelState);
             }
 
-            var contact = new Contact()
+
+            var contact = _contactService.GetContact(contactVM.Id);
+            if (contact != null)
             {
-                Id = contactVM.Id,
-                Address = contactVM.Address,
-                IdNo = contactVM.IdNo,
-                Name = contactVM.Name,
-                Phone = contactVM.Phone,
-            };
+                contact.Id = contactVM.Id;
+                contact.Address = contactVM.Address;
+                contact.IdNo = contactVM.IdNo;
+                contact.Name = contactVM.Name;
+                contact.Phone = contactVM.Phone;
 
-            _contactService.EditContact(contact);
-            _contactService.SaveContact();
+                _contactService.EditContact(contact);
+                _contactService.SaveContact();
 
-            return Ok(contact);
+                return Ok();
+            }
+
+            return NotFound();
         }
     }
 }

@@ -66,7 +66,7 @@ namespace RCM.Controllers
         }
 
         [HttpGet("GetTaskByCollectorId")]
-        public IActionResult GetTaskByCollectorId(string id)
+        public IActionResult GetTaskByCollectorId(string collectorId)
         {
             if (!ModelState.IsValid)
             {
@@ -81,9 +81,68 @@ namespace RCM.Controllers
                .Receivable
                .AssignedCollectors
                     .Select(assignedCollector =>
-                     (assignedCollector.UserId == id)
+                     (assignedCollector.UserId == collectorId && assignedCollector.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE)
                     ).Single()
-                );
+                &&
+                (action.Type == Constant.ACTION_NOTIFICATION_CODE || action.Type == Constant.ACTION_REPORT_CODE));
+
+            if (rawData.Any())
+            {
+                var result = rawData.Select(x => new TaskVM()
+                {
+                    Id = x.Id,
+                    ExecutionDay = x.ExcutionDay,
+                    Name = x.Name,
+                    StartTime = x.StartTime,
+                    Status = x.Status,
+                    Type = x.Type
+                });
+                return Ok(result);
+            }
+
+            return NotFound();
+        }
+
+        [HttpGet("GetReceivableTodayTask")]
+        public IActionResult GetReceivableTodayTask(int receivableId)
+        {
+            var rawData = _progressStageActionService.GetProgressStageActions().Where(x => x.ProgressStage.CollectionProgress.ReceivableId == receivableId && x.ExcutionDay == Int32.Parse(Utility.ConvertDatetimeToString(DateTime.Now)));
+            if (rawData.Any())
+            {
+                var result = rawData.Select(x => new TaskVM()
+                {
+                    Id = x.Id,
+                    ExecutionDay = x.ExcutionDay,
+                    Name = x.Name,
+                    StartTime = x.StartTime,
+                    Status = x.Status,
+                    Type = x.Type
+                });
+                return Ok(result);
+            }
+            return NotFound();
+        }
+
+        [HttpGet("GetCollectorTodayTask")]
+        public IActionResult GetCollectorTodayTask(string collectorId)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var rawData = _progressStageActionService.GetProgressStageActions()
+                .Where(action =>
+               action
+               .ProgressStage
+               .CollectionProgress
+               .Receivable
+               .AssignedCollectors
+                    .Select(assignedCollector =>
+                     (assignedCollector.UserId == collectorId && assignedCollector.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE)
+                    ).Single()
+                && (action.Type == Constant.ACTION_NOTIFICATION_CODE || action.Type == Constant.ACTION_REPORT_CODE)
+                && action.ExcutionDay == Int32.Parse(Utility.ConvertDatetimeToString(DateTime.Now)));
 
             if (rawData.Any())
             {
