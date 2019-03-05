@@ -1,5 +1,6 @@
 ﻿using CRM.Data.Infrastructure;
 using RCM.Data.Repositories;
+using RCM.Helper;
 using RCM.Model;
 using System;
 using System.Collections.Generic;
@@ -65,7 +66,9 @@ namespace RCM.Service
 
         public void CloseReceivable(Receivable receivable)
         {
+            receivable.ClosedDay = Int32.Parse(Utility.ConvertDatetimeToString(DateTime.Now));
             _collectionProgressService.CloseReceivable(receivable.CollectionProgress);
+            
         }
 
         public void RemoveReceivable(int id)

@@ -67,9 +67,9 @@ namespace RCM.Helpers
                 && x.ExcutionDay <= date
                 && x.StartTime < time
                 && x.ProgressStage.CollectionProgress.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE
+                && (x.Type == Constant.ACTION_PHONECALL_CODE || x.Type == Constant.ACTION_SMS_CODE)
                 ));
 
-            return;
             //Execute action.
             //ExecuteAction(actions);
         }
@@ -213,10 +213,10 @@ namespace RCM.Helpers
             ITrigger jobTrigger = TriggerBuilder.Create()
                 .WithIdentity(name + "Trigger", group)
                 .StartNow()
-                //This line is for testing purpose
-                .WithSimpleSchedule(x => x.WithIntervalInSeconds(10).RepeatForever())
-                ////Main time line is here
-                //.WithCronSchedule(Constant.SCHEDULER_CRON, x => x.InTimeZone(TimeZoneInfo.Local))
+                ////This line is for testing purpose
+                //.WithSimpleSchedule(x => x.WithIntervalInSeconds(10).RepeatForever())
+                //Main time line is here
+                .WithCronSchedule(Constant.SCHEDULER_CRON, x => x.InTimeZone(TimeZoneInfo.Local))
                 .Build();
 
             await Scheduler.ScheduleJob(job, jobTrigger);

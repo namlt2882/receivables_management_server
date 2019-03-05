@@ -92,7 +92,7 @@ namespace RCM.Controllers
             _receivableService.CloseReceivable(receivable);
             _receivableService.SaveReceivable();
 
-            return Ok(receivable);
+            return Ok();
         }
 
         [HttpGet("{id}")]
@@ -167,17 +167,17 @@ namespace RCM.Controllers
                 return BadRequest(ModelState);
             }
 
-            var receivable = new Receivable()
+            var receivable = _receivableService.GetReceivable(receivableIM.Id);
+            if (receivable != null)
             {
-                Id = receivableIM.Id,
-                DebtAmount = receivableIM.DebtAmount,
-                PrepaidAmount = receivableIM.PrepaidAmount,
-            };
+                receivable.DebtAmount = receivableIM.DebtAmount;
+                receivable.PrepaidAmount = receivableIM.PrepaidAmount;
 
-            _receivableService.EditReceivable(receivable);
-            _receivableService.SaveReceivable();
-
-            return Ok(receivable);
+                _receivableService.EditReceivable(receivable);
+                _receivableService.SaveReceivable();
+                return Ok();
+            }
+            return NotFound();
         }
 
         private ReceivableDM GetReceivable(int id)
@@ -266,7 +266,7 @@ namespace RCM.Controllers
                 DoneAt = x.DoneAt,
                 ExcutionDay = x.ExcutionDay,
                 Status = x.Status,
-                Type = x.ProgressStageId,
+                Type = x.Type,
                 ProgressStageId = x.ProgressStageId,
                 ProgressMessageFormId = x.ProgressMessageFormId
             });
