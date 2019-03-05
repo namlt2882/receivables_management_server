@@ -1,4 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Mapster;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using RCM.Helper;
 using RCM.Model;
 using RCM.Service;
@@ -7,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace RCM.Controllers
 {
@@ -18,13 +22,20 @@ namespace RCM.Controllers
         private readonly IReceivableService _receivableService;
         private readonly IProfileService _profileService;
         private readonly IProfileMessageFormService _profileMessageFormService;
-
-        public ReceivableController(IReceivableService receivableService, IProfileService profileService, IProfileMessageFormService profileMessageFormService)
+        private readonly UserManager<User> _userManager;
+        private readonly IAssignedCollectorService _assignedCollectorService;
+        public ReceivableController(
+            IReceivableService receivableService,
+            IProfileService profileService,
+            IProfileMessageFormService profileMessageFormService,
+            UserManager<User> userManager,
+            IAssignedCollectorService assignedCollectorService)
         {
             _receivableService = receivableService;
             _profileService = profileService;
             _profileMessageFormService = profileMessageFormService;
-
+            _userManager = userManager;
+            _assignedCollectorService = assignedCollectorService;
         }
 
         [HttpGet]
@@ -45,7 +56,18 @@ namespace RCM.Controllers
             });
             return Ok(result);
         }
-
+        [Authorize]
+        [HttpGet("GetAssignedReceivable")]
+        public async Task<IActionResult> GetAssignedReceivableAsync()
+        {
+            var result = new List<ReceivableLM>();
+            var user = await _userManager.FindByNameAsync(User.Identity.Name);
+            _assignedCollectorService.GetAssignedCollectors(_ => _.UserId == user.Id && _.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE).ToList().ForEach(_ =>
+            {
+                result.Add(_receivableService.GetReceivable(_.ReceivableId).Adapt<ReceivableLM>());
+            });
+            return Ok(result);
+        }
         [HttpGet("GetReceivaleByCollectorId")]
         public IActionResult GetReceivableByCollectorId(string collectorId)
         {
