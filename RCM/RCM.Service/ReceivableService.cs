@@ -67,8 +67,6 @@ namespace RCM.Service
         public void CloseReceivable(Receivable receivable)
         {
             receivable.ClosedDay = Int32.Parse(Utility.ConvertDatetimeToString(DateTime.Now));
-            receivable.PrepaidAmount = receivable.DebtAmount;
-            _collectionProgressService.CloseReceivable(receivable.CollectionProgress);
         }
 
         public void RemoveReceivable(int id)

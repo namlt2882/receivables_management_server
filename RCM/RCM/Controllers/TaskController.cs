@@ -72,19 +72,21 @@ namespace RCM.Controllers
             {
                 return BadRequest(ModelState);
             }
-
             var rawData = _progressStageActionService.GetProgressStageActions()
-                .Where(action =>
-               action
-               .ProgressStage
+                           .Where(action =>
+                           action.Type == Constant.ACTION_NOTIFICATION_CODE
+                           || action.Type == Constant.ACTION_REPORT_CODE);
+
+            rawData = rawData.Where(action =>
+            action.ProgressStage
                .CollectionProgress
                .Receivable
                .AssignedCollectors
                     .Select(assignedCollector =>
                      (assignedCollector.UserId == collectorId && assignedCollector.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE)
-                    ).Single()
-                &&
-                (action.Type == Constant.ACTION_NOTIFICATION_CODE || action.Type == Constant.ACTION_REPORT_CODE));
+                    ).SingleOrDefault());
+
+            rawData = rawData.Where(x => x.ProgressStage.CollectionProgress.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE);
 
             if (rawData.Any())
             {
@@ -106,7 +108,13 @@ namespace RCM.Controllers
         [HttpGet("GetReceivableTodayTask")]
         public IActionResult GetReceivableTodayTask(int receivableId)
         {
-            var rawData = _progressStageActionService.GetProgressStageActions().Where(x => x.ProgressStage.CollectionProgress.ReceivableId == receivableId && x.ExcutionDay == Int32.Parse(Utility.ConvertDatetimeToString(DateTime.Now)));
+            var rawData = _progressStageActionService.GetProgressStageActions()
+                .Where(x =>
+                x.ProgressStage.CollectionProgress.ReceivableId == receivableId
+                && x.ExcutionDay == Int32.Parse(Utility.ConvertDatetimeToString(DateTime.Now)));
+
+            rawData = rawData.Where(x => x.ProgressStage.CollectionProgress.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE);
+
             if (rawData.Any())
             {
                 var result = rawData.Select(x => new TaskVM()
@@ -133,16 +141,22 @@ namespace RCM.Controllers
 
             var rawData = _progressStageActionService.GetProgressStageActions()
                 .Where(action =>
-               action
-               .ProgressStage
+                action.Type == Constant.ACTION_NOTIFICATION_CODE
+                || action.Type == Constant.ACTION_REPORT_CODE);
+
+            rawData = rawData.Where(action =>
+            action.ProgressStage
                .CollectionProgress
                .Receivable
                .AssignedCollectors
                     .Select(assignedCollector =>
                      (assignedCollector.UserId == collectorId && assignedCollector.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE)
-                    ).Single()
-                && (action.Type == Constant.ACTION_NOTIFICATION_CODE || action.Type == Constant.ACTION_REPORT_CODE)
-                && action.ExcutionDay == Int32.Parse(Utility.ConvertDatetimeToString(DateTime.Now)));
+                    ).SingleOrDefault());
+
+            rawData = rawData.Where(action =>
+            action.ExcutionDay == Int32.Parse(Utility.ConvertDatetimeToString(DateTime.Now)));
+
+            rawData = rawData.Where(x => x.ProgressStage.CollectionProgress.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE);
 
             if (rawData.Any())
             {

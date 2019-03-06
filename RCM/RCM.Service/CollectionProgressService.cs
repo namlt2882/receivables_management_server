@@ -20,7 +20,6 @@ namespace RCM.Service
         void RemoveCollectionProgress(CollectionProgress collectionProgress);
         void SaveCollectionProgress();
         void MarkAsDone(CollectionProgress collectionProgress);
-        void CloseReceivable(CollectionProgress collectionProgress);
     }
 
     public class CollectionProgressService : ICollectionProgressService
@@ -34,11 +33,6 @@ namespace RCM.Service
             _unitOfWork = unitOfWork;
         }
 
-        public void CloseReceivable(CollectionProgress collectionProgress)
-        {
-            collectionProgress.Status = Constant.COLLECTION_STATUS_CLOSED_CODE;
-            EditCollectionProgress(collectionProgress);
-        }
         public CollectionProgress CreateCollectionProgress(CollectionProgress collectionProgress)
         {
             collectionProgress.CreatedDate = DateTime.Now;

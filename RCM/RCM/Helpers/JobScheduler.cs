@@ -64,14 +64,14 @@ namespace RCM.Helpers
                 .Where(x => (
                 x.IsDeleted == false
                 && x.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE
-                && x.ExcutionDay <= date
+                && x.ExcutionDay == date
                 && x.StartTime < time
                 && x.ProgressStage.CollectionProgress.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE
                 && (x.Type == Constant.ACTION_PHONECALL_CODE || x.Type == Constant.ACTION_SMS_CODE)
                 ));
 
             //Execute action.
-            //sExecuteAction(actions);
+            //ExecuteAction(actions);
         }
 
         private void ExecuteAction(IEnumerable<ProgressStageAction> actions)
