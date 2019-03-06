@@ -81,7 +81,7 @@ namespace RCM.Controllers
             return NotFound();
         }
 
-        [HttpPost("CloseReceivable")]
+        [HttpGet("CloseReceivable")]
         public IActionResult CloseReceivable(int receivableId)
         {
             if (!ModelState.IsValid)
@@ -98,7 +98,7 @@ namespace RCM.Controllers
             _receivableService.CloseReceivable(receivable);
             _receivableService.SaveReceivable();
 
-            return Ok();
+            return Ok(new { ClosedTime = receivable.ClosedDay, PrepaidAmount = receivable.PrepaidAmount, DebtAmount = receivable.DebtAmount });
         }
 
         [HttpGet("{id}")]
@@ -176,7 +176,8 @@ namespace RCM.Controllers
             var receivable = _receivableService.GetReceivable(assignedCollectorUM.ReceivableId);
             receivable.AssignedCollectors.Select(x => { x.Status = Constant.ASSIGNED_STATUS_DEACTIVE_CODE; return x; }).ToList();
 
-            receivable.AssignedCollectors.Add(new AssignedCollector() {
+            receivable.AssignedCollectors.Add(new AssignedCollector()
+            {
                 Status = Constant.ASSIGNED_STATUS_ACTIVE_CODE,
                 UserId = assignedCollectorUM.CollectorId,
                 CreatedDate = DateTime.Now,
@@ -231,8 +232,13 @@ namespace RCM.Controllers
             {
                 receivable.DebtAmount = receivableIM.DebtAmount;
                 receivable.PrepaidAmount = receivableIM.PrepaidAmount;
-
-                _receivableService.EditReceivable(receivable);
+                if (receivable.DebtAmount == receivable.PrepaidAmount)
+                {
+                    _receivableService.CloseReceivable(receivable);
+                } else
+                {
+                    _receivableService.EditReceivable(receivable);
+                }
                 _receivableService.SaveReceivable();
                 return Ok();
             }
