@@ -50,10 +50,15 @@ namespace RCM.ViewModels
         public int DebtorId { get; set; }
 
     }
-   
+
     public class ReceivableCloseModel
     {
         public int Id { get; set; }
         public bool isPayed { get; set; }
+    }
+
+    public class ReceivableOpenModel
+    {
+        public int Id { get; set; }
     }
 }

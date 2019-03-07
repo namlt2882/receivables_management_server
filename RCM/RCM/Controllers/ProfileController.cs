@@ -108,7 +108,12 @@ namespace RCM.Controllers
         public IActionResult GetAll()
         {
             var profiles = GetProfiles();
-            return Ok(profiles);
+            if (profiles.Any())
+            {
+                return Ok(profiles);
+            }
+
+            return Ok(new List<ProfileUM>());
         }
 
         private IEnumerable<ProfileUM> GetProfiles()
