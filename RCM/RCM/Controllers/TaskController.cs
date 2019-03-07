@@ -98,7 +98,8 @@ namespace RCM.Controllers
                     Name = x.Name,
                     StartTime = x.StartTime,
                     Status = x.Status,
-                    Type = x.Type
+                    Type = x.Type,
+                    ReceivableId = x.ProgressStage.CollectionProgress.ReceivableId
                 });
                 return Ok(result);
             }
@@ -125,7 +126,8 @@ namespace RCM.Controllers
                     Name = x.Name,
                     StartTime = x.StartTime,
                     Status = x.Status,
-                    Type = x.Type
+                    Type = x.Type,
+                    ReceivableId = x.ProgressStage.CollectionProgress.ReceivableId
                 });
                 return Ok(result);
             }
@@ -168,7 +170,8 @@ namespace RCM.Controllers
                     Name = x.Name,
                     StartTime = x.StartTime,
                     Status = x.Status,
-                    Type = x.Type
+                    Type = x.Type,
+                    ReceivableId = x.ProgressStage.CollectionProgress.ReceivableId
                 });
                 return Ok(result);
             }

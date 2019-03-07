@@ -13,5 +13,6 @@ namespace RCM.ViewModels
         public int Type { get; set; }
         public int StartTime { get; set; }
         public int ExecutionDay { get; set; }
+        public int ReceivableId { get; set; }
     }
 }
