@@ -64,32 +64,11 @@ namespace RCM.Helper
 
         public static string SendSMS(string phoneNo, string content)
         {
-            SpeedSMSAPI api = new SpeedSMSAPI(Constant.SPEEDSMS_TOKEN);
-            /**
-            * Để lấy thông tin về tài khoản như: email, số dư tài khoản bạn sử dụng hàm getUserInfo()
-            */
-            String userInfo = api.getUserInfo();
-            /* * Hàm getUserInfo() sẽ trả về một json string như sau:
-             * /
-            {"email": "test@speedsms.vn", "balance": 100000.0, "currency": "VND"}
+            SpeedSMSAPI api = new SpeedSMSAPI("H-TVWpn8KOmBc_mO9D1WOTKkV0IDWexj");
 
-            /** Để gửi SMS bạn sử dụng hàm sendSMS như sau:
-            */
             String[] phones = new String[] { phoneNo };
-            int type = 2;
-            /**
-            sms_type có các giá trị như sau:
-            2: tin nhắn gửi bằng đầu số ngẫu nhiên
-            3: tin nhắn gửi bằng brandname
-            4: tin nhắn gửi bằng brandname mặc định (Verify hoặc Notify)
-            5: tin nhắn gửi bằng app android
-            */
-            String sender = "Receivable management system";
-            /**
-            brandname là tên thương hiệu hoặc số điện thoại đã đăng ký với SpeedSMS hoặc android deviceId của bạn
-            */
-
-            String response = api.sendSMS(phones, content, type, sender);
+            String str = content;
+            String response = api.sendSMS(phones, str, 2, "");
             return response;
         }
 

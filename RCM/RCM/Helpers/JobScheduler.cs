@@ -60,7 +60,7 @@ namespace RCM.Helpers
             //Example 14/02/1997 => 19970214.
             long date = Int64.Parse(Utility.ConvertDatetimeToString(DateTime.Now.Date));
 
-            var actions = _progressStageActionService.GetProgressStageActions()
+            var actionsToExecute = _progressStageActionService.GetProgressStageActions()
                 .Where(x => (
                 x.IsDeleted == false
                 && x.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE
@@ -71,7 +71,28 @@ namespace RCM.Helpers
                 ));
 
             //Execute action.
-            //ExecuteAction(actions);
+            if (actionsToExecute.Any())
+            {
+                ExecuteAction(actionsToExecute);
+            }
+
+            var actionsToMarkAsLate = _progressStageActionService.GetProgressStageActions()
+                .Where(x => (
+                x.IsDeleted == false
+                && x.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE
+                && x.ExcutionDay < date
+                && x.ProgressStage.CollectionProgress.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE
+                ));
+
+            if (actionsToMarkAsLate.Any())
+            {
+                foreach (var action in actionsToMarkAsLate)
+                {
+                    action.Status = Constant.COLLECTION_STATUS_LATE_CODE;
+                    _progressStageActionService.EditProgressStageAction(action);
+                    _progressStageActionService.SaveProgressStageAction();
+                }
+            }
         }
 
         private void ExecuteAction(IEnumerable<ProgressStageAction> actions)
@@ -84,7 +105,8 @@ namespace RCM.Helpers
                         NotifyVisit();
                         break;
                     case Constant.ACTION_PHONECALL_CODE:
-                        MakePhoneCallAsync(action);
+                        //MakePhoneCallAsync(action);
+                        SendSMS(action);
                         break;
                     case Constant.ACTION_REPORT_CODE:
                         NotifyReport();
@@ -133,13 +155,12 @@ namespace RCM.Helpers
             var messageContent = progressStageAction.ProgressMessageForm.Content;
 
             string response = Utility.SendSMS(phoneNo, messageContent);
-
-            var result = JsonConvert.DeserializeObject<SpeedSMSResponseModel>(response);
-
-            if (result.status == 0)
-            {
-                _progressStageActionService.MarkAsDone(progressStageAction);
-            }
+            _progressStageActionService.MarkAsDone(progressStageAction);
+            _progressStageActionService.SaveProgressStageAction();
+            //if (response.Contains("success"))
+            //{
+            //    _progressStageActionService.MarkAsDone(progressStageAction);
+            //}
         }
 
         public Task Execute(IJobExecutionContext context)
@@ -159,14 +180,6 @@ namespace RCM.Helpers
     {
         public int r { get; set; }
         public string message { get; set; }
-    }
-
-    class SpeedSMSResponseModel
-    {
-        public string type { get; set; }
-        public int tranId { get; set; }
-        public string phone { get; set; }
-        public int status { get; set; }
     }
 
     public class Quartz
