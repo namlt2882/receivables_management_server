@@ -4,7 +4,7 @@ using System.Net;
 
 namespace RCM.Helper
 {
-    public class SpeedSMSAPI
+    class SpeedSMSAPI
     {
         public const int TYPE_QC = 1;
         public const int TYPE_CSKH = 2;
@@ -25,7 +25,7 @@ namespace RCM.Helper
 
         public SpeedSMSAPI(String token)
         {
-            accessToken = token;
+            this.accessToken = token;
         }
 
         private string EncodeNonAsciiCharacters(string value)
