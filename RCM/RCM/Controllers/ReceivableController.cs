@@ -688,7 +688,9 @@ namespace RCM.Controllers
 
                 for (int i = 0; i < Frequency; i++)
                 {
-
+                    //Calculate execution date.
+                    DateTime newDate = startDate.AddDays(profileStageAction.Frequency);
+                    startDate = newDate;
 
                     var progressStageAction = new ProgressStageAction()
                     {
@@ -701,10 +703,6 @@ namespace RCM.Controllers
                         CreatedDate = DateTime.Now,
                         Status = Constant.COLLECTION_STATUS_COLLECTION_CODE
                     };
-
-                    //Calculate execution date.
-                    DateTime newDate = startDate.AddDays(profileStageAction.Frequency);
-                    startDate = newDate;
 
                     //Add action to result list.
                     result.Add(progressStageAction);
