@@ -3,6 +3,7 @@ using RCM.Helper;
 using RCM.Service;
 using RCM.ViewModels;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace RCM.Controllers
@@ -102,7 +103,7 @@ namespace RCM.Controllers
                 return Ok(result);
             }
 
-            return NotFound();
+            return Ok(new List<TaskVM>());
         }
 
         [HttpGet("GetReceivableTodayTask")]
@@ -128,7 +129,7 @@ namespace RCM.Controllers
                 });
                 return Ok(result);
             }
-            return NotFound();
+            return Ok(new List<TaskVM>());
         }
 
         [HttpGet("GetCollectorTodayTask")]
@@ -172,7 +173,7 @@ namespace RCM.Controllers
                 return Ok(result);
             }
 
-            return NotFound();
+            return Ok(new List<TaskVM>());
         }
     }
 }

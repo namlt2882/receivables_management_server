@@ -49,6 +49,21 @@ namespace RCM.Controllers
             return Ok(result);
         }
 
+        [HttpPut("OpenReceivable")]
+        public IActionResult OpenReceivable([FromBody] ReceivableOpenModel receivableOM)
+        {
+            var receivable = _receivableService.GetReceivable(receivableOM.Id);
+            if (receivable != null)
+            {
+                receivable.CollectionProgress.Status = Constant.COLLECTION_STATUS_COLLECTION_CODE;
+                _receivableService.EditReceivable(receivable);
+                _receivableService.SaveReceivable();
+                return Ok();
+            }
+
+            return NotFound();
+        }
+
         [HttpGet("GetReceivaleByCollectorId")]
         public IActionResult GetReceivableByCollectorId(string collectorId)
         {
