@@ -37,7 +37,7 @@ namespace RCM.Controllers
                 CustomerId = x.CustomerId,
                 DebtAmount = x.DebtAmount,
                 LocationId = x.LocationId,
-                PayableDay = x.PayableDay,
+                PayableDay = x.PayableDay != null ? x.PayableDay : null,
                 PrepaidAmount = x.PrepaidAmount,
                 CollectionProgressStatus = x.CollectionProgress.Status,
                 CollectionProgressId = x.CollectionProgress.Id,
@@ -45,6 +45,8 @@ namespace RCM.Controllers
                 CustomerName = x.Customer.Name,
                 DebtorName = x.Contacts.Where(contact => contact.Type == Constant.CONTACT_DEBTOR_CODE).SingleOrDefault().Name,
                 DebtorId = x.Contacts.Where(contact => contact.Type == Constant.CONTACT_DEBTOR_CODE).SingleOrDefault().Id,
+                ProgressPercent = GetProgressReached(x),
+                HaveLateAction = HaveLateActions(x)
             });
             return Ok(result);
         }
@@ -74,7 +76,7 @@ namespace RCM.Controllers
                 CustomerId = x.CustomerId,
                 DebtAmount = x.DebtAmount,
                 LocationId = x.LocationId,
-                PayableDay = x.PayableDay,
+                PayableDay = x.PayableDay != null ? x.PayableDay : null,
                 PrepaidAmount = x.PrepaidAmount,
                 CollectionProgressStatus = x.CollectionProgress.Status,
                 CollectionProgressId = x.CollectionProgress.Id,
@@ -82,6 +84,8 @@ namespace RCM.Controllers
                 CustomerName = x.Customer.Name,
                 DebtorName = x.Contacts.Where(contact => contact.Type == Constant.CONTACT_DEBTOR_CODE).SingleOrDefault().Name,
                 DebtorId = x.Contacts.Where(contact => contact.Type == Constant.CONTACT_DEBTOR_CODE).SingleOrDefault().Id,
+                ProgressPercent = GetProgressReached(x),
+                HaveLateAction = HaveLateActions(x)
             });
 
             if (rawList.Any())
@@ -717,5 +721,55 @@ namespace RCM.Controllers
             //End if profileStageAction != null
             return null;
         }
+
+        private int GetTotalProgressDay(Receivable receivable)
+        {
+            int result = 0;
+            foreach (var stage in receivable.CollectionProgress.ProgressStages)
+            {
+                result += stage.Duration;
+            }
+            return result;
+        }
+
+        private int GetProgressReached(Receivable receivable)
+        {
+            if (receivable.PayableDay == null)
+            {
+                return 0;
+            }
+
+            var result = 0;
+            var totalDayInMiliSecond = GetTotalProgressDay(receivable) * 24 * 60 * 60 * 1000;
+            if (receivable.PayableDay != null)
+            {
+                result = (int)((DateTime.Now - Utility.ConvertIntToDatetime((int)receivable.PayableDay)).TotalMilliseconds );
+                result = (int) ((double) result * 100 / totalDayInMiliSecond);
+            }
+
+            return result;
+        }
+
+        private bool HaveLateActions(Receivable receivable)
+        {
+            if (receivable.PayableDay == null)
+            {
+                return false;
+            }
+
+            foreach (var stage in receivable.CollectionProgress.ProgressStages)
+            {
+                foreach (var action in stage.ProgressStageAction)
+                {
+                    if (action.Status == Constant.COLLECTION_STATUS_LATE_CODE)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+        
     }
 }
