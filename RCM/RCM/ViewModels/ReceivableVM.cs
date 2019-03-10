@@ -48,6 +48,8 @@ namespace RCM.ViewModels
         public string CustomerName { get; set; }
         public string DebtorName { get; set; }
         public int DebtorId { get; set; }
+        public int ProgressPercent { get; set; }
+        public bool HaveLateAction { get; set; }
 
     }
 

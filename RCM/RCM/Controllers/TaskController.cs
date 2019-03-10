@@ -15,11 +15,13 @@ namespace RCM.Controllers
     public class TaskController : ControllerBase
     {
         private readonly IProgressStageActionService _progressStageActionService;
+        private readonly IAssignedCollectorService _assignedCollectorService;
         private readonly IReceivableService _receivableService;
         private readonly UserManager<User> _userManager;
 
-        public TaskController(IProgressStageActionService progressStageActionService, IReceivableService receivableService, UserManager<User> userManager)
+        public TaskController(IProgressStageActionService progressStageActionService, IAssignedCollectorService assignedCollectorService, IReceivableService receivableService, UserManager<User> userManager )
         {
+            _assignedCollectorService = assignedCollectorService;
             _progressStageActionService = progressStageActionService;
             _receivableService = receivableService;
             _userManager = userManager;
@@ -77,21 +79,18 @@ namespace RCM.Controllers
             {
                 return BadRequest(ModelState);
             }
-            var rawData = _progressStageActionService.GetProgressStageActions()
-                           .Where(action =>
-                           action.Type == Constant.ACTION_NOTIFICATION_CODE
-                           || action.Type == Constant.ACTION_REPORT_CODE);
 
-            rawData = rawData.Where(action =>
-            action.ProgressStage
-               .CollectionProgress
-               .Receivable
-               .AssignedCollectors
-                    .Select(assignedCollector =>
-                     (assignedCollector.UserId == collectorId && assignedCollector.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE)
-                    ).SingleOrDefault());
+            var receivableIdList = _assignedCollectorService.GetAssignedCollectors()
+                .Where(x => 
+                x.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE 
+                && x.UserId == collectorId)
+                .Select(x => x.Id).ToList();
 
-            rawData = rawData.Where(x => x.ProgressStage.CollectionProgress.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE);
+            var rawData = from action in _progressStageActionService.GetProgressStageActions()
+                      where receivableIdList.Contains(action.ProgressStage.CollectionProgress.ReceivableId) 
+                      && action.ProgressStage.CollectionProgress.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE
+                      && (action.Type == Constant.ACTION_NOTIFICATION_CODE || action.Type == Constant.ACTION_REPORT_CODE)
+                      select action;
 
             if (rawData.Any())
             {
@@ -146,24 +145,20 @@ namespace RCM.Controllers
                 return BadRequest(ModelState);
             }
 
-            var rawData = _progressStageActionService.GetProgressStageActions()
-                .Where(action =>
-                action.Type == Constant.ACTION_NOTIFICATION_CODE
-                || action.Type == Constant.ACTION_REPORT_CODE);
+            var receivableIdList = _assignedCollectorService.GetAssignedCollectors()
+                .Where(x =>
+                x.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE
+                && x.UserId == collectorId)
+                .Select(x => x.Id).ToList();
 
-            rawData = rawData.Where(action =>
-            action.ProgressStage
-               .CollectionProgress
-               .Receivable
-               .AssignedCollectors
-                    .Select(assignedCollector =>
-                     (assignedCollector.UserId == collectorId && assignedCollector.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE)
-                    ).SingleOrDefault());
+            var rawData = from action in _progressStageActionService.GetProgressStageActions()
+                          where receivableIdList.Contains(action.ProgressStage.CollectionProgress.ReceivableId)
+                          && action.ProgressStage.CollectionProgress.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE
+                          && (action.Type == Constant.ACTION_NOTIFICATION_CODE || action.Type == Constant.ACTION_REPORT_CODE)
+                          select action;
 
             rawData = rawData.Where(action =>
             action.ExcutionDay == Int32.Parse(Utility.ConvertDatetimeToString(DateTime.Now)));
-
-            rawData = rawData.Where(x => x.ProgressStage.CollectionProgress.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE);
 
             if (rawData.Any())
             {
