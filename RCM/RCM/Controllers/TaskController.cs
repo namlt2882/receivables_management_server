@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using RCM.Helper;
+using RCM.Model;
 using RCM.Service;
 using RCM.ViewModels;
 using System;
@@ -14,11 +16,13 @@ namespace RCM.Controllers
     {
         private readonly IProgressStageActionService _progressStageActionService;
         private readonly IReceivableService _receivableService;
+        private readonly UserManager<User> _userManager;
 
-        public TaskController(IProgressStageActionService progressStageActionService, IReceivableService receivableService)
+        public TaskController(IProgressStageActionService progressStageActionService, IReceivableService receivableService, UserManager<User> userManager)
         {
             _progressStageActionService = progressStageActionService;
             _receivableService = receivableService;
+            _userManager = userManager;
         }
 
         [HttpGet("Done")]
