@@ -2,6 +2,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
+using Newtonsoft.Json;
+using RCM.CenterHubs;
 using RCM.Helper;
 using RCM.Model;
 using RCM.Service;
@@ -11,7 +14,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
+using RCM.NotificationUtility;
 namespace RCM.Controllers
 {
     [Route("api/[controller]")]
@@ -19,23 +22,28 @@ namespace RCM.Controllers
 
     public class ReceivableController : ControllerBase
     {
+
+        private readonly IHubContext<CenterHub> _hubContext;
+        private readonly IHubUserConnectionService _hubService;
+        private readonly IFirebaseTokenService _firebaseTokenService;
         private readonly IReceivableService _receivableService;
         private readonly IProfileService _profileService;
+        private readonly INotificationService _notificationService;
+        private readonly IAssignedCollectorService _assignedCollectorService;
         private readonly IProfileMessageFormService _profileMessageFormService;
         private readonly UserManager<User> _userManager;
-        private readonly IAssignedCollectorService _assignedCollectorService;
-        public ReceivableController(
-            IReceivableService receivableService,
-            IProfileService profileService,
-            IProfileMessageFormService profileMessageFormService,
-            UserManager<User> userManager,
-            IAssignedCollectorService assignedCollectorService)
+
+        public ReceivableController(IHubContext<CenterHub> hubContext, IHubUserConnectionService hubService, IFirebaseTokenService firebaseTokenService, IReceivableService receivableService, IProfileService profileService, INotificationService notificationService, IAssignedCollectorService assignedCollectorService, IProfileMessageFormService profileMessageFormService, UserManager<User> userManager)
         {
+            _hubContext = hubContext;
+            _hubService = hubService;
+            _firebaseTokenService = firebaseTokenService;
             _receivableService = receivableService;
             _profileService = profileService;
+            _notificationService = notificationService;
+            _assignedCollectorService = assignedCollectorService;
             _profileMessageFormService = profileMessageFormService;
             _userManager = userManager;
-            _assignedCollectorService = assignedCollectorService;
         }
 
         [HttpGet]
@@ -211,10 +219,67 @@ namespace RCM.Controllers
                 }
 
                 var importedReceivables = _receivableService.GetReceivables().OrderByDescending(x => x.Id).Take(receivablesDBM.Count());
+                SendNotification(importedReceivables.ToList());
+
                 return Ok(importedReceivables);
             }
 
             return BadRequest(new { Message = "Error when trying to import" });
+        }
+
+        private void SendNotification(List<Receivable> receivables)
+        {
+
+            #region Create Notification
+
+
+            List<UserNotification> userNotifications = new List<UserNotification>();
+            //Get notify user
+            _assignedCollectorService.GetAssignedCollectors().ToList().ForEach(_ =>
+            {
+                receivables.ForEach(receivable =>
+                {
+                    if (_.ReceivableId == receivable.Id)
+                    {
+                        if (userNotifications.Count < 1 || userNotifications.FirstOrDefault(un => un.UserId == _.UserId) == null)
+                        {
+                            userNotifications.Add(new UserNotification()
+                            {
+                                UserId = _.UserId,
+                                ReceivableList = new List<int>() { receivable.Id }
+                            });
+
+                        }
+                        else
+                        {
+                            userNotifications.First(un => un.UserId == _.UserId).ReceivableList.Add(receivable.Id);
+                        }
+                    }
+                });
+            });
+            //Create New Notification
+            List<Notification> notifications = new List<Notification>();
+            userNotifications.ForEach(_ =>
+            {
+                notifications.Add(new Notification()
+                {
+                    Title = Constant.NOTIFICATION_TYPE_NEW_RECEIVABLE,
+                    Type = Constant.NOTIFICATION_TYPE_NEW_RECEIVABLE_CODE,
+                    Body = $"You were assgined to {_.ReceivableList.Count} reiceivable",
+                    UserId = _.UserId,
+                    NData = JsonConvert.SerializeObject(_.ReceivableList),
+                    IsSeen = false,
+                    CreatedDate = DateTime.Now,
+                    IsDeleted = false,
+                });
+            });
+            _notificationService.CreateNotification(notifications);
+            _notificationService.SaveNotification();
+            #endregion
+
+            //Send
+            RCM.NotificationUtility.NotificationUtility.SendNotificationToCurrentMobileClient(notifications, _firebaseTokenService);
+            RCM.NotificationUtility.NotificationUtility.SendNotificationToCurrentWebClient(notifications, _hubService, _hubContext);
         }
 
         [HttpPost("ChangeAsignedCollector")]
@@ -766,8 +831,8 @@ namespace RCM.Controllers
             var totalDayInMiliSecond = GetTotalProgressDay(receivable) * 24 * 60 * 60 * 1000;
             if (receivable.PayableDay != null)
             {
-                result = (int)((DateTime.Now - Utility.ConvertIntToDatetime((int)receivable.PayableDay)).TotalMilliseconds );
-                result = (int) ((double) result * 100 / totalDayInMiliSecond);
+                result = (int)((DateTime.Now - Utility.ConvertIntToDatetime((int)receivable.PayableDay)).TotalMilliseconds);
+                result = (int)((double)result * 100 / totalDayInMiliSecond);
             }
 
             return result;
@@ -793,6 +858,6 @@ namespace RCM.Controllers
 
             return false;
         }
-        
+
     }
 }

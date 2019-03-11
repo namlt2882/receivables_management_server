@@ -37,4 +37,5 @@ namespace RCM.Firebase
             var msg = stringTask.Content.ReadAsStringAsync().Result;
         }
     }
+
 }

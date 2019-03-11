@@ -26,7 +26,7 @@ namespace RCM.Controllers
         private readonly IHubContext<CenterHub> _hubContext;
         private readonly UserManager<User> _userManager;
         private readonly IHubUserConnectionService _hubService;
-        private readonly INotificationService _notiService;
+        private readonly INotificationService _notificationService;
         private readonly IAssignedCollectorService _assignedCollectorService;
         private readonly IFirebaseTokenService _firebaseTokenService;
 
@@ -35,7 +35,7 @@ namespace RCM.Controllers
             _hubContext = hubContext;
             _userManager = userManager;
             _hubService = hubService;
-            _notiService = notiService;
+            _notificationService = notiService;
             _assignedCollectorService = assignedCollectorService;
             _firebaseTokenService = firebaseTokenService;
         }
@@ -57,8 +57,8 @@ namespace RCM.Controllers
                     IsSeen = false,
                     CreatedDate = DateTime.Now
                 };
-                _notiService.CreateNotification(notification);
-                _notiService.SaveNotification();
+                _notificationService.CreateNotification(notification);
+                _notificationService.SaveNotification();
 
                 var connections = _hubService.GetHubUserConnections(_ => _.UserId.Equals(_user.Id));
                 await _hubContext.Clients.Clients(connections.Select(_ => _.Connection).ToList())
@@ -109,8 +109,8 @@ namespace RCM.Controllers
                     IsDeleted = false,
                 });
             });
-            _notiService.CreateNotification(notifications);
-            _notiService.SaveNotification();
+            _notificationService.CreateNotification(notifications);
+            _notificationService.SaveNotification();
             SendNotificationToCurrentWebClient(notifications);
             SendNotificationToCurrentMobileClient(notifications);
             return Ok(notifications);
@@ -177,8 +177,8 @@ namespace RCM.Controllers
                     IsSeen = false,
                     CreatedDate = DateTime.Now
                 };
-                _notiService.CreateNotification(notification);
-                _notiService.SaveNotification();
+                _notificationService.CreateNotification(notification);
+                _notificationService.SaveNotification();
 
                 var connections = _hubService.GetHubUserConnections(_ => _.UserId.Equals(user.Id));
                 await _hubContext.Clients.Clients(connections.Select(_ => _.Connection).ToList())
@@ -247,7 +247,7 @@ namespace RCM.Controllers
         {
             var user = await _userManager.FindByNameAsync(User.Identity.Name);
             if (user == null) return BadRequest();
-            var data = _notiService.GetNotifications(_ => _.UserId.Equals(user.Id)).OrderByDescending(_ => _.CreatedDate);
+            var data = _notificationService.GetNotifications(_ => _.UserId.Equals(user.Id)).OrderByDescending(_ => _.CreatedDate);
             List<NotificationVM> result = new List<NotificationVM>();
             foreach (var item in data)
             {
@@ -261,7 +261,7 @@ namespace RCM.Controllers
         {
             var user = await _userManager.FindByNameAsync(User.Identity.Name);
             if (user == null) return BadRequest();
-            var noti = _notiService.GetNotification(id);
+            var noti = _notificationService.GetNotification(id);
             if (noti == null) return NotFound();
             return Ok(noti.Adapt<NotificationVM>());
         }
@@ -271,11 +271,11 @@ namespace RCM.Controllers
         {
             try
             {
-                var noti = _notiService.GetNotification(id);
+                var noti = _notificationService.GetNotification(id);
                 if (noti == null) return NotFound();
                 noti.IsSeen = !noti.IsSeen;
-                _notiService.EditNotification(noti);
-                _notiService.SaveNotification();
+                _notificationService.EditNotification(noti);
+                _notificationService.SaveNotification();
             }
             catch (Exception e)
             {
@@ -289,11 +289,11 @@ namespace RCM.Controllers
         {
             try
             {
-                var noti = _notiService.GetNotification(id);
+                var noti = _notificationService.GetNotification(id);
                 if (noti == null) return NotFound();
                 noti.IsSeen = !noti.IsSeen;
-                _notiService.RemoveNotification(noti);
-                _notiService.SaveNotification();
+                _notificationService.RemoveNotification(noti);
+                _notificationService.SaveNotification();
             }
             catch (Exception e)
             {
