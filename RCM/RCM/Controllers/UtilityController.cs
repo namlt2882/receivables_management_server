@@ -12,6 +12,7 @@ using System.Text;
 using Newtonsoft.Json;
 using RCM.SpeedSMS;
 
+
 namespace RCM.Controllers
 {
     [Route("api/[controller]")]
@@ -141,12 +142,42 @@ namespace RCM.Controllers
 
             return Ok(response);
         }
-       
+
         [HttpGet("GetServerDay")]
         public IActionResult GetServerDay()
         {
             return Ok(Utility.ConvertDatetimeToString(DateTime.Now));
         }
+
+        [HttpPost("SendNotificationFireBase/{token}")]
+        public async Task<IActionResult> SendNotificationFireBase(string token, string content, string title)
+        {
+            //var client = new RestClient("https://fcm.googleapis.com/fcm/send");
+            //var request = new RestRequest(Method.POST);
+            //request.AddHeader("cache-control", "no-cache");
+            //request.AddHeader("Authorization", "key=AIzaSyBPVURwPYjlk3U3rPBrujsl9cIHN6Q53Zg");
+            //request.AddHeader("Content-Type", "application/json");
+            //request.AddParameter("undefined", "{\n    \n    \"data\": {\n        \"title\": \"Hello Xamarin\",\n        \"image\": \"https://firebase.google.com/images/social.png\",\n        \"message\": \"FCM\"\n    },\n    \"to\": \"cbPM_pge0_Y:APA91bGkQZBXHHuR2LY9K7tPNVMyTEKyvqJ4WiF0-AXxFyZk0Q3Hkmn7g_992FZx-T1VV1VoFay3BHblKQUosdJ1UZiMvqGn3HqU1Hu50UGpQ0AojnNaUbbccRTdSxmeDP6et2ibvPfg\"\n}", ParameterType.RequestBody);
+            //IRestResponse response = client.Execute(request);
+
+            //FirebaseApp.Create(new AppOptions()
+            //{
+            //    Credential = GoogleCredential.FromFile("path/to/serviceAccountKey.json"),
+            //});
+
+            HttpClient client = new HttpClient();
+            client.DefaultRequestHeaders.Accept.Clear();
+            client.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+            client.DefaultRequestHeaders.Add("cache-control", "no-cache");
+            client.DefaultRequestHeaders.TryAddWithoutValidation("Authorization", "key=AIzaSyBPVURwPYjlk3U3rPBrujsl9cIHN6Q53Zg");
+            string data = "{\n    \n    \"data\": {\n        \"title\": \"" + title + "\",\n        \"image\": \"https://firebase.google.com/images/social.png\",\n        \"message\": \"" + content + "\"\n    },\n    \"to\": \"" + token + "\"}";
+            var stringContent = new StringContent(data, Encoding.UTF8, "application/json");
+            var stringTask = await client.PostAsync("https://fcm.googleapis.com/fcm/send", stringContent);
+            var msg = stringTask.Content.ReadAsStringAsync().Result;
+            return Ok(msg);
+        }
+
     }
 
 }

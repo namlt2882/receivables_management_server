@@ -4,7 +4,7 @@ using System.Net;
 
 namespace RCM.Helper
 {
-    class SpeedSMSAPI
+    public class SpeedSMSAPI
     {
         public const int TYPE_QC = 1;
         public const int TYPE_CSKH = 2;

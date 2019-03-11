@@ -71,10 +71,10 @@ namespace RCM.Helpers
                 ));
 
             //Execute action.
-            if (actionsToExecute.Any())
-            {
-                ExecuteAction(actionsToExecute);
-            }
+            //if (actionsToExecute.Any())
+            //{
+            //    ExecuteAction(actionsToExecute);
+            //}
 
             var actionsToMarkAsLate = _progressStageActionService.GetProgressStageActions()
                 .Where(x => (

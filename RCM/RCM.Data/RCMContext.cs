@@ -30,6 +30,7 @@ namespace RCM.Data
         public DbSet<ProgressStage> ProgressStages { get; set; }
         public DbSet<ProgressStageAction> ProgressStageActions { get; set; }
         public DbSet<Receivable> Receivables { get; set; }
+        public DbSet<FirebaseToken> FirebaseTokens { get; set; }
 
         //public DbSet<User> Users { get; set; }
         //public DbSet<Role> Roles { get; set; }

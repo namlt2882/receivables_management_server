@@ -22,7 +22,7 @@
         public const string ACTION_NOTIFICATION = "Notification";
         public const int ACTION_NOTIFICATION_CODE = 2;
 
-        public const string ACTION_VISIT = "Notification";
+        public const string ACTION_VISIT = "Visit";
         public const int ACTION_VISIT_CODE = 4;
 
         public const string ACTION_REPORT = "Report";
@@ -75,6 +75,11 @@
         public const string DATE_FORMAT = "yyyyMMdd";
 
         public const string TIME_FORMAT = "HHmm";
+
+        public const string NOTIFICATION_TYPE_NEW_RECEIVABLE = "New Receivable";
+        public const int NOTIFICATION_TYPE_NEW_RECEIVABLE_CODE = 11;
+
+
     }
 
 }

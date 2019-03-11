@@ -70,6 +70,10 @@ namespace RCM
             services.AddTransient<ICustomerRepository, CustomerRepository>();
             services.AddTransient<ICustomerService, CustomerService>();
 
+            //Firebase
+            services.AddTransient<IFirebaseTokenRepository, FirebaseTokenRepository>();
+            services.AddTransient<IFirebaseTokenService, FirebaseTokenService>();
+
             //HubUserConnection
             services.AddTransient<IHubUserConnectionRepository, HubUserConnectionRepository>();
             services.AddTransient<IHubUserConnectionService, HubUserConnectionService>();
@@ -113,6 +117,7 @@ namespace RCM
             //Receivable
             services.AddTransient<IReceivableRepository, ReceivableRepository>();
             services.AddTransient<IReceivableService, ReceivableService>();
+  
 
 
             //Mail 

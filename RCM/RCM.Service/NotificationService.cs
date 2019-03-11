@@ -14,6 +14,7 @@ namespace RCM.Service
         IEnumerable<Notification> GetNotifications(Expression<Func<Notification, bool>> where);
         Notification GetNotification(int id);
         Notification CreateNotification(Notification notification);
+        List<Notification> CreateNotification(List<Notification> notifications);
         void EditNotification(Notification notification);
         void RemoveNotification(int id);
         void RemoveNotification(Notification notification);
@@ -36,6 +37,11 @@ namespace RCM.Service
             notification.CreatedDate = DateTime.Now;
             notification.IsDeleted = false;
             return _notificationRepository.Add(notification);
+        }
+
+        public List<Notification> CreateNotification(List<Notification> notifications)
+        {
+            return _notificationRepository.Add(notifications);
         }
 
         public void EditNotification(Notification notification)

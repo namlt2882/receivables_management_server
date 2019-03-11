@@ -53,15 +53,35 @@ namespace RCM.Identity
                 UserName = userNameManager,
             };
             //Ensure you have these values in your appsettings.json file
-            var _userManager = await UserManager.FindByNameAsync(userNameManager);
+            var _manager = await UserManager.FindByNameAsync(userNameManager);
 
-            if (_userManager == null)
+            if (_manager == null)
             {
-                var createSuperAdmin = await UserManager.CreateAsync(manager, "zaq@123");
-                if (createSuperAdmin.Succeeded)
+                var createUser = await UserManager.CreateAsync(manager, "zaq@123");
+                if (createUser.Succeeded)
                 {
                     //here we tie the new user to the role
                     await UserManager.AddToRoleAsync(manager, "Manager");
+                }
+            }
+            string userNameCollector = "collector";
+
+            var collector = new User
+            {
+                UserName = userNameCollector,
+                FirstName = "Thong",
+                LastName = "Vo"
+            };
+            //Ensure you have these values in your appsettings.json file
+            var _collector = await UserManager.FindByNameAsync(userNameCollector);
+
+            if (_collector == null)
+            {
+                var createUser = await UserManager.CreateAsync(collector, "zaq@123");
+                if (createUser.Succeeded)
+                {
+                    //here we tie the new user to the _userCollector
+                    await UserManager.AddToRoleAsync(collector, "Manager");
                 }
             }
         }

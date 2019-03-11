@@ -8,7 +8,7 @@ namespace RCM.ViewModels
     public class NotificationVM
     {
         public int Id { get; set; }
-        public String Type { get; set; }
+        public int Type { get; set; }
         public string Title { get; set; }
         public string Body { get; set; }
         public string NData { get; set; }
@@ -17,7 +17,7 @@ namespace RCM.ViewModels
     }
     public class NotificationCM
     {
-        public String Type { get; set; }
+        public int Type { get; set; }
         public string Title { get; set; }
         public string Body { get; set; }
         public object NData { get; set; }
