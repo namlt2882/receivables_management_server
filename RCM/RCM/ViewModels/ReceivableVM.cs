@@ -50,6 +50,7 @@ namespace RCM.ViewModels
         public int DebtorId { get; set; }
         public int ProgressPercent { get; set; }
         public bool HaveLateAction { get; set; }
+        public bool IsConfirmed { get; set; }
 
     }
 

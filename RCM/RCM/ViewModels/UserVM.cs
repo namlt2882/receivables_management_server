@@ -29,6 +29,7 @@ namespace RCM.ViewModels
     public class UserLM
     {
         public string Id { get; set; }
+        public string Username { get; set; }
         public bool IsBanned { get; set; }
         public int NumberOfAssignedReceivables { get; set; }
     }

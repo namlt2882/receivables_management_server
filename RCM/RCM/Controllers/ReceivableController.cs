@@ -14,7 +14,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using RCM.NotificationUtility;
 namespace RCM.Controllers
 {
     [Route("api/[controller]")]
@@ -65,10 +64,12 @@ namespace RCM.Controllers
                 DebtorName = x.Contacts.Where(contact => contact.Type == Constant.CONTACT_DEBTOR_CODE).SingleOrDefault().Name,
                 DebtorId = x.Contacts.Where(contact => contact.Type == Constant.CONTACT_DEBTOR_CODE).SingleOrDefault().Id,
                 ProgressPercent = GetProgressReached(x),
-                HaveLateAction = HaveLateActions(x)
+                HaveLateAction = HaveLateActions(x),
+                IsConfirmed = x.IsConfirmed
             });
             return Ok(result);
         }
+
         [Authorize]
         [HttpGet("GetAssignedReceivable")]
         public async Task<IActionResult> GetAssignedReceivableAsync()
@@ -116,7 +117,8 @@ namespace RCM.Controllers
                 DebtorName = x.Contacts.Where(contact => contact.Type == Constant.CONTACT_DEBTOR_CODE).SingleOrDefault().Name,
                 DebtorId = x.Contacts.Where(contact => contact.Type == Constant.CONTACT_DEBTOR_CODE).SingleOrDefault().Id,
                 ProgressPercent = GetProgressReached(x),
-                HaveLateAction = HaveLateActions(x)
+                HaveLateAction = HaveLateActions(x),
+                IsConfirmed = x.IsConfirmed
             });
 
             if (rawList.Any())
@@ -161,8 +163,8 @@ namespace RCM.Controllers
             return Ok(new { ClosedTime = receivable.ClosedDay, DebtAmount = receivable.DebtAmount, Status = receivable.CollectionProgress.Status });
         }
 
-        [HttpPut("MarkReceivableAsFinished")]
-        public IActionResult MarkReceivableAsFinished([FromBody] ReceivableCloseModel receivableCM)
+        [HttpPut("Confirm")]
+        public IActionResult MarkReceivableAsFinished([FromBody] ReceivableOpenModel receivableCM)
         {
             if (!ModelState.IsValid)
             {
@@ -176,11 +178,18 @@ namespace RCM.Controllers
                 return NotFound();
             }
 
-            receivable.CollectionProgress.Status = Constant.COLLECTION_STATUS_WAIT_CODE;
-            _receivableService.CloseReceivable(receivable);
-            _receivableService.SaveReceivable();
+            if (receivable.CollectionProgress.Status == Constant.COLLECTION_STATUS_CANCEL_CODE || receivable.CollectionProgress.Status == Constant.COLLECTION_STATUS_CLOSED_CODE)
+            {
+                receivable.IsConfirmed = true;
+                _receivableService.CloseReceivable(receivable);
+                _receivableService.SaveReceivable();
+            }
+            else
+            {
+                return BadRequest(new { Message = "Receivable is not closed or canceled so cannot be confirmed." });
+            }
 
-            return Ok(new { ClosedTime = receivable.ClosedDay, DebtAmount = receivable.DebtAmount, Status = receivable.CollectionProgress.Status });
+            return Ok(new { ClosedTime = receivable.ClosedDay, DebtAmount = receivable.DebtAmount, Status = receivable.CollectionProgress.Status, IsConfirmed = receivable.IsConfirmed });
         }
 
         [HttpGet("{id}")]
@@ -248,9 +257,6 @@ namespace RCM.Controllers
 
             return BadRequest(new { Message = "Error when trying to import" });
         }
-
-
-
 
         private void SendNewReceivableNotification(List<Receivable> receivables)
         {
@@ -486,7 +492,7 @@ namespace RCM.Controllers
         }
 
         [HttpGet("GetReceivablesById")]
-        public IActionResult GetReceivablesById(int[] listOfId)
+        public IActionResult GetReceivablesById([FromQuery] int[] receivableId)
         {
             var result = _receivableService.GetReceivables().Select(x => new ReceivableLM()
             {
@@ -504,12 +510,13 @@ namespace RCM.Controllers
                 DebtorName = x.Contacts.Where(contact => contact.Type == Constant.CONTACT_DEBTOR_CODE).SingleOrDefault().Name,
                 DebtorId = x.Contacts.Where(contact => contact.Type == Constant.CONTACT_DEBTOR_CODE).SingleOrDefault().Id,
                 ProgressPercent = GetProgressReached(x),
-                HaveLateAction = HaveLateActions(x)
+                HaveLateAction = HaveLateActions(x),
+                IsConfirmed = x.IsConfirmed
             });
 
             result = result
                 .Where(x =>
-                       listOfId.Contains(x.Id));
+                       receivableId.Contains(x.Id));
 
             return Ok(result);
         }

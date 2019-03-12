@@ -51,12 +51,14 @@ namespace RCM.Controllers
                 .Select(x => new UserLM()
                 {
                     Id = x.Id,
+                    Username = x.UserName,
                     IsBanned = x.IsBanned,
                     NumberOfAssignedReceivables = x.AssignedCollectors
                                                     .Select(
                                                     assignedCollector => 
                                                     assignedCollector.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE 
-                                                    && assignedCollector.UserId == x.Id).Count()
+                                                    && assignedCollector.UserId == x.Id
+                                                    && assignedCollector.Receivable.CollectionProgress.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE).Count()
                 }).ToList();
             return Ok(result);
         }
