@@ -16,7 +16,7 @@ namespace RCM.JWT
         private string audience = "";
         private Dictionary<string, string> claimsDictionary = new Dictionary<string, string>();
         private List<Claim> claims = new List<Claim>();
-        private int expiryInMinutes = 5;
+        private int expiryInDays = 5;
 
         public JwtTokenBuilder AddSecurityKey(SecurityKey securityKey)
         {
@@ -58,9 +58,9 @@ namespace RCM.JWT
             this.claims = this.claims.Union(claims).ToList();
             return this;
         }
-        public JwtTokenBuilder AddExpiry(int expiryInMinutes)
+        public JwtTokenBuilder AddExpiry(int expiryInDays)
         {
-            this.expiryInMinutes = expiryInMinutes;
+            this.expiryInDays = expiryInDays;
             return this;
         }
 
@@ -80,7 +80,8 @@ namespace RCM.JWT
                               issuer: this.issuer,
                               audience: this.audience,
                               claims: claims,
-                              expires: DateTime.UtcNow.AddMinutes(expiryInMinutes),
+                              //expires: DateTime.UtcNow.AddDays(expiryInDays),
+                              expires: DateTime.Now.AddDays(expiryInDays),
                               signingCredentials: new SigningCredentials(
                                                         this.securityKey,
                                                         SecurityAlgorithms.HmacSha256));
