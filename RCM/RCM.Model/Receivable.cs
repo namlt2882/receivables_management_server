@@ -12,6 +12,7 @@ namespace RCM.Model
         public int? PayableDay { get; set; }
         public long PrepaidAmount { get; set; }
         public long DebtAmount { get; set; }
+        public bool IsConfirmed{ get; set; }
         public int CustomerId { get; set; }
         [ForeignKey("CustomerId")]
         public virtual Customer Customer { get; set; }
