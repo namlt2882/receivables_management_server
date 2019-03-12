@@ -117,7 +117,7 @@ namespace RCM
             //Receivable
             services.AddTransient<IReceivableRepository, ReceivableRepository>();
             services.AddTransient<IReceivableService, ReceivableService>();
-  
+
 
 
             //Mail 
@@ -200,10 +200,25 @@ namespace RCM
             #endregion
 
             // add cors
-            services.AddCors(options => options.AddPolicy("AllowAll", builder =>
-                builder.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin().AllowCredentials()
-            ));
-
+            services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAll", builder =>
+                {
+                    builder
+                    //.AllowAnyOrigin()
+                    .AllowAnyHeader()
+                    .AllowAnyMethod()
+                    .SetIsOriginAllowed((host) => true)
+                    .AllowCredentials();
+                });
+                options.AddPolicy("AllowFuck", builder =>
+                {
+                    builder.WithOrigins("http://202.78.227.91:8686")
+                    .AllowAnyMethod()
+                    .AllowCredentials()
+                    .AllowAnyHeader();
+                });
+            });
             // other
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2).AddJsonOptions(options =>
             {
@@ -213,7 +228,6 @@ namespace RCM
             services.AddSignalR(options =>
             {
                 options.EnableDetailedErrors = true;
-
             });
             // Register the Swagger services
             services.AddSwaggerDocument(c =>
@@ -270,14 +284,16 @@ namespace RCM
             app.UseSwaggerUi3();
 
             app.UseCors("AllowAll");
-            app.UseCors("CorsPolicy");
+            app.UseCors("AllowFuck");
+            //app.UseCors("Allow4500");
+            //app.UseCors("Allow36902");
+            //app.UseCors("CorsPolicy");
             app.UseHttpsRedirection();
             app.UseSignalR(routes =>
             {
                 routes.MapHub<CenterHub>("/centerHub");
-
-
             });
+
             app.UseMvc(routes =>
             {
                 routes.MapRoute(

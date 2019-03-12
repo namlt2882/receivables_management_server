@@ -302,13 +302,20 @@ namespace RCM.Controllers
             return Ok();
         }
     }
-    class UserNotification
+    class UserNotification : BaseNotification
     {
-        public string UserId { get; set; }
-
         public List<int> ReceivableList { get; set; }
     }
-    class NewReceivable
+    class BaseNotification
+    {
+        public string UserId { get; set; }
+    }
+    class NewReceivable : BaseNotification
+    {
+        public int ReceivableId { get; set; }
+    }
+
+    class CloseReceivable : BaseNotification
     {
         public int ReceivableId { get; set; }
     }

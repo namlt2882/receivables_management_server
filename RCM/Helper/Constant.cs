@@ -79,7 +79,8 @@
         public const string NOTIFICATION_TYPE_NEW_RECEIVABLE = "New Receivable";
         public const int NOTIFICATION_TYPE_NEW_RECEIVABLE_CODE = 11;
 
-
+        public const string NOTIFICATION_TYPE_CLOSE_RECEIVABLE = "Close Receivable";
+        public const int NOTIFICATION_TYPE_CLOSE_RECEIVABLE_CODE = 12;
     }
 
 }

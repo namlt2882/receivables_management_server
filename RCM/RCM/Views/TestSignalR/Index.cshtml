@@ -27,7 +27,7 @@
 
         //var connection = new signalR.HubConnectionBuilder().withUrl("/centerHub").build();
         var connection = new signalR.HubConnectionBuilder()
-            .withUrl("/centerHub?access_token="+token)
+            .withUrl("http://202.78.227.91:6868/centerHub?access_token="+token)
             .build();
 
         //Disable send button until connection is established

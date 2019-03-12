@@ -47,5 +47,33 @@ namespace RCM.NotificationUtility
                             .SendAsync("Notify", JsonConvert.SerializeObject(notification.Adapt<NotificationVM>()));
             });
         }
+
+        public static void SendNotificationToCurrentMobileClient(Notification notification, IFirebaseTokenService _firebaseTokenService)
+        {
+
+            _firebaseTokenService.GetFirebaseTokens(_ => _.UserId == notification.UserId).ToList().ForEach(async ft =>
+            {
+                await SendFirebaseNotification.SendNotificationToMobileAsync(new FirebaseNotification()
+                {
+                    to = ft.Token,
+                    notification = new NotificationObject()
+                    {
+                        title = notification.Title,
+                        body = notification.Body,
+                    },
+                    data = new Dictionary<string, string>()
+                    {
+                            { "ReceivableList", notification.NData }
+                    }
+                });
+            });
+        }
+
+        public static async Task SendNotificationToCurrentWebClient(Notification notification, IHubUserConnectionService _hubService, IHubContext<CenterHub> _hubContext)
+        {
+            var connections = _hubService.GetHubUserConnections(_ => _.UserId.Equals(notification.UserId));
+            await _hubContext.Clients.Clients(connections.Select(_ => _.Connection).ToList())
+                        .SendAsync("Notify", JsonConvert.SerializeObject(notification.Adapt<NotificationVM>()));
+        }
     }
 }

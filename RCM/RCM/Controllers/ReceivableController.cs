@@ -219,7 +219,7 @@ namespace RCM.Controllers
                 }
 
                 var importedReceivables = _receivableService.GetReceivables().OrderByDescending(x => x.Id).Take(receivablesDBM.Count());
-                SendNotification(importedReceivables.ToList());
+                SendNewReceivableNotification(importedReceivables.ToList());
 
                 return Ok(importedReceivables);
             }
@@ -227,14 +227,15 @@ namespace RCM.Controllers
             return BadRequest(new { Message = "Error when trying to import" });
         }
 
-        private void SendNotification(List<Receivable> receivables)
+
+
+
+        private void SendNewReceivableNotification(List<Receivable> receivables)
         {
 
-            #region Create Notification
-
-
+            #region Create New Receivable Notification
             List<UserNotification> userNotifications = new List<UserNotification>();
-            //Get notify user
+            //Get user need to notify
             _assignedCollectorService.GetAssignedCollectors().ToList().ForEach(_ =>
             {
                 receivables.ForEach(receivable =>
@@ -257,7 +258,7 @@ namespace RCM.Controllers
                     }
                 });
             });
-            //Create New Notification
+            //Create New Receivable Notification
             List<Notification> notifications = new List<Notification>();
             userNotifications.ForEach(_ =>
             {
@@ -276,10 +277,19 @@ namespace RCM.Controllers
             _notificationService.CreateNotification(notifications);
             _notificationService.SaveNotification();
             #endregion
-
             //Send
-            RCM.NotificationUtility.NotificationUtility.SendNotificationToCurrentMobileClient(notifications, _firebaseTokenService);
-            RCM.NotificationUtility.NotificationUtility.SendNotificationToCurrentWebClient(notifications, _hubService, _hubContext);
+            SendNotificationToClient(notifications);
+        }
+
+        private void SendNotificationToClient(List<Notification> notifications)
+        {
+            NotificationUtility.NotificationUtility.SendNotificationToCurrentMobileClient(notifications, _firebaseTokenService);
+            NotificationUtility.NotificationUtility.SendNotificationToCurrentWebClient(notifications, _hubService, _hubContext);
+        }
+        private async Task SendNotificationToClient(Notification notification)
+        {
+            NotificationUtility.NotificationUtility.SendNotificationToCurrentMobileClient(notification, _firebaseTokenService);
+            await NotificationUtility.NotificationUtility.SendNotificationToCurrentWebClient(notification, _hubService, _hubContext);
         }
 
         [HttpPost("ChangeAsignedCollector")]
@@ -337,7 +347,7 @@ namespace RCM.Controllers
         }
 
         [HttpPut]
-        public IActionResult UpdateReceivable([FromBody] ReceivableUM receivableIM)
+        public async Task<IActionResult> UpdateReceivableAsync([FromBody] ReceivableUM receivableIM)
         {
             if (!ModelState.IsValid)
             {
@@ -349,19 +359,51 @@ namespace RCM.Controllers
             {
                 receivable.DebtAmount = receivableIM.DebtAmount;
                 receivable.PrepaidAmount = receivableIM.PrepaidAmount;
+                bool closed = false;
                 if (receivable.DebtAmount == receivable.PrepaidAmount)
                 {
                     _receivableService.CloseReceivable(receivable);
+                    closed = true;
                 }
                 else
                 {
                     _receivableService.EditReceivable(receivable);
                 }
                 _receivableService.SaveReceivable();
+                if (closed)
+                    await SendCloseReceivableNotification(receivable);
                 return Ok();
             }
             return NotFound();
         }
+
+        private async Task SendCloseReceivableNotification(Receivable receivable)
+        {
+            #region Create New Receivable Notification
+            CloseReceivable userNotification = new CloseReceivable()
+            {
+                ReceivableId = receivable.Id,
+                UserId = _assignedCollectorService.GetAssignedCollectors(_ => _.ReceivableId == receivable.Id).Last().UserId
+            };
+            //Create New Receivable Notification
+            Notification notification = new Notification()
+            {
+                Title = Constant.NOTIFICATION_TYPE_CLOSE_RECEIVABLE,
+                Type = Constant.NOTIFICATION_TYPE_CLOSE_RECEIVABLE_CODE,
+                Body = $"You assgined receivable is closed!",
+                UserId = userNotification.UserId,
+                NData = JsonConvert.SerializeObject(userNotification),
+                IsSeen = false,
+                CreatedDate = DateTime.Now,
+                IsDeleted = false,
+            };
+            _notificationService.CreateNotification(notification);
+            _notificationService.SaveNotification();
+            #endregion
+            //Send
+            await SendNotificationToClient(notification);
+        }
+
 
         private ReceivableDM GetReceivable(int id)
         {
