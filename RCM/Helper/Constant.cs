@@ -34,7 +34,7 @@
 
         //Action is in order to be executed.
         //Stage is in order to be executed.
-        //Collection Progress is in order to be done.
+        //Collection Progress is in order to be collected.
         public const string COLLECTION_STATUS_COLLECTION = "Collection";
         public const int COLLECTION_STATUS_COLLECTION_CODE = 1;
 
@@ -55,6 +55,10 @@
         //Collection progress is closed, debt has been recovered.
         public const string COLLECTION_STATUS_CLOSED = "Closed";
         public const int COLLECTION_STATUS_CLOSED_CODE = 5;
+
+        //Collection progress is finised.
+        public const string COLLECTION_STATUS_FINISHED = "Finished";
+        public const int COLLECTION_STATUS_FINISHED_CODE = 6;
 
         public const string ASSIGNED_STATUS_ACTIVE = "Active";
         public const int ASSIGNED_STATUS_ACTIVE_CODE = 1;

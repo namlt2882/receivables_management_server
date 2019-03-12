@@ -130,6 +130,28 @@ namespace RCM.Controllers
             return Ok(new { ClosedTime = receivable.ClosedDay, DebtAmount = receivable.DebtAmount, Status = receivable.CollectionProgress.Status });
         }
 
+        [HttpPut("MarkReceivableAsFinished")]
+        public IActionResult MarkReceivableAsFinished([FromBody] ReceivableCloseModel receivableCM)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var receivable = _receivableService.GetReceivable(receivableCM.Id);
+
+            if (receivable == null)
+            {
+                return NotFound();
+            }
+
+            receivable.CollectionProgress.Status = Constant.COLLECTION_STATUS_WAIT_CODE;
+            _receivableService.CloseReceivable(receivable);
+            _receivableService.SaveReceivable();
+
+            return Ok(new { ClosedTime = receivable.ClosedDay, DebtAmount = receivable.DebtAmount, Status = receivable.CollectionProgress.Status });
+        }
+
         [HttpGet("{id}")]
         public IActionResult GetReceivableDetail(int id)
         {
@@ -321,9 +343,10 @@ namespace RCM.Controllers
                             _receivableService.SaveReceivable();
                         }
                         //End if contacts.Any()
-                    } else
+                    }
+                    else
                     {
-                        return Ok(new { Message = "One or more receivable is in collection progress and cannot be change."});
+                        return Ok(new { Message = "One or more receivable is in collection progress and cannot be change." });
                     }
                     //End if receivable.CollectionProgress.Status != Constant.COLLECTION_STATUS_COLLECTION_CODE
                 }
@@ -331,6 +354,35 @@ namespace RCM.Controllers
             }
 
             return Ok();
+        }
+
+        [HttpGet("GetReceivablesById")]
+        public IActionResult GetReceivablesById(int[] listOfId)
+        {
+            var result = _receivableService.GetReceivables().Select(x => new ReceivableLM()
+            {
+                Id = x.Id,
+                ClosedDay = x.ClosedDay,
+                CustomerId = x.CustomerId,
+                DebtAmount = x.DebtAmount,
+                LocationId = x.LocationId,
+                PayableDay = x.PayableDay != null ? x.PayableDay : null,
+                PrepaidAmount = x.PrepaidAmount,
+                CollectionProgressStatus = x.CollectionProgress.Status,
+                CollectionProgressId = x.CollectionProgress.Id,
+                AssignedCollectorId = x.AssignedCollectors.Where(assignedCollector => assignedCollector.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE).FirstOrDefault().UserId,
+                CustomerName = x.Customer.Name,
+                DebtorName = x.Contacts.Where(contact => contact.Type == Constant.CONTACT_DEBTOR_CODE).SingleOrDefault().Name,
+                DebtorId = x.Contacts.Where(contact => contact.Type == Constant.CONTACT_DEBTOR_CODE).SingleOrDefault().Id,
+                ProgressPercent = GetProgressReached(x),
+                HaveLateAction = HaveLateActions(x)
+            });
+
+            result = result
+                .Where(x =>
+                       listOfId.Contains(x.Id));
+
+            return Ok(result);
         }
 
         private ReceivableDM GetReceivable(int id)
