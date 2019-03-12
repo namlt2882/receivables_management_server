@@ -29,6 +29,7 @@
         public const int ACTION_REPORT_CODE = 3;
 
         //Action is executed but response result is bad.
+        //Collection progress is closed and not collected.
         public const string COLLECTION_STATUS_CANCEL = "Cancel";
         public const int COLLECTION_STATUS_CANCEL_CODE = 0;
 
@@ -48,7 +49,6 @@
         public const string COLLECTION_STATUS_LATE = "Late";
         public const int COLLECTION_STATUS_LATE_CODE = 3;
 
-
         //Collection progress is still pending for assgined.
         public const string COLLECTION_STATUS_WAIT = "Wait";
         public const int COLLECTION_STATUS_WAIT_CODE = 4;
@@ -56,10 +56,6 @@
         //Collection progress is closed, debt has been recovered.
         public const string COLLECTION_STATUS_CLOSED = "Closed";
         public const int COLLECTION_STATUS_CLOSED_CODE = 5;
-
-        //Collection progress is finised.
-        public const string COLLECTION_STATUS_FINISHED = "Finished";
-        public const int COLLECTION_STATUS_FINISHED_CODE = 6;
 
         public const string ASSIGNED_STATUS_ACTIVE = "Active";
         public const int ASSIGNED_STATUS_ACTIVE_CODE = 1;
