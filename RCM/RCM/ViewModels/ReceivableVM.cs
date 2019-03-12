@@ -63,4 +63,12 @@ namespace RCM.ViewModels
     {
         public int Id { get; set; }
     }
+
+    public class ReceivableAssignModel
+    {
+        public int Id { get; set; }
+        public string CollectorId { get; set; }
+        public int PayableDay { get; set; }
+
+    }
 }
