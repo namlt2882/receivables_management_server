@@ -161,6 +161,28 @@ namespace RCM.Controllers
             return Ok(new { ClosedTime = receivable.ClosedDay, DebtAmount = receivable.DebtAmount, Status = receivable.CollectionProgress.Status });
         }
 
+        [HttpPut("MarkReceivableAsFinished")]
+        public IActionResult MarkReceivableAsFinished([FromBody] ReceivableCloseModel receivableCM)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var receivable = _receivableService.GetReceivable(receivableCM.Id);
+
+            if (receivable == null)
+            {
+                return NotFound();
+            }
+
+            receivable.CollectionProgress.Status = Constant.COLLECTION_STATUS_WAIT_CODE;
+            _receivableService.CloseReceivable(receivable);
+            _receivableService.SaveReceivable();
+
+            return Ok(new { ClosedTime = receivable.ClosedDay, DebtAmount = receivable.DebtAmount, Status = receivable.CollectionProgress.Status });
+        }
+
         [HttpGet("{id}")]
         public IActionResult GetReceivableDetail(int id)
         {
@@ -404,6 +426,93 @@ namespace RCM.Controllers
             await SendNotificationToClient(notification);
         }
 
+        [HttpPut("AssignReceivable")]
+        public IActionResult AssignReceivable([FromBody] IEnumerable<ReceivableAssignModel> receivableAMs)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            foreach (var receivableAM in receivableAMs)
+            {
+                var receivable = _receivableService.GetReceivable(receivableAM.Id);
+                if (receivable != null)
+                {
+                    if (receivable.CollectionProgress.Status != Constant.COLLECTION_STATUS_COLLECTION_CODE)
+                    {
+
+                        receivable.CollectionProgress.Status = Constant.COLLECTION_STATUS_COLLECTION_CODE;
+                        receivable.AssignedCollectors.Add(TransformAssignedCollectorToDBM(receivableAM.CollectorId));
+
+
+                        //Convert contact to contactIM
+                        var contacts = new List<ContactIM>();
+                        foreach (var contact in receivable.Contacts)
+                        {
+                            contacts.Add(new ContactIM()
+                            {
+                                Address = contact.Address,
+                                IdNo = contact.IdNo,
+                                Name = contact.Name,
+                                Phone = contact.Phone,
+                                Type = contact.Type,
+                            });
+                        }
+
+                        if (contacts.Any())
+                        {
+                            var stages = TransformProgressStageToDBM(receivable.CollectionProgress.Profile.ProfileStages, receivableAM.PayableDay, GetDebtorName(contacts), receivable.DebtAmount);
+                            if (stages.Any())
+                            {
+                                receivable.CollectionProgress.ProgressStages = stages.ToList();
+                            }
+
+                            _receivableService.EditReceivable(receivable);
+                            _receivableService.SaveReceivable();
+                        }
+                        //End if contacts.Any()
+                    }
+                    else
+                    {
+                        return Ok(new { Message = "One or more receivable is in collection progress and cannot be change." });
+                    }
+                    //End if receivable.CollectionProgress.Status != Constant.COLLECTION_STATUS_COLLECTION_CODE
+                }
+                //End if receivable != null
+            }
+
+            return Ok();
+        }
+
+        [HttpGet("GetReceivablesById")]
+        public IActionResult GetReceivablesById(int[] listOfId)
+        {
+            var result = _receivableService.GetReceivables().Select(x => new ReceivableLM()
+            {
+                Id = x.Id,
+                ClosedDay = x.ClosedDay,
+                CustomerId = x.CustomerId,
+                DebtAmount = x.DebtAmount,
+                LocationId = x.LocationId,
+                PayableDay = x.PayableDay != null ? x.PayableDay : null,
+                PrepaidAmount = x.PrepaidAmount,
+                CollectionProgressStatus = x.CollectionProgress.Status,
+                CollectionProgressId = x.CollectionProgress.Id,
+                AssignedCollectorId = x.AssignedCollectors.Where(assignedCollector => assignedCollector.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE).FirstOrDefault().UserId,
+                CustomerName = x.Customer.Name,
+                DebtorName = x.Contacts.Where(contact => contact.Type == Constant.CONTACT_DEBTOR_CODE).SingleOrDefault().Name,
+                DebtorId = x.Contacts.Where(contact => contact.Type == Constant.CONTACT_DEBTOR_CODE).SingleOrDefault().Id,
+                ProgressPercent = GetProgressReached(x),
+                HaveLateAction = HaveLateActions(x)
+            });
+
+            result = result
+                .Where(x =>
+                       listOfId.Contains(x.Id));
+
+            return Ok(result);
+        }
 
         private ReceivableDM GetReceivable(int id)
         {
@@ -590,7 +699,6 @@ namespace RCM.Controllers
             return -1;
         }
 
-
         //Import to receivable to Database
         //===============================
         private IEnumerable<Receivable> TransformReceivablesToDBM(IEnumerable<ReceivableIM> receivableIMs)
@@ -607,21 +715,40 @@ namespace RCM.Controllers
                     }
                     //End if !contacts.Any()
 
-                    var assignedCollector = TransformAssignedCollectorToDBM(receivable.CollectorId);
-                    if (assignedCollector == null)
-                    {
-                        return null;
-                    }
-                    //End if !assignedCollector.Any()
                     var assignedCollectors = new List<AssignedCollector>();
-                    assignedCollectors.Add(assignedCollector);
+                    CollectionProgress collectionProgress = null;
 
-                    var collectionProgress = TransformCollectionProgressToDBM(receivable.ProfileId, (int)receivable.PayableDay, receivable.DebtAmount, GetDebtorName(receivable.Contacts));
-                    if (collectionProgress == null)
+
+                    //Receivable is not assigned to Collector
+                    if (receivable.CollectorId != null)
                     {
-                        return null;
+                        //Generate assigned collector
+                        var assignedCollector = TransformAssignedCollectorToDBM(receivable.CollectorId);
+                        if (assignedCollector == null)
+                        {
+                            return null;
+                        }
+                        //End if !assignedCollector.Any()
+                        assignedCollectors.Add(assignedCollector);
+
+                        //Generate collectionProgress with full stage and action.
+                        collectionProgress = TransformCollectionProgressToDBM(receivable.ProfileId, (int)receivable.PayableDay, receivable.DebtAmount, GetDebtorName(receivable.Contacts));
+                        if (collectionProgress == null)
+                        {
+                            return null;
+                        }
+                        //End if !collectionProgress.Any()
                     }
-                    //End if !collectionProgress.Any()
+                    else
+                    //Receivable is assigned to Collector
+                    {
+                        collectionProgress = TransfromCollectionProgressToDBMWithoutStage(receivable.ProfileId);
+                        if (collectionProgress == null)
+                        {
+                            return null;
+                        }
+                    }
+                    //End if receivable.CollectorId != null
 
                     var receivableDBM = new Receivable()
                     {
@@ -715,6 +842,24 @@ namespace RCM.Controllers
                 //end if Profile != null
             }
             //end if receivable != null
+            return null;
+        }
+
+        private CollectionProgress TransfromCollectionProgressToDBMWithoutStage(int profileId)
+        {
+            var profile = GetProfileFromDB(profileId);
+            if (profile != null)
+            {
+                var collectionProgress = new CollectionProgress()
+                {
+                    Profile = profile,
+                    Status = Constant.COLLECTION_STATUS_WAIT_CODE,
+                    IsDeleted = false,
+                    CreatedDate = DateTime.Now,
+                    ProgressStages = null
+                };
+                return collectionProgress;
+            }
             return null;
         }
 

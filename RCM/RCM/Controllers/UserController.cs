@@ -1,13 +1,13 @@
-﻿using System;
+﻿using Mapster;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using RCM.Helper;
+using RCM.Model;
+using RCM.ViewModels;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Mapster;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
-using RCM.Model;
-using RCM.ViewModels;
 
 namespace RCM.Controllers
 {
@@ -45,12 +45,19 @@ namespace RCM.Controllers
         [HttpGet("GetCollector")]
         public async Task<IActionResult> GetCollectorAsync()
         {
-            List<UserVM> result = new List<UserVM>();
+            List<UserLM> result = new List<UserLM>();
             var data = await _userManager.GetUsersInRoleAsync("Collector");
-            foreach (var item in data)
-            {
-                result.Add(item.Adapt<UserVM>());
-            }
+            result = data
+                .Select(x => new UserLM()
+                {
+                    Id = x.Id,
+                    IsBanned = x.IsBanned,
+                    NumberOfAssignedReceivables = x.AssignedCollectors
+                                                    .Select(
+                                                    assignedCollector => 
+                                                    assignedCollector.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE 
+                                                    && assignedCollector.UserId == x.Id).Count()
+                }).ToList();
             return Ok(result);
         }
 
