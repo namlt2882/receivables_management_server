@@ -121,25 +121,25 @@ namespace RCM.Controllers
 
         private void SendNotificationToCurrentMobileClient(List<Notification> notifications)
         {
-            notifications.ForEach(async notification =>
-            {
-                _firebaseTokenService.GetFirebaseTokens(_ => _.UserId == notification.UserId).ToList().ForEach(async ft =>
-                {
-                    await SendFirebaseNotification.SendNotificationToMobileAsync(new FirebaseNotification()
-                    {
-                        to = ft.Token,
-                        notification = new NotificationObject()
-                        {
-                            title = notification.Title,
-                            body = notification.Body,
-                        },
-                        data = new Dictionary<string, string>()
-                        {
+            notifications.ForEach(notification =>
+           {
+               _firebaseTokenService.GetFirebaseTokens(_ => _.UserId == notification.UserId).ToList().ForEach(async ft =>
+               {
+                   await SendFirebaseNotification.SendNotificationToMobileAsync(new FirebaseNotification()
+                   {
+                       to = ft.Token,
+                       notification = new NotificationObject()
+                       {
+                           title = notification.Title,
+                           body = notification.Body,
+                       },
+                       data = new Dictionary<string, string>()
+                       {
                             { "ReceivableList", notification.NData }
-                        }
-                    });
-                });
-            });
+                       }
+                   });
+               });
+           });
         }
 
         private void SendNotificationToCurrentWebClient(List<Notification> notifications)
@@ -247,7 +247,7 @@ namespace RCM.Controllers
         {
             var user = await _userManager.FindByNameAsync(User.Identity.Name);
             if (user == null) return BadRequest();
-            var data = _notificationService.GetNotifications(_ => _.UserId.Equals(user.Id)).OrderByDescending(_ => _.CreatedDate);
+            var data = _notificationService.GetNotifications(_ => _.UserId.Equals(user.Id) && _.IsDeleted == false).OrderByDescending(_ => _.CreatedDate);
             List<NotificationVM> result = new List<NotificationVM>();
             foreach (var item in data)
             {

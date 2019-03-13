@@ -531,6 +531,7 @@ namespace RCM.Controllers
                     DebtAmount = receivableDBM.DebtAmount,
                     PayableDay = receivableDBM.PayableDay,
                     PrepaidAmount = receivableDBM.PrepaidAmount,
+                    IsConfirmed = receivableDBM.IsConfirmed,
                     CustomerId = receivableDBM.CustomerId,
                     LocationId = receivableDBM.LocationId,
                     ClosedDay = receivableDBM.ClosedDay,

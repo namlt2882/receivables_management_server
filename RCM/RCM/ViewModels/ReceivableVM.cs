@@ -8,6 +8,7 @@ namespace RCM.ViewModels
         public int Id { get; set; }
         public int? ClosedDay { get; set; }
         public int? PayableDay { get; set; }
+        public bool IsConfirmed { get; set; }
         public IEnumerable<ContactVM> Contacts { get; set; }
     }
 
