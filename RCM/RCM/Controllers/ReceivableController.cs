@@ -59,7 +59,7 @@ namespace RCM.Controllers
                 PrepaidAmount = x.PrepaidAmount,
                 CollectionProgressStatus = x.CollectionProgress.Status,
                 CollectionProgressId = x.CollectionProgress.Id,
-                AssignedCollectorId = x.AssignedCollectors.Where(assignedCollector => assignedCollector.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE).FirstOrDefault().UserId,
+                AssignedCollectorId = x.AssignedCollectors.FirstOrDefault(assignedCollector => assignedCollector.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE) != null ? x.AssignedCollectors.FirstOrDefault(assignedCollector => assignedCollector.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE).UserId : "",
                 CustomerName = x.Customer.Name,
                 DebtorName = x.Contacts.Where(contact => contact.Type == Constant.CONTACT_DEBTOR_CODE).SingleOrDefault().Name,
                 DebtorId = x.Contacts.Where(contact => contact.Type == Constant.CONTACT_DEBTOR_CODE).SingleOrDefault().Id,
@@ -112,7 +112,7 @@ namespace RCM.Controllers
                 PrepaidAmount = x.PrepaidAmount,
                 CollectionProgressStatus = x.CollectionProgress.Status,
                 CollectionProgressId = x.CollectionProgress.Id,
-                AssignedCollectorId = x.AssignedCollectors.Where(assignedCollector => assignedCollector.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE).FirstOrDefault().UserId,
+                AssignedCollectorId = x.AssignedCollectors.FirstOrDefault(assignedCollector => assignedCollector.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE) != null ? x.AssignedCollectors.FirstOrDefault(assignedCollector => assignedCollector.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE).UserId : "",
                 CustomerName = x.Customer.Name,
                 DebtorName = x.Contacts.Where(contact => contact.Type == Constant.CONTACT_DEBTOR_CODE).SingleOrDefault().Name,
                 DebtorId = x.Contacts.Where(contact => contact.Type == Constant.CONTACT_DEBTOR_CODE).SingleOrDefault().Id,
@@ -494,7 +494,8 @@ namespace RCM.Controllers
         [HttpGet("GetReceivablesById")]
         public IActionResult GetReceivablesById([FromQuery] int[] receivableId)
         {
-            var result = _receivableService.GetReceivables().Select(x => new ReceivableLM()
+
+            var result = _receivableService.GetReceivables(_ => receivableId.Contains(_.Id)).Select(x => new ReceivableLM()
             {
                 Id = x.Id,
                 ClosedDay = x.ClosedDay,
@@ -505,7 +506,7 @@ namespace RCM.Controllers
                 PrepaidAmount = x.PrepaidAmount,
                 CollectionProgressStatus = x.CollectionProgress.Status,
                 CollectionProgressId = x.CollectionProgress.Id,
-                AssignedCollectorId = x.AssignedCollectors.Where(assignedCollector => assignedCollector.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE).FirstOrDefault().UserId,
+                AssignedCollectorId = x.AssignedCollectors.FirstOrDefault(assignedCollector => assignedCollector.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE) != null ? "" : "",
                 CustomerName = x.Customer.Name,
                 DebtorName = x.Contacts.Where(contact => contact.Type == Constant.CONTACT_DEBTOR_CODE).SingleOrDefault().Name,
                 DebtorId = x.Contacts.Where(contact => contact.Type == Constant.CONTACT_DEBTOR_CODE).SingleOrDefault().Id,
@@ -514,11 +515,9 @@ namespace RCM.Controllers
                 IsConfirmed = x.IsConfirmed
             });
 
-            result = result
-                .Where(x =>
-                       receivableId.Contains(x.Id));
-
             return Ok(result);
+
+
         }
 
         private ReceivableDM GetReceivable(int id)
