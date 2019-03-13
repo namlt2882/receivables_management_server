@@ -58,7 +58,9 @@ namespace RCM.Controllers
                                                     assignedCollector => 
                                                     assignedCollector.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE 
                                                     && assignedCollector.UserId == x.Id
-                                                    && assignedCollector.Receivable.CollectionProgress.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE).Count()
+                                                    && assignedCollector.Receivable.CollectionProgress.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE).Count(),
+                    FirstName = x.FirstName,
+                    LastName = x.LastName
                 }).ToList();
             return Ok(result);
         }

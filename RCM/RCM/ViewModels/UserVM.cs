@@ -32,5 +32,7 @@ namespace RCM.ViewModels
         public string Username { get; set; }
         public bool IsBanned { get; set; }
         public int NumberOfAssignedReceivables { get; set; }
+        public string FirstName { get; set; }
+        public string LastName { get; set; }
     }
 }
