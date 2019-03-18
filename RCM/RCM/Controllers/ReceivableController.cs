@@ -70,18 +70,77 @@ namespace RCM.Controllers
             return Ok(result);
         }
 
+        //[Authorize]
+        //[HttpGet("GetAssignedReceivables")]
+        //public async Task<IActionResult> GetAssignedReceivablesAsync()
+        //{
+        //    var result = new List<ReceivableMobileLM>();
+        //    var user = await _userManager.FindByNameAsync(User.Identity.Name);
+        //    _assignedCollectorService.GetAssignedCollectors(_ => _.UserId == user.Id && _.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE).ToList().ForEach(_ =>
+        //    {
+        //        var model = _receivableService.GetReceivable(_.ReceivableId);
+        //        var receivable = model.Adapt<ReceivableMobileLM>();
+        //        receivable.DebtorName = model.Contacts.Where(contact => contact.Type == Constant.CONTACT_DEBTOR_CODE).SingleOrDefault().Name;
+        //        receivable.DebtorId = model.Contacts.Where(contact => contact.Type == Constant.CONTACT_DEBTOR_CODE).SingleOrDefault().Id;
+        //        receivable.ProgressPercent = GetProgressReached(model);
+        //        receivable.AssignDate = model.AssignedCollectors.SingleOrDefault(ac => ac.ReceivableId == _.ReceivableId && ac.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE).CreatedDate;
+        //        result.Add(receivable);
+        //    });
+        //    return Ok(result);
+        //}
+
+
+        #region Mobile
         [Authorize]
-        [HttpGet("GetAssignedReceivable")]
-        public async Task<IActionResult> GetAssignedReceivableAsync()
+        [HttpPost("GetAssignedReceivables")]
+        public async Task<IActionResult> GetAssignedReceivablesAsync([FromBody]List<int> receivableIdList)
         {
-            var result = new List<ReceivableLM>();
+            var result = new List<ReceivableMobileLM>();
             var user = await _userManager.FindByNameAsync(User.Identity.Name);
-            _assignedCollectorService.GetAssignedCollectors(_ => _.UserId == user.Id && _.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE).ToList().ForEach(_ =>
+            var models = new List<AssignedCollector>();
+            //Get all or get by receivable list id
+            if (receivableIdList.Count > 0)
             {
-                result.Add(_receivableService.GetReceivable(_.ReceivableId).Adapt<ReceivableLM>());
+                models = _assignedCollectorService.GetAssignedCollectors(_ => _.UserId == user.Id && _.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE && receivableIdList.Contains(_.ReceivableId)).ToList();
+            }
+            else
+            {
+                models = _assignedCollectorService.GetAssignedCollectors(_ => _.UserId == user.Id && _.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE).ToList();
+            }
+            models.ForEach(_ =>
+            {
+                result.Add(ParseReceivableMobile(_receivableService.GetReceivable(_.ReceivableId)));
             });
             return Ok(result);
         }
+
+        [Authorize]
+        [HttpGet("GetAssignedReceivable/{receivableId}")]
+        public async Task<IActionResult> GetAssignedReceivableAsync(int receivableId)
+        {
+            var user = await _userManager.FindByNameAsync(User.Identity.Name);
+            var assignedCollector = _assignedCollectorService.GetAssignedCollector(_ => _.UserId == user.Id && _.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE && receivableId == _.ReceivableId);
+            var model = _receivableService.GetReceivable(assignedCollector.ReceivableId);
+            return Ok(ParseReceivableMobile(model));
+        }
+
+        private ReceivableMobileLM ParseReceivableMobile(Receivable model)
+        {
+            var receivable = model.Adapt<ReceivableMobileLM>();
+            receivable.CustomerName = model.Customer.Name;
+            receivable.DebtorName = model.Contacts.Where(contact => contact.Type == Constant.CONTACT_DEBTOR_CODE).SingleOrDefault().Name;
+            receivable.Contacts = GetReceivableContactsForDetailView(model.Contacts);
+            receivable.CollectionProgressStatus = model.CollectionProgress.Status;
+            receivable.CustomerName = model.Customer.Name;
+            receivable.DebtorName = model.Contacts.Where(contact => contact.Type == Constant.CONTACT_DEBTOR_CODE).SingleOrDefault().Name;
+            receivable.DebtorId = model.Contacts.Where(contact => contact.Type == Constant.CONTACT_DEBTOR_CODE).SingleOrDefault().Id;
+            receivable.IsConfirmed = model.IsConfirmed;
+            receivable.AssignDate = Utility.ConvertDatimeToInt(model.AssignedCollectors.SingleOrDefault(ac => ac.ReceivableId == receivable.Id && ac.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE).CreatedDate);
+            return receivable;
+        }
+        #endregion
+
+
 
         [HttpPut("OpenReceivable")]
         public IActionResult OpenReceivable([FromBody] ReceivableOpenModel receivableOM)
@@ -134,7 +193,7 @@ namespace RCM.Controllers
         }
 
         [HttpPut("CloseReceivable")]
-        public IActionResult CloseReceivable([FromBody] ReceivableCloseModel receivableCM)
+        public async Task<IActionResult> CloseReceivableAsync([FromBody] ReceivableCloseModel receivableCM)
         {
             if (!ModelState.IsValid)
             {
@@ -159,6 +218,7 @@ namespace RCM.Controllers
 
             _receivableService.CloseReceivable(receivable);
             _receivableService.SaveReceivable();
+            await SendManagerConfirmReceivableNotification(receivable);
 
             return Ok(new { ClosedTime = receivable.ClosedDay, DebtAmount = receivable.DebtAmount, Status = receivable.CollectionProgress.Status });
         }
@@ -294,7 +354,7 @@ namespace RCM.Controllers
                 {
                     Title = Constant.NOTIFICATION_TYPE_NEW_RECEIVABLE,
                     Type = Constant.NOTIFICATION_TYPE_NEW_RECEIVABLE_CODE,
-                    Body = $"You were assgined to {_.ReceivableList.Count} reiceivable",
+                    Body = $"You were assgined to {_.ReceivableList.Count}{JsonConvert.SerializeObject(_.ReceivableList)} reiceivable",
                     UserId = _.UserId,
                     NData = JsonConvert.SerializeObject(_.ReceivableList),
                     IsSeen = false,
@@ -309,11 +369,35 @@ namespace RCM.Controllers
             SendNotificationToClient(notifications);
         }
 
+
+        private async Task SendManagerConfirmReceivableNotification(Receivable receivable)
+        {
+            #region Create New Receivable Notification
+            var user = await _userManager.FindByNameAsync("manager");
+            //Create New Receivable Notification
+            Notification notification = new Notification()
+            {
+                Title = Constant.NOTIFICATION_TYPE_CLOSE_RECEIVABLE,
+                Type = Constant.NOTIFICATION_TYPE_CLOSE_RECEIVABLE_CODE,
+                Body = $"You have reiceivable-{receivable.Id} need to confirm!",
+                UserId = user.Id,
+                NData = JsonConvert.SerializeObject(receivable.Id),
+                IsSeen = false,
+                CreatedDate = DateTime.Now,
+                IsDeleted = false,
+            };
+            _notificationService.CreateNotification(notification);
+            _notificationService.SaveNotification();
+            #endregion
+            //Send
+            await SendNotificationToClient(notification);
+        }
         private void SendNotificationToClient(List<Notification> notifications)
         {
             NotificationUtility.NotificationUtility.SendNotificationToCurrentMobileClient(notifications, _firebaseTokenService);
             NotificationUtility.NotificationUtility.SendNotificationToCurrentWebClient(notifications, _hubService, _hubContext);
         }
+
         private async Task SendNotificationToClient(Notification notification)
         {
             NotificationUtility.NotificationUtility.SendNotificationToCurrentMobileClient(notification, _firebaseTokenService);
@@ -387,19 +471,19 @@ namespace RCM.Controllers
             {
                 receivable.DebtAmount = receivableIM.DebtAmount;
                 receivable.PrepaidAmount = receivableIM.PrepaidAmount;
-                bool closed = false;
+                //bool closed = false;
                 if (receivable.DebtAmount == receivable.PrepaidAmount)
                 {
                     _receivableService.CloseReceivable(receivable);
-                    closed = true;
+                    //closed = true;
                 }
                 else
                 {
                     _receivableService.EditReceivable(receivable);
                 }
                 _receivableService.SaveReceivable();
-                if (closed)
-                    await SendCloseReceivableNotification(receivable);
+                //if (closed)
+                //    await SendCloseReceivableNotification(receivable);
                 return Ok();
             }
             return NotFound();
@@ -447,11 +531,8 @@ namespace RCM.Controllers
                 {
                     if (receivable.CollectionProgress.Status != Constant.COLLECTION_STATUS_COLLECTION_CODE)
                     {
-
                         receivable.CollectionProgress.Status = Constant.COLLECTION_STATUS_COLLECTION_CODE;
                         receivable.AssignedCollectors.Add(TransformAssignedCollectorToDBM(receivableAM.CollectorId));
-
-
                         //Convert contact to contactIM
                         var contacts = new List<ContactIM>();
                         foreach (var contact in receivable.Contacts)
@@ -506,7 +587,7 @@ namespace RCM.Controllers
                 PrepaidAmount = x.PrepaidAmount,
                 CollectionProgressStatus = x.CollectionProgress.Status,
                 CollectionProgressId = x.CollectionProgress.Id,
-                AssignedCollectorId = x.AssignedCollectors.FirstOrDefault(assignedCollector => assignedCollector.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE) != null ? "" : "",
+                AssignedCollectorId = x.AssignedCollectors.FirstOrDefault(assignedCollector => assignedCollector.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE) != null ? x.AssignedCollectors.FirstOrDefault(assignedCollector => assignedCollector.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE).UserId : "",
                 CustomerName = x.Customer.Name,
                 DebtorName = x.Contacts.Where(contact => contact.Type == Constant.CONTACT_DEBTOR_CODE).SingleOrDefault().Name,
                 DebtorId = x.Contacts.Where(contact => contact.Type == Constant.CONTACT_DEBTOR_CODE).SingleOrDefault().Id,
@@ -537,7 +618,7 @@ namespace RCM.Controllers
                     ClosedDay = receivableDBM.ClosedDay,
                     Contacts = GetReceivableContactsForDetailView(receivableDBM.Contacts),
                     CollectionProgress = GetCollectionProgressForDetailView(receivableDBM.CollectionProgress),
-                    assignedCollector = GetAssignedCollectorForDetailView(receivableDBM.AssignedCollectors.Where(x => x.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE).FirstOrDefault())
+                    assignedCollector = receivableDBM.AssignedCollectors.FirstOrDefault(x => x.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE) != null ? GetAssignedCollectorForDetailView(receivableDBM.AssignedCollectors.FirstOrDefault(x => x.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE)) : null
                 };
                 return receivableVM;
 
