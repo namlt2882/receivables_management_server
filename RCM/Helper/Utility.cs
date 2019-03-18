@@ -26,10 +26,7 @@ namespace RCM.Helper
 
             return result;
         }
-        public static int ConvertDatimeToInt(DateTime dateTime)
-        {
-            return dateTime.Year * 10000 + dateTime.Month * 100 + dateTime.Day;
-        }
+
         //Ex Input: 19970214 to 14/02/1997.
         public static string ConvertIntToDateStringForView(int time)
         {
@@ -42,20 +39,6 @@ namespace RCM.Helper
             string result = tmp.Substring(6, 2) + "/" + tmp.Substring(4, 2) + "/" + tmp.Substring(0, 4);
             return result;
         }
-        
-        //Ex Input: 700 to 07:00 or 1700 to 17:00
-        public static TimeSpan ConvertIntToTimeSpan(int time)
-        {
-            string tmp = time.ToString();
-            
-
-            if (tmp.Length == 3)
-            {
-                tmp = "0" + tmp;
-            }
-            return new TimeSpan(int.Parse(tmp.Substring(0, 2)),int.Parse(tmp.Substring(2)),0);
-        }
-
 
         //Convert 19970214 to Datetime
         public static DateTime ConvertIntToDatetime(int time)

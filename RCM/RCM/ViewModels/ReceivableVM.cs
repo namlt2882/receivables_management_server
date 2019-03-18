@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace RCM.ViewModels
 {
@@ -56,22 +55,6 @@ namespace RCM.ViewModels
 
     }
 
-    public class ReceivableMobileLM
-    {
-        public int Id { get; set; }
-        public long PrepaidAmount { get; set; }
-        public long DebtAmount { get; set; }
-        public int? LocationId { get; set; }
-        public int CollectionProgressStatus { get; set; }
-        public int? PayableDay { get; set; }
-        public int? ClosedDay { get; set; }
-        public string CustomerName { get; set; }
-        public string DebtorName { get; set; }
-        public int DebtorId { get; set; }
-        public bool IsConfirmed { get; set; }
-        public IEnumerable<ContactVM> Contacts { get; set; }
-        public int AssignDate { get; set; }
-    }
     public class ReceivableCloseModel
     {
         public int Id { get; set; }
