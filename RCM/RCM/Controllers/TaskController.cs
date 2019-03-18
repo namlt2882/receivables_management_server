@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using RCM.Helper;
 using RCM.Model;
@@ -19,7 +20,7 @@ namespace RCM.Controllers
         private readonly IReceivableService _receivableService;
         private readonly UserManager<User> _userManager;
 
-        public TaskController(IProgressStageActionService progressStageActionService, IAssignedCollectorService assignedCollectorService, IReceivableService receivableService, UserManager<User> userManager )
+        public TaskController(IProgressStageActionService progressStageActionService, IAssignedCollectorService assignedCollectorService, IReceivableService receivableService, UserManager<User> userManager)
         {
             _assignedCollectorService = assignedCollectorService;
             _progressStageActionService = progressStageActionService;
@@ -81,16 +82,16 @@ namespace RCM.Controllers
             }
 
             var receivableIdList = _assignedCollectorService.GetAssignedCollectors()
-                .Where(x => 
-                x.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE 
+                .Where(x =>
+                x.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE
                 && x.UserId == collectorId)
                 .Select(x => x.Id).ToList();
 
             var rawData = from action in _progressStageActionService.GetProgressStageActions()
-                      where receivableIdList.Contains(action.ProgressStage.CollectionProgress.ReceivableId) 
-                      && action.ProgressStage.CollectionProgress.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE
-                      && (action.Type == Constant.ACTION_NOTIFICATION_CODE || action.Type == Constant.ACTION_REPORT_CODE)
-                      select action;
+                          where receivableIdList.Contains(action.ProgressStage.CollectionProgress.ReceivableId)
+                          && action.ProgressStage.CollectionProgress.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE
+                          && (action.Type == Constant.ACTION_NOTIFICATION_CODE || action.Type == Constant.ACTION_REPORT_CODE)
+                          select action;
 
             if (rawData.Any())
             {
@@ -168,6 +169,45 @@ namespace RCM.Controllers
                     ExecutionDay = x.ExcutionDay,
                     Name = x.Name,
                     StartTime = x.StartTime,
+                    Status = x.Status,
+                    Type = x.Type,
+                    ReceivableId = x.ProgressStage.CollectionProgress.ReceivableId
+                });
+                return Ok(result);
+            }
+
+            return Ok(new List<TaskVM>());
+        }
+
+        [Authorize]
+        [HttpGet("MobileGetCollectorTodayTask")]
+        public async System.Threading.Tasks.Task<IActionResult> MobileGetCollectorTodayTask()
+        {
+            var user = await _userManager.FindByNameAsync(User.Identity.Name);
+
+            var receivableIdList = _assignedCollectorService.GetAssignedCollectors()
+                .Where(x =>
+                x.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE
+                && x.UserId == user.Id)
+                .Select(x => x.Id).ToList();
+
+            var rawData = from action in _progressStageActionService.GetProgressStageActions()
+                          where receivableIdList.Contains(action.ProgressStage.CollectionProgress.ReceivableId)
+                          && action.ProgressStage.CollectionProgress.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE
+                          && (action.Type == Constant.ACTION_NOTIFICATION_CODE || action.Type == Constant.ACTION_REPORT_CODE)
+                          select action;
+
+            rawData = rawData.Where(action =>
+            action.ExcutionDay == Int32.Parse(Utility.ConvertDatetimeToString(DateTime.Now)));
+
+            if (rawData.Any())
+            {
+                var result = rawData.Select(x => new TaskMobileVM()
+                {
+                    Id = x.Id,
+                    ExecutionDay = Helper.Utility.ConvertIntToDatetime(x.ExcutionDay),
+                    Name = x.Name,
+                    StartTime = Helper.Utility.ConvertIntToTimeSpan(x.StartTime),
                     Status = x.Status,
                     Type = x.Type,
                     ReceivableId = x.ProgressStage.CollectionProgress.ReceivableId
