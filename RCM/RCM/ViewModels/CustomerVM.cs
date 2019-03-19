@@ -9,6 +9,7 @@ namespace RCM.ViewModels
     public class CustomerVM : CustomerCM
     {
         public int Id { get; set; }
+        public int NumberOfReceivable { get; set; }
     }
     public class CustomerCM
     {

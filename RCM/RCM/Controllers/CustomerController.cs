@@ -31,7 +31,9 @@ namespace RCM.Controllers
             var data = _customerService.GetCustomers(_ => _.IsDeleted == false);
             foreach (var item in data)
             {
-                result.Add(item.Adapt<CustomerVM>());
+                var tmp = item.Adapt<CustomerVM>();
+                tmp.NumberOfReceivable = item.Receivables.Count();
+                result.Add(tmp);
             }
             return Ok(result);
         }

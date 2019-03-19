@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Mapster;
+using Microsoft.AspNetCore.Mvc;
 using RCM.Helper;
 using RCM.Model;
 using RCM.Service;
@@ -22,6 +23,24 @@ namespace RCM.Controllers
         public IActionResult GetAll()
         {
             return Ok(_profileMessageFormService.GetProfileMessageForms());
+        }
+
+        [HttpGet("{id}")]
+        public IActionResult GetById(int id)
+        {
+            var result = _profileMessageFormService.GetProfileMessageForm(id);
+            return Ok(result);
+        }
+
+        [HttpPut]
+        public IActionResult UpdateForm(ProfileMessageFormUM profileMessageFormUM)
+        {
+            var result = _profileMessageFormService.GetProfileMessageForm(profileMessageFormUM.Id);
+            if (result == null) return NotFound();
+
+            result = profileMessageFormUM.Adapt(result);
+            _profileMessageFormService.SaveProfileMessageForm();
+            return Ok(result);
         }
 
         [HttpPost]
