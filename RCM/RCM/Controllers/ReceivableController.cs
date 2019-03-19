@@ -440,15 +440,17 @@ namespace RCM.Controllers
                 return BadRequest(ModelState);
             }
 
+            var result = new List<ReceivableDM>();
             foreach (var receivableAM in receivableAMs)
             {
                 var receivable = _receivableService.GetReceivable(receivableAM.Id);
                 if (receivable != null)
                 {
-                    if (receivable.CollectionProgress.Status != Constant.COLLECTION_STATUS_COLLECTION_CODE)
+                    if (receivable.CollectionProgress.Status == Constant.COLLECTION_STATUS_WAIT_CODE)
                     {
 
                         receivable.CollectionProgress.Status = Constant.COLLECTION_STATUS_COLLECTION_CODE;
+                        receivable.PayableDay = receivableAM.PayableDay;
                         receivable.AssignedCollectors.Add(TransformAssignedCollectorToDBM(receivableAM.CollectorId));
 
 
@@ -476,19 +478,20 @@ namespace RCM.Controllers
 
                             _receivableService.EditReceivable(receivable);
                             _receivableService.SaveReceivable();
+                            result.Add(GetReceivable(receivable.Id));
                         }
                         //End if contacts.Any()
                     }
                     else
                     {
-                        return Ok(new { Message = "One or more receivable is in collection progress and cannot be change." });
+                        return BadRequest(new { Message = "One or more receivable is in collection progress and cannot be change." });
                     }
                     //End if receivable.CollectionProgress.Status != Constant.COLLECTION_STATUS_COLLECTION_CODE
                 }
                 //End if receivable != null
             }
 
-            return Ok();
+            return Ok(result);
         }
 
         [HttpGet("GetReceivablesById")]
