@@ -15,4 +15,9 @@ namespace RCM.ViewModels
         public string Content { get; set; }
         public int Type { get; set; }
     }
+
+    public class ProfileMessageFormUM : ProfileMessageFormIM
+    {
+        public int Id { get; set; }
+    }
 }
