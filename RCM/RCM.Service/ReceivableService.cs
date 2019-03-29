@@ -13,6 +13,7 @@ namespace RCM.Service
         IEnumerable<Receivable> GetReceivables();
         IEnumerable<Receivable> GetReceivables(Expression<Func<Receivable, bool>> where);
         Receivable GetReceivable(int id);
+        Receivable GetReceivable(Expression<Func<Receivable, bool>> where);
         Receivable CreateReceivable(Receivable receivable);
         void EditReceivable(Receivable receivable);
         void RemoveReceivable(int id);
@@ -58,7 +59,10 @@ namespace RCM.Service
         {
             return _receivableRepository.GetAll();
         }
-
+        public Receivable GetReceivable(Expression<Func<Receivable, bool>> where)
+        {
+            return _receivableRepository.Get(where);
+         }
         public IEnumerable<Receivable> GetReceivables(Expression<Func<Receivable, bool>> where)
         {
             return _receivableRepository.GetMany(where);

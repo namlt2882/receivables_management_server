@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using RCM.Data;
 
 namespace RCM.Data.Migrations
 {
     [DbContext(typeof(RCMContext))]
-    partial class RCMContextModelSnapshot : ModelSnapshot
+    [Migration("20190324071040_Update-ProgressStageAction-Note")]
+    partial class UpdateProgressStageActionNote
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -539,15 +541,11 @@ namespace RCM.Data.Migrations
 
                     b.Property<DateTime?>("UpdatedDate");
 
-                    b.Property<string>("UserId");
-
                     b.HasKey("Id");
 
                     b.HasIndex("ProgressMessageFormId");
 
                     b.HasIndex("ProgressStageId");
-
-                    b.HasIndex("UserId");
 
                     b.ToTable("ProgressStageActions");
                 });
@@ -565,8 +563,6 @@ namespace RCM.Data.Migrations
                     b.Property<int>("CustomerId");
 
                     b.Property<long>("DebtAmount");
-
-                    b.Property<DateTime?>("ExpectationClosedDay");
 
                     b.Property<bool>("IsConfirmed");
 
@@ -791,10 +787,6 @@ namespace RCM.Data.Migrations
                         .WithMany("ProgressStageAction")
                         .HasForeignKey("ProgressStageId")
                         .OnDelete(DeleteBehavior.Cascade);
-
-                    b.HasOne("RCM.Model.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId");
                 });
 
             modelBuilder.Entity("RCM.Model.Receivable", b =>

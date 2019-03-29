@@ -19,10 +19,14 @@ namespace RCM.ViewModels
     {
         public int Id { get; set; }
         public string Name { get; set; }
+        public string Note { get; set; }
         public int Status { get; set; }
         public int Type { get; set; }
         public TimeSpan StartTime { get; set; }
         public DateTime ExecutionDay { get; set; }
+        public DateTime? UpdateDay { get; set; }
+        public string Evidence { get; set; }
         public int ReceivableId { get; set; }
+        public string UserId { get; set; }
     }
 }

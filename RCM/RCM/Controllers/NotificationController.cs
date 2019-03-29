@@ -256,6 +256,15 @@ namespace RCM.Controllers
             return Ok(result);
         }
 
+        [Authorize]
+        [HttpGet("HasNotifications")]
+        public async Task<IActionResult> HasNotifications()
+        {
+            var user = await _userManager.FindByNameAsync(User.Identity.Name);
+            if (user == null) return BadRequest();
+            return Ok(_notificationService.GetNotifications(_ => _.UserId.Equals(user.Id) && _.IsDeleted == false).Any());
+        }
+
         [HttpGet("{id}")]
         public async Task<IActionResult> GetNotificationById(int id)
         {
