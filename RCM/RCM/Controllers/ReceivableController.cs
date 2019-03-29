@@ -190,7 +190,7 @@ namespace RCM.Controllers
         public async Task<IActionResult> GetAssignedReceivableAsync(int receivableId)
         {
             var user = await _userManager.FindByNameAsync(User.Identity.Name);
-            var assignedCollector = _assignedCollectorService.GetAssignedCollector(_ => _.UserId == user.Id && _.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE && receivableId == _.ReceivableId);
+            var assignedCollector = _assignedCollectorService.GetAssignedCollector(_ => _.UserId == user.Id && _.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE && receivableId == _.ReceivableId && !_.IsDeleted);
             var model = _receivableService.GetReceivable(assignedCollector.ReceivableId);
             return Ok(ParseReceivableMobile(model));
         }

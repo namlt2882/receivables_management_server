@@ -104,7 +104,7 @@ namespace RCM.Controllers
                 .Where(x =>
                 x.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE
                 && x.UserId == collectorId)
-                .Select(x => x.Id).ToList();
+                .Select(x => x.ReceivableId).ToList();
 
             var rawData = from action in _progressStageActionService.GetProgressStageActions()
                           where receivableIdList.Contains(action.ProgressStage.CollectionProgress.ReceivableId)
@@ -169,7 +169,7 @@ namespace RCM.Controllers
                 .Where(x =>
                 x.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE
                 && x.UserId == collectorId)
-                .Select(x => x.Id).ToList();
+                .Select(x => x.ReceivableId).ToList();
 
             var rawData = from action in _progressStageActionService.GetProgressStageActions()
                           where receivableIdList.Contains(action.ProgressStage.CollectionProgress.ReceivableId)
@@ -209,7 +209,7 @@ namespace RCM.Controllers
                 .Where(x =>
                 x.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE
                 && x.UserId == user.Id)
-                .Select(x => x.Id).ToList();
+                .Select(x => x.ReceivableId).ToList();
 
             var rawData = from action in _progressStageActionService.GetProgressStageActions()
                           where receivableIdList.Contains(action.ProgressStage.CollectionProgress.ReceivableId)
@@ -348,7 +348,7 @@ namespace RCM.Controllers
                 .Where(x =>
                 x.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE
                 && x.UserId == user.Id)
-                .Select(x => x.Id);
+                .Select(x => x.ReceivableId);
 
             var progressStageActions = _progressStageActionService.GetProgressStageActions
                 (psa =>
@@ -398,8 +398,10 @@ namespace RCM.Controllers
             var receivableIdList = _assignedCollectorService.GetAssignedCollectors()
                 .Where(x =>
                 x.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE
-                && x.UserId == user.Id)
-                .Select(x => x.Id).ToList();
+                && x.UserId == user.Id
+                &&x.IsDeleted==false
+                )
+                .Select(x => x.ReceivableId).ToList();
 
             var progressStageActions = _progressStageActionService.GetProgressStageActions
                 (psa =>
