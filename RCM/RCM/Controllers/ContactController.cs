@@ -84,12 +84,7 @@ namespace RCM.Controllers
             };
             _contactService.CreateContact(contact);
             _contactService.SaveContact();
-<<<<<<< HEAD
-
-            return Ok(contact);
-=======
             return StatusCode(201,contact.Adapt<ContactVM>());
->>>>>>> master
         }
 
         [HttpPut]
