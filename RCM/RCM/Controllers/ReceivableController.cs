@@ -875,7 +875,7 @@ namespace RCM.Controllers
 
                     var assignedCollectors = new List<AssignedCollector>();
                     CollectionProgress collectionProgress = null;
-
+                    DateTime? endDay = null;
 
                     //Receivable is not assigned to Collector
                     if (receivable.CollectorId != null)
@@ -895,6 +895,8 @@ namespace RCM.Controllers
                         {
                             return null;
                         }
+
+                        endDay = CalculateEndDay(collectionProgress.ProgressStages, (int)receivable.PayableDay);
                         //End if !collectionProgress.Any()
                     }
                     else
@@ -919,6 +921,7 @@ namespace RCM.Controllers
                         IsDeleted = false,
                         PrepaidAmount = receivable.PrepaidAmount,
                         PayableDay = receivable.PayableDay,
+                        ExpectationClosedDay = endDay
                     };
                     result.Add(receivableDBM);
                 }
@@ -1057,9 +1060,9 @@ namespace RCM.Controllers
 
         private IEnumerable<ProgressStageAction> TransformProgressStageActionToDBM(IEnumerable<ProfileStageAction> profileStageActions, int stageDuration, DateTime stageStartDate, string debtorName, long debtAmount)
         {
+            List<ProgressStageAction> result = new List<ProgressStageAction>();
             if (profileStageActions.Any())
             {
-                var result = new List<ProgressStageAction>();
                 foreach (var action in profileStageActions)
                 {
                     var tmp = SplitProfileStageAction(action, stageDuration, stageStartDate, debtorName, debtAmount);
@@ -1072,14 +1075,9 @@ namespace RCM.Controllers
                     }
                 }
 
-                if (result.Any())
-                {
-                    return result;
-                }
-                //End if result.Any()
             }
             //End if profileStageActions.Any()
-            return null;
+            return result;
         }
 
         //Change 2 paramater [NAME] and [AMOUNT] to curernt context
@@ -1204,5 +1202,17 @@ namespace RCM.Controllers
             return false;
         }
 
+        private DateTime? CalculateEndDay(IEnumerable<ProgressStage> stages, int payableDay)
+        {
+            DateTime? result = null;
+            if (stages.Any())
+            {
+                int totalDay = stages.Sum(x => x.Duration);
+                DateTime payable = Utility.ConvertIntToDatetime(payableDay);
+                result = payable.AddDays(totalDay);
+            }
+
+            return result;
+        }
     }
 }
