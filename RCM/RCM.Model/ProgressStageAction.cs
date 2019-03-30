@@ -16,6 +16,7 @@ namespace RCM.Model
         public int ExcutionDay { get; set; }
         public string Evidence { get; set; }
         public string Note { get; set; }
+        public string NData { get; set; }
         public int? DoneAt { get; set; }
         public string UserId { get; set; }
         [ForeignKey("UserId")]
@@ -23,7 +24,6 @@ namespace RCM.Model
         public int ProgressStageId { get; set; }
         [ForeignKey("ProgressStageId")]
         public virtual ProgressStage ProgressStage { get; set; }
-
         public int? ProgressMessageFormId { get; set; }
         [ForeignKey("ProgressMessageFormId")]
         public virtual ProgressMessageForm ProgressMessageForm { get; set; }

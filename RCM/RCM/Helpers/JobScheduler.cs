@@ -81,10 +81,10 @@ namespace RCM.Helpers
                 ));
 
             //Execute action.
-            //if (actionsToExecute.Any())
-            //{
-            //    ExecuteAction(actionsToExecute);
-            //}
+            if (actionsToExecute.Any())
+            {
+                ExecuteAction(actionsToExecute);
+            }
             #endregion
 
             #region Late Action
@@ -149,8 +149,7 @@ namespace RCM.Helpers
                         NotifyVisit();
                         break;
                     case Constant.ACTION_PHONECALL_CODE:
-                        //MakePhoneCallAsync(action);
-                        //SendSMS(action);
+                        MakePhoneCallAsync(action);
                         break;
                     case Constant.ACTION_REPORT_CODE:
                         NotifyReport();
@@ -176,14 +175,15 @@ namespace RCM.Helpers
             var messageContent = progressStageAction.ProgressMessageForm.Content;
 
             //Make phone call
-            var task = await Utility.MakePhoneCallAsync(phoneNo, messageContent);
+            //var task = await Utility.MakePhoneCallAsync(phoneNo, messageContent);
 
             //Check phone call
-            var result = JsonConvert.DeserializeObject<StringeeResponseModel>(task);
-            if (result.r == 0)
-            {
-                _progressStageActionService.MarkAsDone(progressStageAction);
-            }
+            //var result = JsonConvert.DeserializeObject<StringeeResponseModel>(task);
+            //if (result.r == 0)
+            //{
+            _progressStageActionService.MarkAsDone(progressStageAction);
+            _progressStageActionService.SaveProgressStageAction();
+            //}
         }
 
         private void NotifyReport()
@@ -198,7 +198,7 @@ namespace RCM.Helpers
                 .Contacts.Where(x => x.Type == Constant.CONTACT_DEBTOR_CODE).FirstOrDefault().Phone;
             var messageContent = progressStageAction.ProgressMessageForm.Content;
 
-            string response = Utility.SendSMS(phoneNo, messageContent);
+            //string response = Utility.SendSMS(phoneNo, messageContent);
             _progressStageActionService.MarkAsDone(progressStageAction);
             _progressStageActionService.SaveProgressStageAction();
             //if (response.Contains("success"))
