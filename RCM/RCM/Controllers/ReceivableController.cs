@@ -249,10 +249,10 @@ namespace RCM.Controllers
                     _receivableService.SaveReceivable();
                 }
 
-                var importedReceivables = _receivableService.GetReceivables().OrderByDescending(x => x.Id).Take(receivablesDBM.Count());
-                SendNewReceivableNotification(importedReceivables.ToList());
+                //After imported to DB, each receivable will be auto binded to its Id.
+                SendNewReceivableNotification(receivablesDBM.ToList());
 
-                return Ok(importedReceivables);
+                return Ok(receivablesDBM);
             }
 
             return BadRequest(new { Message = "Error when trying to import" });
@@ -308,7 +308,6 @@ namespace RCM.Controllers
             //Send
             SendNotificationToClient(notifications);
         }
-
         private void SendNotificationToClient(List<Notification> notifications)
         {
             NotificationUtility.NotificationUtility.SendNotificationToCurrentMobileClient(notifications, _firebaseTokenService);
@@ -909,9 +908,9 @@ namespace RCM.Controllers
 
         private IEnumerable<ProgressStageAction> TransformProgressStageActionToDBM(IEnumerable<ProfileStageAction> profileStageActions, int stageDuration, DateTime stageStartDate, string debtorName, long debtAmount)
         {
+            var result = new List<ProgressStageAction>();
             if (profileStageActions.Any())
             {
-                var result = new List<ProgressStageAction>();
                 foreach (var action in profileStageActions)
                 {
                     var tmp = SplitProfileStageAction(action, stageDuration, stageStartDate, debtorName, debtAmount);
@@ -923,15 +922,10 @@ namespace RCM.Controllers
                         }
                     }
                 }
-
-                if (result.Any())
-                {
-                    return result;
-                }
-                //End if result.Any()
             }
             //End if profileStageActions.Any()
-            return null;
+            return result;
+
         }
 
         //Change 2 paramater [NAME] and [AMOUNT] to curernt context

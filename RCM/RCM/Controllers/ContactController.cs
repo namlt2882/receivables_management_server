@@ -86,7 +86,7 @@ namespace RCM.Controllers
             _contactService.CreateContact(contact);
             _contactService.SaveContact();
 
-            return Ok();
+            return Ok(contact);
         }
 
         [HttpPut]
@@ -110,7 +110,7 @@ namespace RCM.Controllers
                 _contactService.EditContact(contact);
                 _contactService.SaveContact();
 
-                return Ok();
+                return Ok(contact);
             }
 
             return NotFound();

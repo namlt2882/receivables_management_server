@@ -66,8 +66,7 @@ namespace RCM.Controllers
             _profileMessageFormService.CreateProfileMessageForm(message);
             _profileMessageFormService.SaveProfileMessageForm();
 
-            var result = _profileMessageFormService.GetProfileMessageForms().LastOrDefault();
-            return Ok(result);
+            return Ok(message);
         }
     }
 }

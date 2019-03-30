@@ -84,24 +84,34 @@ namespace RCM.Controllers
         }
 
         [HttpPut]
-        public IActionResult UpdateProfile([FromBody] ProfileUM profileUM)
+        public IActionResult UpdateProfile([FromBody] ProfileUpdateModel profileUM)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            var profile = new Profile()
+            var profile = _profileService.GetProfile(profileUM.Id);
+
+            if (profile == null)
             {
-                Id = profileUM.Id,
-                Name = profileUM.Name,
-                DebtAmountFrom = profileUM.DebtAmountFrom,
-                DebtAmountTo = profileUM.DebtAmountTo
-            };
+                return NotFound();
+
+            }
+
+            profile.Id = profileUM.Id;
+            profile.Name = profileUM.Name;
+            profile.DebtAmountFrom = profileUM.DebtAmountFrom;
+            profile.DebtAmountTo = profileUM.DebtAmountTo;
+            profile.ProfileStages.Clear();
+            profile.ProfileStages = TransformStagesToDBM(profileUM.Stages).ToList();
+
+
             _profileService.EditProfile(profile);
             _profileService.SaveProfile();
 
             return Ok(profile);
+
         }
 
         [HttpGet]
