@@ -48,17 +48,23 @@ namespace RCM.Helpers
 
     public class NotifyJob : IJob
     {
-        private IProgressStageActionService _progressStageActionService;
+        private readonly IProgressStageActionService _progressStageActionService;
         private readonly IHubContext<CenterHub> _hubContext;
         private readonly IHubUserConnectionService _hubService;
         private readonly IFirebaseTokenService _firebaseTokenService;
         private readonly IReceivableService _receivableService;
         private readonly INotificationService _notificationService;
         private readonly UserManager<User> _userManager;
-        public NotifyJob(IProgressStageActionService progressStageActionService, IReceivableService receivableService)
+
+        public NotifyJob(IProgressStageActionService progressStageActionService, IHubContext<CenterHub> hubContext, IHubUserConnectionService hubService, IFirebaseTokenService firebaseTokenService, IReceivableService receivableService, INotificationService notificationService, UserManager<User> userManager)
         {
             _progressStageActionService = progressStageActionService;
+            _hubContext = hubContext;
+            _hubService = hubService;
+            _firebaseTokenService = firebaseTokenService;
             _receivableService = receivableService;
+            _notificationService = notificationService;
+            _userManager = userManager;
         }
 
         public void SendNotify()
