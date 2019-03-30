@@ -26,11 +26,11 @@ namespace RCM.Controllers
         private readonly IHubUserConnectionService _hubService;
         private readonly IFirebaseTokenService _firebaseTokenService;
         private readonly IReceivableService _receivableService;
-        private readonly IProfileService _profileService;
         private readonly INotificationService _notificationService;
+        private readonly UserManager<User> _userManager;
+        private readonly IProfileService _profileService;
         private readonly IAssignedCollectorService _assignedCollectorService;
         private readonly IProfileMessageFormService _profileMessageFormService;
-        private readonly UserManager<User> _userManager;
 
         public ReceivableController(IHubContext<CenterHub> hubContext, IHubUserConnectionService hubService, IFirebaseTokenService firebaseTokenService, IReceivableService receivableService, IProfileService profileService, INotificationService notificationService, IAssignedCollectorService assignedCollectorService, IProfileMessageFormService profileMessageFormService, UserManager<User> userManager)
         {
@@ -462,14 +462,12 @@ namespace RCM.Controllers
         }
         private void SendNotificationToClient(List<Notification> notifications)
         {
-            NotificationUtility.NotificationUtility.SendNotificationToCurrentMobileClient(notifications, _firebaseTokenService);
-            NotificationUtility.NotificationUtility.SendNotificationToCurrentWebClient(notifications, _hubService, _hubContext);
+            NotificationUtility.NotificationUtility.SendNotification(notifications, _hubService, _hubContext,_firebaseTokenService);
         }
 
         private async Task SendNotificationToClient(Notification notification)
         {
-            NotificationUtility.NotificationUtility.SendNotificationToCurrentMobileClient(notification, _firebaseTokenService);
-            await NotificationUtility.NotificationUtility.SendNotificationToCurrentWebClient(notification, _hubService, _hubContext);
+            await NotificationUtility.NotificationUtility.SendNotification(notification, _hubService, _hubContext,_firebaseTokenService);
         }
 
         [HttpPost("ChangeAsignedCollector")]

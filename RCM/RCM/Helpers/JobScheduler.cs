@@ -1,9 +1,12 @@
 ﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using Quartz;
 using Quartz.Impl;
 using Quartz.Spi;
+using RCM.CenterHubs;
 using RCM.Helper;
 using RCM.Model;
 using RCM.Service;
@@ -46,10 +49,16 @@ namespace RCM.Helpers
     public class NotifyJob : IJob
     {
         private IProgressStageActionService _progressStageActionService;
-
-        public NotifyJob(IProgressStageActionService progressStageActionService)
+        private readonly IHubContext<CenterHub> _hubContext;
+        private readonly IHubUserConnectionService _hubService;
+        private readonly IFirebaseTokenService _firebaseTokenService;
+        private readonly IReceivableService _receivableService;
+        private readonly INotificationService _notificationService;
+        private readonly UserManager<User> _userManager;
+        public NotifyJob(IProgressStageActionService progressStageActionService, IReceivableService receivableService)
         {
             _progressStageActionService = progressStageActionService;
+            _receivableService = receivableService;
         }
 
         public void SendNotify()
@@ -60,6 +69,7 @@ namespace RCM.Helpers
             //Example 14/02/1997 => 19970214.
             long date = Int64.Parse(Utility.ConvertDatetimeToString(DateTime.Now.Date));
 
+            #region Phone/SMS
             var actionsToExecute = _progressStageActionService.GetProgressStageActions()
                 .Where(x => (
                 x.IsDeleted == false
@@ -75,7 +85,9 @@ namespace RCM.Helpers
             //{
             //    ExecuteAction(actionsToExecute);
             //}
+            #endregion
 
+            #region Late Action
             var actionsToMarkAsLate = _progressStageActionService.GetProgressStageActions()
                 .Where(x => (
                 x.IsDeleted == false
@@ -93,6 +105,38 @@ namespace RCM.Helpers
                     _progressStageActionService.SaveProgressStageAction();
                 }
             }
+            #endregion
+
+        }
+
+        private async void SendPendingReceivableNotify()
+        {
+            #region Pending Receivable
+            var lateReceivableList = _receivableService.GetReceivables(
+                r => !r.IsDeleted
+                && r.CollectionProgress.Status == Constant.COLLECTION_STATUS_WAIT_CODE
+                && r.CreatedDate.AddDays(5) <= DateTime.Now
+            );
+            #region Create New Receivable Notification
+            var user = await _userManager.FindByNameAsync("manager");
+            //Create New Receivable Notification
+            Notification notification = new Notification()
+            {
+                Title = Constant.NOTIFICATION_TYPE_CLOSE_RECEIVABLE,
+                Type = Constant.NOTIFICATION_TYPE_CLOSE_RECEIVABLE_CODE,
+                Body = $"{lateReceivableList.Count()} receivable(s) already pending more than 5 days!",
+                UserId = user.Id,
+                NData = JsonConvert.SerializeObject(lateReceivableList.Select(r => r.Id)),
+                IsSeen = false,
+                CreatedDate = DateTime.Now,
+                IsDeleted = false,
+            };
+            _notificationService.CreateNotification(notification);
+            _notificationService.SaveNotification();
+            #endregion
+            //Send
+            await NotificationUtility.NotificationUtility.SendNotification(notification, _hubService, _hubContext, _firebaseTokenService);
+            #endregion
         }
 
         private void ExecuteAction(IEnumerable<ProgressStageAction> actions)
@@ -106,7 +150,7 @@ namespace RCM.Helpers
                         break;
                     case Constant.ACTION_PHONECALL_CODE:
                         //MakePhoneCallAsync(action);
-                        SendSMS(action);
+                        //SendSMS(action);
                         break;
                     case Constant.ACTION_REPORT_CODE:
                         NotifyReport();
