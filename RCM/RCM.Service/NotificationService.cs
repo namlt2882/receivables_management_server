@@ -73,9 +73,11 @@ namespace RCM.Service
             _notificationRepository.Delete(entity);
         }
 
-        public void RemoveNotification(Notification notification)
+        public void RemoveNotification(Notification entity)
         {
-            _notificationRepository.Delete(notification);
+            entity.IsDeleted = true;
+            entity.UpdatedDate = DateTime.Now;
+            _notificationRepository.Update(entity);
         }
 
         public void SaveNotification()

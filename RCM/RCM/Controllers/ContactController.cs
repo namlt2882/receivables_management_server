@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Mapster;
+using Microsoft.AspNetCore.Mvc;
 using RCM.Helper;
 using RCM.Model;
 using RCM.Service;
@@ -34,7 +35,7 @@ namespace RCM.Controllers
                 return NotFound();
             }
 
-            return Ok();
+            return Ok(contact.Adapt<ContactVM>());
         }
 
         [HttpGet]
@@ -56,7 +57,6 @@ namespace RCM.Controllers
             {
                 return NotFound();
             }
-
             return Ok(contacts);
         }
 
@@ -82,11 +82,14 @@ namespace RCM.Controllers
                 Phone = contactIM.Phone,
                 Type = Constant.CONTACT_RELATION_CODE
             };
-
             _contactService.CreateContact(contact);
             _contactService.SaveContact();
+<<<<<<< HEAD
 
             return Ok(contact);
+=======
+            return StatusCode(201,contact.Adapt<ContactVM>());
+>>>>>>> master
         }
 
         [HttpPut]
@@ -96,8 +99,6 @@ namespace RCM.Controllers
             {
                 return BadRequest(ModelState);
             }
-
-
             var contact = _contactService.GetContact(contactVM.Id);
             if (contact != null)
             {
@@ -112,8 +113,16 @@ namespace RCM.Controllers
 
                 return Ok(contact);
             }
-
             return NotFound();
+        }
+        [HttpDelete("{id}")]
+        public IActionResult Delete(int id)
+        {
+            var contact = _contactService.GetContact(id);
+            if (contact == null) return NotFound();
+            _contactService.RemoveContact(contact);
+            _contactService.SaveContact();
+            return Ok();
         }
     }
 }

@@ -71,14 +71,15 @@ namespace RCM.Controllers
         {
             try
             {
-                _customerService.CreateCustomer(customer.Adapt<Customer>());
+                var result = _customerService.CreateCustomer(customer.Adapt<Customer>());
                 _customerService.SaveCustomer();
+                return StatusCode(201, result);
+
             }
             catch (Exception e)
             {
                 return BadRequest(e.Message);
             }
-            return StatusCode(201);
         }
 
         //[HttpPost("AddReceivables")]

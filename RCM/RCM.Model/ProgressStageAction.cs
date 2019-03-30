@@ -14,7 +14,12 @@ namespace RCM.Model
         public int Type { get; set; }
         public int Status { get; set; }
         public int ExcutionDay { get; set; }
+        public string Evidence { get; set; }
+        public string Note { get; set; }
         public int? DoneAt { get; set; }
+        public string UserId { get; set; }
+        [ForeignKey("UserId")]
+        public virtual User User { get; set; }
         public int ProgressStageId { get; set; }
         [ForeignKey("ProgressStageId")]
         public virtual ProgressStage ProgressStage { get; set; }

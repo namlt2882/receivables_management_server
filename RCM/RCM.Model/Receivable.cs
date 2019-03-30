@@ -14,6 +14,7 @@ namespace RCM.Model
         public long DebtAmount { get; set; }
         public bool IsConfirmed{ get; set; }
         public int CustomerId { get; set; }
+        public DateTime? ExpectationClosedDay { get; set; }
         [ForeignKey("CustomerId")]
         public virtual Customer Customer { get; set; }
         public int? LocationId { get; set; }

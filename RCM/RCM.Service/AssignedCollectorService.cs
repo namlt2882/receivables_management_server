@@ -14,6 +14,7 @@ namespace RCM.Service
         IEnumerable<AssignedCollector> GetAssignedCollectors();
         IEnumerable<AssignedCollector> GetAssignedCollectors(Expression<Func<AssignedCollector, bool>> where);
         AssignedCollector GetAssignedCollector(int id);
+        AssignedCollector GetAssignedCollector(Expression<Func<AssignedCollector, bool>> where);
         AssignedCollector CreateAssignedCollector(AssignedCollector assignedCollector);
         void EditAssignedCollector(AssignedCollector assignedCollector);
         void RemoveAssignedCollector(int id);
@@ -51,6 +52,11 @@ namespace RCM.Service
         public AssignedCollector GetAssignedCollector(int id)
         {
             return _assignedCollectorRepository.GetById(id);
+        }
+
+        public AssignedCollector GetAssignedCollector(Expression<Func<AssignedCollector, bool>> where)
+        {
+            return _assignedCollectorRepository.Get(where);
         }
 
         public IEnumerable<AssignedCollector> GetAssignedCollectors()

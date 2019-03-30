@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using RCM.Data;
 
 namespace RCM.Data.Migrations
 {
     [DbContext(typeof(RCMContext))]
-    partial class RCMContextModelSnapshot : ModelSnapshot
+    [Migration("20190326063745_ProgressStageAction-UserId_Receivable-ExpectationCloseDay")]
+    partial class ProgressStageActionUserId_ReceivableExpectationCloseDay
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -441,11 +443,15 @@ namespace RCM.Data.Migrations
 
                     b.Property<DateTime?>("UpdatedDate");
 
+                    b.Property<string>("UserId");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ProfileMessageFormId");
 
                     b.HasIndex("ProfileStageId");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("ProfileStageActions");
                 });
@@ -539,15 +545,11 @@ namespace RCM.Data.Migrations
 
                     b.Property<DateTime?>("UpdatedDate");
 
-                    b.Property<string>("UserId");
-
                     b.HasKey("Id");
 
                     b.HasIndex("ProgressMessageFormId");
 
                     b.HasIndex("ProgressStageId");
-
-                    b.HasIndex("UserId");
 
                     b.ToTable("ProgressStageActions");
                 });
@@ -771,6 +773,10 @@ namespace RCM.Data.Migrations
                         .WithMany("ProfileStageActions")
                         .HasForeignKey("ProfileStageId")
                         .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("RCM.Model.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId");
                 });
 
             modelBuilder.Entity("RCM.Model.ProgressStage", b =>
@@ -791,10 +797,6 @@ namespace RCM.Data.Migrations
                         .WithMany("ProgressStageAction")
                         .HasForeignKey("ProgressStageId")
                         .OnDelete(DeleteBehavior.Cascade);
-
-                    b.HasOne("RCM.Model.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId");
                 });
 
             modelBuilder.Entity("RCM.Model.Receivable", b =>
