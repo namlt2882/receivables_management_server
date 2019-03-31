@@ -118,7 +118,9 @@ namespace RCM
             services.AddTransient<IReceivableRepository, ReceivableRepository>();
             services.AddTransient<IReceivableService, ReceivableService>();
 
-
+            //Point
+            services.AddTransient<IPointRepository, PointRepository>();
+            services.AddTransient<IPointService, PointService>();
 
             //Mail 
             services.AddTransient<IEmailService, EmailService>();
