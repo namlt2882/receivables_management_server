@@ -27,6 +27,7 @@ namespace RCM.ViewModels
         public DateTime? UpdateDay { get; set; }
         public string Evidence { get; set; }
         public int ReceivableId { get; set; }
+        public string CollectorName { get; set; }
         public string UserId { get; set; }
     }
 }

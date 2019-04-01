@@ -30,7 +30,15 @@ namespace RCM.ViewModels
     {
         public int Id { get; set; }
     }
-
+    //Import succes model
+    public class ReceivableISM : ReceivableCM
+    {
+        public int Id{ get; set; }
+        public IEnumerable<ContactIM> Contacts { get; set; }
+        public int? PayableDay { get; set; }
+        public int ProfileId { get; set; }
+        public string CollectorId { get; set; }
+    }
     public class ReceivableIM : ReceivableCM
     {
         public IEnumerable<ContactIM> Contacts { get; set; }
@@ -64,6 +72,7 @@ namespace RCM.ViewModels
         public int? LocationId { get; set; }
         public int CollectionProgressStatus { get; set; }
         public int? PayableDay { get; set; }
+        public int ExpectationClosedDay { get; set; }
         public int? ClosedDay { get; set; }
         public string CustomerName { get; set; }
         public string DebtorName { get; set; }

@@ -31,8 +31,9 @@ namespace RCM.Controllers
         private readonly IProfileService _profileService;
         private readonly IAssignedCollectorService _assignedCollectorService;
         private readonly IProfileMessageFormService _profileMessageFormService;
+        private readonly ICustomerService _customerService;
 
-        public ReceivableController(IHubContext<CenterHub> hubContext, IHubUserConnectionService hubService, IFirebaseTokenService firebaseTokenService, IReceivableService receivableService, IProfileService profileService, INotificationService notificationService, IAssignedCollectorService assignedCollectorService, IProfileMessageFormService profileMessageFormService, UserManager<User> userManager)
+        public ReceivableController(IHubContext<CenterHub> hubContext, IHubUserConnectionService hubService, IFirebaseTokenService firebaseTokenService, IReceivableService receivableService, IProfileService profileService, INotificationService notificationService, IAssignedCollectorService assignedCollectorService, IProfileMessageFormService profileMessageFormService, UserManager<User> userManager, ICustomerService customerService)
         {
             _hubContext = hubContext;
             _hubService = hubService;
@@ -43,6 +44,7 @@ namespace RCM.Controllers
             _assignedCollectorService = assignedCollectorService;
             _profileMessageFormService = profileMessageFormService;
             _userManager = userManager;
+            _customerService = customerService;
         }
 
         [HttpGet]
@@ -197,12 +199,18 @@ namespace RCM.Controllers
 
         private ReceivableMobileLM ParseReceivableMobile(Receivable model)
         {
-            var receivable = model.Adapt<ReceivableMobileLM>();
+            var receivable = new ReceivableMobileLM();
+            receivable.Id = model.Id;
+            receivable.PayableDay = model.PayableDay;
+            receivable.PrepaidAmount = model.PrepaidAmount;
+            receivable.DebtAmount = model.DebtAmount;
+            receivable.ClosedDay = model.ClosedDay;
             receivable.CustomerName = model.Customer.Name;
             receivable.DebtorId = model.Contacts.Where(contact => contact.Type == Constant.CONTACT_DEBTOR_CODE && !contact.IsDeleted).SingleOrDefault().Id;
             receivable.DebtorName = model.Contacts.Where(contact => contact.Type == Constant.CONTACT_DEBTOR_CODE && !contact.IsDeleted).SingleOrDefault().Name;
             receivable.Contacts = GetReceivableContactsForDetailView(model.Contacts.Where(con => !con.IsDeleted));
             receivable.CollectionProgressStatus = model.CollectionProgress.Status;
+            receivable.ExpectationClosedDay = Utility.ConvertDatimeToInt((DateTime)model.ExpectationClosedDay);
             receivable.IsConfirmed = model.IsConfirmed;
             receivable.AssignDate = Utility.ConvertDatimeToInt(model.AssignedCollectors.SingleOrDefault(ac => ac.ReceivableId == receivable.Id && ac.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE && !ac.IsDeleted).CreatedDate);
             return receivable;
@@ -355,8 +363,6 @@ namespace RCM.Controllers
                     return BadRequest(tmp);
                 }
             }
-
-
             return Ok(receivableIMs);
         }
 
@@ -367,22 +373,19 @@ namespace RCM.Controllers
             {
                 return BadRequest(ModelState);
             }
-
+            var importList = new List<Receivable>();
             var receivablesDBM = TransformReceivablesToDBM(receivableIMs);
             if (receivablesDBM.Any())
             {
                 foreach (var receivableDBM in receivablesDBM)
                 {
-                    _receivableService.CreateReceivable(receivableDBM);
+                    importList.Add(_receivableService.CreateReceivable(receivableDBM));
                     _receivableService.SaveReceivable();
                 }
-
-                var importedReceivables = _receivableService.GetReceivables().OrderByDescending(x => x.Id).Take(receivablesDBM.Count());
-                SendNewReceivableNotification(importedReceivables.ToList());
-
-                return Ok(importedReceivables);
+                //var importedReceivables = _receivableService.GetReceivables().OrderByDescending(x => x.Id).Take(receivablesDBM.Count());
+                SendNewReceivableNotification(importList);
+                return Ok(importList.ToList().Select(_=>_.Id));
             }
-
             return BadRequest(new { Message = "Error when trying to import" });
         }
 
@@ -416,20 +419,34 @@ namespace RCM.Controllers
             });
             //Create New Receivable Notification
             List<Notification> notifications = new List<Notification>();
-            userNotifications.ForEach(_ =>
+            foreach (var _ in userNotifications)
             {
                 notifications.Add(new Notification()
                 {
                     Title = Constant.NOTIFICATION_TYPE_NEW_RECEIVABLE,
                     Type = Constant.NOTIFICATION_TYPE_NEW_RECEIVABLE_CODE,
-                    Body = $"You were assgined to {_.ReceivableList.Count}{JsonConvert.SerializeObject(_.ReceivableList)} reiceivable",
+                    Body = $"You were assgined to {_.ReceivableList.Count}{JsonConvert.SerializeObject(_.ReceivableList)} reiceivable from {_customerService.GetCustomer(receivables.First().CustomerId).Name}",
                     UserId = _.UserId,
                     NData = JsonConvert.SerializeObject(_.ReceivableList),
                     IsSeen = false,
                     CreatedDate = DateTime.Now,
                     IsDeleted = false,
                 });
-            });
+            }
+            //userNotifications.ForEach(_ =>
+            //{
+            //    notifications.Add(new Notification()
+            //    {
+            //        Title = Constant.NOTIFICATION_TYPE_NEW_RECEIVABLE,
+            //        Type = Constant.NOTIFICATION_TYPE_NEW_RECEIVABLE_CODE,
+            //        Body = $"You were assgined to {_.ReceivableList.Count}{JsonConvert.SerializeObject(_.ReceivableList)} reiceivable from {receivables.First().Customer.Name}",
+            //        UserId = _.UserId,
+            //        NData = JsonConvert.SerializeObject(_.ReceivableList),
+            //        IsSeen = false,
+            //        CreatedDate = DateTime.Now,
+            //        IsDeleted = false,
+            //    });
+            //});
             _notificationService.CreateNotification(notifications);
             _notificationService.SaveNotification();
             #endregion
@@ -447,7 +464,7 @@ namespace RCM.Controllers
             {
                 Title = Constant.NOTIFICATION_TYPE_CLOSE_RECEIVABLE,
                 Type = Constant.NOTIFICATION_TYPE_CLOSE_RECEIVABLE_CODE,
-                Body = $"You have reiceivable-{receivable.Id} need to confirm!",
+                Body = $"You have reiceivable-{receivable.Id} from {receivable.Customer.Name} need to confirm!",
                 UserId = user.Id,
                 NData = JsonConvert.SerializeObject(receivable.Id),
                 IsSeen = false,
@@ -462,16 +479,16 @@ namespace RCM.Controllers
         }
         private void SendNotificationToClient(List<Notification> notifications)
         {
-            NotificationUtility.NotificationUtility.SendNotification(notifications, _hubService, _hubContext,_firebaseTokenService);
+            NotificationUtility.NotificationUtility.SendNotification(notifications, _hubService, _hubContext, _firebaseTokenService);
         }
 
         private async Task SendNotificationToClient(Notification notification)
         {
-            await NotificationUtility.NotificationUtility.SendNotification(notification, _hubService, _hubContext,_firebaseTokenService);
+            await NotificationUtility.NotificationUtility.SendNotification(notification, _hubService, _hubContext, _firebaseTokenService);
         }
-
+        #region ChangeAsignedCollector
         [HttpPost("ChangeAsignedCollector")]
-        public IActionResult ChangeAssignedCollector([FromBody]AssignedCollectorUM assignedCollectorUM)
+        public async Task<IActionResult> ChangeAssignedCollectorAsync([FromBody]AssignedCollectorUM assignedCollectorUM)
         {
             if (!ModelState.IsValid)
             {
@@ -488,13 +505,35 @@ namespace RCM.Controllers
                 CreatedDate = DateTime.Now,
                 IsDeleted = false,
             });
-
-
             _receivableService.EditReceivable(receivable);
             _receivableService.SaveReceivable();
-
+            await SendAsignedCollectorReceivableNotification(receivable, assignedCollectorUM.CollectorId);
             return Ok();
         }
+
+        private async Task SendAsignedCollectorReceivableNotification(Receivable receivable, string collectorId)
+        {
+            #region Create New Receivable Notification
+            var user = await _userManager.FindByNameAsync("manager");
+            //Create New Receivable Notification
+            Notification notification = new Notification()
+            {
+                Title = Constant.NOTIFICATION_TYPE_ASSIGN_RECEIVABLE,
+                Type = Constant.NOTIFICATION_TYPE_ASSIGN_RECEIVABLE_CODE,
+                Body = $"You were assigned to receivable[{receivable.Id}] from {receivable.Customer.Name}!",
+                UserId = collectorId,
+                NData = JsonConvert.SerializeObject(receivable.Id),
+                IsSeen = false,
+                CreatedDate = DateTime.Now,
+                IsDeleted = false,
+            };
+            _notificationService.CreateNotification(notification);
+            _notificationService.SaveNotification();
+            #endregion
+            //Send
+            await SendNotificationToClient(notification);
+        }
+        #endregion
 
         [HttpGet("GetAssignedCollectorHistory")]
         public IActionResult GetReceivableAssignedCollectorHisory(int receivableId)
@@ -584,7 +623,7 @@ namespace RCM.Controllers
         }
 
         [HttpPut("AssignReceivable")]
-        public IActionResult AssignReceivable([FromBody] IEnumerable<ReceivableAssignModel> receivableAMs)
+        public async Task<IActionResult> AssignReceivableAsync([FromBody] IEnumerable<ReceivableAssignModel> receivableAMs)
         {
             if (!ModelState.IsValid)
             {
@@ -629,6 +668,7 @@ namespace RCM.Controllers
                             result.Add(GetReceivable(receivable.Id));
                         }
                         //End if contacts.Any()
+                        await SendAsignedCollectorReceivableNotification(receivable, receivableAM.CollectorId);
                     }
                     else
                     {

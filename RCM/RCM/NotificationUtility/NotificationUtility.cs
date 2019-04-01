@@ -48,10 +48,11 @@ namespace RCM.NotificationUtility
             });
         }
 
-        private static void SendNotificationToCurrentMobileClient(Notification notification, IFirebaseTokenService _firebaseTokenService)
+        private static async Task SendNotificationToCurrentMobileClientAsync(Notification notification, IFirebaseTokenService _firebaseTokenService)
         {
 
-            _firebaseTokenService.GetFirebaseTokens(_ => _.UserId == notification.UserId).ToList().ForEach(async ft =>
+            var a = _firebaseTokenService.GetFirebaseTokens(_ => _.UserId == notification.UserId).ToList();
+            foreach (var ft in a)
             {
                 await SendFirebaseNotification.SendNotificationToMobileAsync(new FirebaseNotification()
                 {
@@ -66,21 +67,22 @@ namespace RCM.NotificationUtility
                             { "ReceivableList", notification.NData }
                     }
                 });
-            });
+            }
+
         }
 
         private static async Task SendNotificationToCurrentWebClient(Notification notification, IHubUserConnectionService _hubService, IHubContext<CenterHub> _hubContext)
         {
-            
+
             var connections = _hubService.GetHubUserConnections(_ => _.UserId.Equals(notification.UserId));
             await _hubContext.Clients.Clients(connections.Select(_ => _.Connection).ToList())
                          .SendAsync("Notify", JsonConvert.SerializeObject(notification.Adapt<NotificationVM>()));
-            
+
         }
 
         public static async Task SendNotification(Notification notification, IHubUserConnectionService _hubService, IHubContext<CenterHub> _hubContext, IFirebaseTokenService _firebaseTokenService)
         {
-            SendNotificationToCurrentMobileClient(notification, _firebaseTokenService);
+            await SendNotificationToCurrentMobileClientAsync(notification, _firebaseTokenService);
             await SendNotificationToCurrentWebClient(notification, _hubService, _hubContext);
         }
 

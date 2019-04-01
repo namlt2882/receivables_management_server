@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Quartz;
 using Quartz.Impl;
 using Quartz.Spi;
@@ -155,7 +156,7 @@ namespace RCM.Helpers
                         NotifyVisit();
                         break;
                     case Constant.ACTION_PHONECALL_CODE:
-                        MakePhoneCallAsync(action);
+                        MakePhoneCall(action);
                         break;
                     case Constant.ACTION_REPORT_CODE:
                         NotifyReport();
@@ -172,7 +173,7 @@ namespace RCM.Helpers
 
         }
 
-        private async void MakePhoneCallAsync(ProgressStageAction progressStageAction)
+        private async void MakePhoneCall(ProgressStageAction progressStageAction)
         {
             //Get information
             var phoneNo = progressStageAction.ProgressStage.CollectionProgress
@@ -180,15 +181,20 @@ namespace RCM.Helpers
                 .Contacts.Where(x => x.Type == Constant.CONTACT_DEBTOR_CODE).FirstOrDefault().Phone;
             var messageContent = progressStageAction.ProgressMessageForm.Content;
 
-            //Make phone call
-            //var task = await Utility.MakePhoneCallAsync(phoneNo, messageContent);
+            ////Make phone call
+            //var stringeeMsg = await Utility.MakePhoneCallAsync(phoneNo, messageContent);
+            #region get CallId
+            //JObject call = JObject.Parse(stringeeMsg);
+            //var callId = call.SelectToken("call_id").ToString();
+            #endregion
+            //progressStageAction.NData = callId;
 
-            //Check phone call
-            //var result = JsonConvert.DeserializeObject<StringeeResponseModel>(task);
-            //if (result.r == 0)
+            //Check phone call Set 5 phut sau se check?
+
+            //if (await Utility.CheckCall(callId, phoneNo))
             //{
             _progressStageActionService.MarkAsDone(progressStageAction);
-            _progressStageActionService.SaveProgressStageAction();
+                _progressStageActionService.SaveProgressStageAction();
             //}
         }
 

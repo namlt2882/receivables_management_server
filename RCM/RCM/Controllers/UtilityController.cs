@@ -11,7 +11,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using Newtonsoft.Json;
 using RCM.SpeedSMS;
-
+using Newtonsoft.Json.Linq;
 
 namespace RCM.Controllers
 {
@@ -101,12 +101,46 @@ namespace RCM.Controllers
             client.DefaultRequestHeaders.Accept.Add(
                 new MediaTypeWithQualityHeaderValue("application/json"));
             client.DefaultRequestHeaders.Add("cache-control", "no-cache");
-            client.DefaultRequestHeaders.Add("X-STRINGEE-AUTH", "eyJjdHkiOiJzdHJpbmdlZS1hcGk7dj0xIiwidHlwIjoiSldUIiwiYWxnIjoiSFMyNTYifQ.eyJqdGkiOiJTSzhMa1FQVmVvcEdwSnY3UjdwanpsN3h3TG1iVkZVdDZZLTE1NTA2MDEyNjAiLCJpc3MiOiJTSzhMa1FQVmVvcEdwSnY3UjdwanpsN3h3TG1iVkZVdDZZIiwiZXhwIjoxNTUzMTkzMjYwLCJyZXN0X2FwaSI6dHJ1ZX0.fOcqwWeCpE53CAxTGmQzTVWAJdhF6yjMRhMGTTjl3qA");
-            string data = "{\"from\":{\"type\":\"external\",\"number\":\"842471008859\",\"alias\":\"STRINGEE_NUMBER\"},\"to\":[{\"type\":\"external\",\"number\":\"" + number + "\",\"alias\":\"Thong\"}],\"answer_url\":\"https://example.com/answerurl\",\"actions\":[{\"action\":\"talk\",\"voice\":\"hatieumai\",\"text\":\"" + content + "\",\"speed\":-3,\"silenceTime\":1000}]}";
+            client.DefaultRequestHeaders.Add("X-STRINGEE-AUTH", "eyJjdHkiOiJzdHJpbmdlZS1hcGk7dj0xIiwidHlwIjoiSldUIiwiYWxnIjoiSFMyNTYifQ.eyJqdGkiOiJTSzdCUlpiQXZZU3FDRjRsQmRvcTNES3NETWNjR3pvTy0xNTU0MDM4OTU3IiwiaXNzIjoiU0s3QlJaYkF2WVNxQ0Y0bEJkb3EzREtzRE1jY0d6b08iLCJleHAiOjE1NTY2MzA5NTcsInJlc3RfYXBpIjp0cnVlfQ.ETVB2D70cNpvtDwo0uY8UEFp21V09UXvQbuinFFjQyY");
+            string data = "{\"from\":{\"type\":\"external\",\"number\":\"84901701062\",\"alias\":\"STRINGEE_NUMBER\"},\"to\":[{\"type\":\"external\",\"number\":\"" + number + "\",\"alias\":\"Thong\"}],\"answer_url\":\"https://example.com/answerurl\",\"actions\":[{\"action\":\"talk\",\"voice\":\"hatieumai\",\"text\":\"" + content + "\",\"speed\":-3,\"silenceTime\":1000}]}";
             var stringContent = new StringContent(data, Encoding.UTF8, "application/json");
             var stringTask = await client.PostAsync("https://api.stringee.com/v1/call2/callout", stringContent);
             var msg = stringTask.Content.ReadAsStringAsync().Result;
+            JObject call = JObject.Parse(msg);
+            var callId = call.SelectToken("call_id");
             return Ok(msg);
+        }
+        [HttpPost("Getstring")]
+        public async Task<IActionResult> TestPhone(string phone)
+        {
+            //var callId = "call-vn-1-OZQMBPBUWM-1553965647526";
+            //var stringeeMsg = await Utility.MakePhoneCallAsync(phone, "Chào mừng bạn đã đến với Stringee");
+            //#region get CallId
+            //JObject call = JObject.Parse(stringeeMsg);
+            //var callId = call.SelectToken("call_id").ToString();
+            //#endregion
+            //Check phone call
+            //if (await Utility.CheckCall(callId, phone))
+            //{
+            //    //_progressStageActionService.MarkAsDone(progressStageAction);
+            //    //_progressStageActionService.SaveProgressStageAction();
+            //    return Ok(true);
+            //}
+            return Ok(false);
+        }
+        [HttpPost("Epoch")]
+        public IActionResult Epoch()
+        {
+            // Example of a UNIX timestamp for 11-29-2013 4:58:30
+            double timestamp = 1554042622308;
+
+            // Format our new DateTime object to start at the UNIX Epoch
+            System.DateTime dateTime = new System.DateTime(1970, 1, 1, 0, 0, 0, 0);
+
+            // Add the timestamp (number of seconds since the Epoch) to be converted
+            dateTime = dateTime.AddMilliseconds(timestamp);
+
+            return Ok(dateTime);
         }
 
 
