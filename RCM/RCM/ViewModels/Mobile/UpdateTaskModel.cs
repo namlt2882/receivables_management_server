@@ -12,5 +12,6 @@ namespace RCM.ViewModels.Mobile
         public int Id { get; set; }
         public IFormFile File { get; set; }
         public string Note { get; set; }
+        public int Status { get; set; }
     }
 }

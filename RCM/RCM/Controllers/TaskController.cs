@@ -34,7 +34,7 @@ namespace RCM.Controllers
         }
 
         [Authorize]
-        [HttpPost("Done")]
+        [HttpPost("UpdateTask")]
         public async Task<IActionResult> MarkTaskIsDone([FromForm]UpdateTaskModel model)
         {
             var user = await _userManager.FindByNameAsync(User.Identity.Name);
@@ -59,7 +59,7 @@ namespace RCM.Controllers
                 }
                 action.Evidence = pictureName;
                 action.Note = model.Note;
-                action.Status = Constant.COLLECTION_STATUS_DONE_CODE;
+                action.Status = model.Status;
                 action.DoneAt = Int32.Parse(Utility.ConvertDatetimeToString(DateTime.Now));
                 action.UserId = user.Id;
                 _progressStageActionService.EditProgressStageAction(action);
@@ -334,14 +334,15 @@ namespace RCM.Controllers
             return Ok(new List<TaskMobileVM>());
         }
 
+
         /// <summary>
         /// Task Already finish
         /// </summary>
         /// <param name="receivableId"></param>
         /// <returns></returns>
         [Authorize]
-        [HttpGet("GetTaskByReceivableId/{receivableId}")]
-        public async System.Threading.Tasks.Task<IActionResult> GetTaskByReceivableId(int receivableId)
+        [HttpGet("GetCompletedTaskByReceivableId/{receivableId}")]
+        public async System.Threading.Tasks.Task<IActionResult> GetCompletedTaskByReceivableId(int receivableId)
         {
             var user = await _userManager.FindByNameAsync(User.Identity.Name);
             var progressStageActions = _progressStageActionService.GetProgressStageActions
@@ -349,10 +350,9 @@ namespace RCM.Controllers
                 (psa.ProgressStage.CollectionProgress.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE
                 || psa.ProgressStage.CollectionProgress.Status == Constant.COLLECTION_STATUS_LATE_CODE)
                 && psa.ProgressStage.CollectionProgress.ReceivableId == receivableId
-                && (psa.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE
-                || psa.Status == Constant.COLLECTION_STATUS_DONE_CODE
+                && (psa.Status == Constant.COLLECTION_STATUS_DONE_CODE
                 || psa.Status == Constant.COLLECTION_STATUS_CANCEL_CODE)
-                && psa.ExcutionDay > Utility.ConvertDatimeToInt(DateTime.Now)
+                && psa.ExcutionDay >= Utility.ConvertDatimeToInt(DateTime.Now)
                 && psa.Type != Constant.ACTION_PHONECALL_CODE
                 && psa.Type != Constant.ACTION_SMS_CODE);
             if (progressStageActions.Any())
@@ -375,6 +375,52 @@ namespace RCM.Controllers
                         Type = x.Type,
                         UserId = x.UserId,
                         CollectorName = collector != null ? collector.FirstName + collector.LastName : "",
+                        ReceivableId = receivableId
+                    };
+                    result.Add(vm);
+                });
+                return Ok(result);
+            }
+            return Ok(new List<TaskMobileVM>());
+        }
+
+        /// <summary>
+        /// Task Already planning
+        /// </summary>
+        /// <param name="receivableId"></param>
+        /// <returns></returns>
+        [Authorize]
+        [HttpGet("GetTodoTaskByReceivableId/{receivableId}")]
+        public async System.Threading.Tasks.Task<IActionResult> GetTodoTaskByReceivableId(int receivableId)
+        {
+            var user = await _userManager.FindByNameAsync(User.Identity.Name);
+            var progressStageActions = _progressStageActionService.GetProgressStageActions
+                (psa =>
+                (psa.ProgressStage.CollectionProgress.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE
+                || psa.ProgressStage.CollectionProgress.Status == Constant.COLLECTION_STATUS_LATE_CODE)
+                && psa.ProgressStage.CollectionProgress.ReceivableId == receivableId
+                && psa.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE
+                && psa.ExcutionDay > Utility.ConvertDatimeToInt(DateTime.Now)
+                && psa.Type != Constant.ACTION_PHONECALL_CODE
+                && psa.Type != Constant.ACTION_SMS_CODE);
+            if (progressStageActions.Any())
+            {
+
+                var result = new List<TaskMobileVM>();
+                progressStageActions.ToList().ForEach(async x =>
+                {
+                    var vm = new TaskMobileVM()
+                    {
+                        Id = x.Id,
+                        ExecutionDay = Helper.Utility.ConvertIntToDatetime(x.ExcutionDay),
+                        Name = x.Name,
+                        StartTime = Helper.Utility.ConvertIntToTimeSpan(x.StartTime),
+                        Evidence = string.IsNullOrEmpty(x.Evidence) ? "" : "/Task/" + x.Evidence,
+                        UpdateDay = x.UpdatedDate,
+                        Status = x.Status,
+                        Note = x.Note,
+                        Type = x.Type,
+                        UserId = x.UserId,
                         ReceivableId = receivableId
                     };
                     result.Add(vm);

@@ -193,7 +193,7 @@ namespace RCM.Helpers
 
             //if (await Utility.CheckCall(callId, phoneNo))
             //{
-            _progressStageActionService.MarkAsDone(progressStageAction);
+                _progressStageActionService.MarkAsDone(progressStageAction);
                 _progressStageActionService.SaveProgressStageAction();
             //}
         }
@@ -208,14 +208,14 @@ namespace RCM.Helpers
             var phoneNo = progressStageAction.ProgressStage.CollectionProgress
                 .Receivable
                 .Contacts.Where(x => x.Type == Constant.CONTACT_DEBTOR_CODE).FirstOrDefault().Phone;
-            var messageContent = progressStageAction.ProgressMessageForm.Content;
+            //var messageContent = progressStageAction.ProgressMessageForm.Content;
 
             //string response = Utility.SendSMS(phoneNo, messageContent);
             _progressStageActionService.MarkAsDone(progressStageAction);
             _progressStageActionService.SaveProgressStageAction();
             //if (response.Contains("success"))
             //{
-            //    _progressStageActionService.MarkAsDone(progressStageAction);
+                //_progressStageActionService.MarkAsDone(progressStageAction);
             //}
         }
 
