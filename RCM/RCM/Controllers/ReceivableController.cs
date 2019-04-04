@@ -780,7 +780,6 @@ namespace RCM.Controllers
                 Id = x.Id,
                 Actions = GetProgressStageActionsForDetailView(x.ProgressStageAction),
                 CollectionProgressId = x.CollectionProgressId,
-                CollectorComment = x.CollectorComment,
                 Duration = x.Duration,
                 Name = x.Name,
                 Sequence = x.Sequence,

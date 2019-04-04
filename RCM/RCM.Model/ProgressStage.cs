@@ -13,7 +13,6 @@ namespace RCM.Model
         public int Duration { get; set; }
         public int Sequence { get; set; }
         public int Status { get; set; }
-        public string CollectorComment { get; set; }
         public int CollectionProgressId { get; set; }
         [ForeignKey("CollectionProgressId")]
         public virtual CollectionProgress CollectionProgress { get; set; }
