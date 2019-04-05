@@ -61,6 +61,8 @@ namespace RCM.ViewModels
         public int ProgressPercent { get; set; }
         public bool HaveLateAction { get; set; }
         public bool IsConfirmed { get; set; }
+        public string Stage { get; set; }
+        public string Action { get; set; }
 
     }
 

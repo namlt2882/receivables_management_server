@@ -71,6 +71,68 @@ namespace RCM.Controllers
             });
             return Ok(result);
         }
+        /// <summary>
+        /// Get receivable by user token
+        /// </summary>
+        /// <returns></returns>
+        [Authorize]
+        [HttpGet("GetByToken")]
+        public async Task<IActionResult> GetByToken()
+        {
+            var user = await _userManager.FindByNameAsync(User.Identity.Name);
+            var result = _receivableService.GetReceivables(r => r.AssignedCollectors.FirstOrDefault(a => a.UserId == user.Id && !a.IsDeleted && a.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE) != null).Select(x => new ReceivableLM()
+            {
+                Id = x.Id,
+                ClosedDay = x.ClosedDay,
+                CustomerId = x.CustomerId,
+                DebtAmount = x.DebtAmount,
+                LocationId = x.LocationId,
+                PayableDay = x.PayableDay != null ? x.PayableDay : null,
+                PrepaidAmount = x.PrepaidAmount,
+                CollectionProgressStatus = x.CollectionProgress.Status,
+                CollectionProgressId = x.CollectionProgress.Id,
+                AssignedCollectorId = x.AssignedCollectors.FirstOrDefault(assignedCollector => assignedCollector.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE).UserId,
+                CustomerName = x.Customer.Name,
+                DebtorName = x.Contacts.Where(contact => contact.Type == Constant.CONTACT_DEBTOR_CODE).SingleOrDefault().Name,
+                DebtorId = x.Contacts.Where(contact => contact.Type == Constant.CONTACT_DEBTOR_CODE).SingleOrDefault().Id,
+                ProgressPercent = GetProgressReached(x),
+                HaveLateAction = HaveLateActions(x),
+                IsConfirmed = x.IsConfirmed,
+                Stage = GetStageName(x),
+                Action = GetStageActionName(x)
+            });
+            return Ok(result);
+        }
+
+        private string GetStageActionName(Receivable receivable)
+        {
+            var stage = receivable.CollectionProgress.ProgressStages.Where(cp => cp.ProgressStageAction.Where(psa => psa.ExcutionDay <= Utility.ConvertDatimeToInt(DateTime.Now)).FirstOrDefault() != null).Last();
+
+            if (stage != null)
+            {
+                var action = stage.ProgressStageAction.OrderByDescending(_ => _.Id).FirstOrDefault(psa => psa.ExcutionDay <= Utility.ConvertDatimeToInt(DateTime.Now));
+                if (action != null)
+                    return action.Name;
+            }
+            return "";
+        }
+
+        private string GetStageName(Receivable receivable)
+        {
+            //
+            var stage = receivable.CollectionProgress.ProgressStages.Where(cp => cp.ProgressStageAction.Where(psa => psa.ExcutionDay <= Utility.ConvertDatimeToInt(DateTime.Now)).FirstOrDefault() != null).Last();
+            if (stage != null)
+            {
+                return stage.Name;
+            }
+            if (receivable.CollectionProgress.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE)
+            {
+                return receivable.CollectionProgress.ProgressStages.FirstOrDefault().Name;
+            }
+            return "";
+            
+        }
+
 
         //[Authorize]
         //[HttpGet("GetAssignedReceivables")]
@@ -384,7 +446,7 @@ namespace RCM.Controllers
                 }
                 //var importedReceivables = _receivableService.GetReceivables().OrderByDescending(x => x.Id).Take(receivablesDBM.Count());
                 SendNewReceivableNotification(importList);
-                return Ok(importList.ToList().Select(_=>_.Id));
+                return Ok(importList.ToList().Select(_ => _.Id));
             }
             return BadRequest(new { Message = "Error when trying to import" });
         }
