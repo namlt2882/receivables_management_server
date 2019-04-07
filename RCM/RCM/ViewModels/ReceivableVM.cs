@@ -76,12 +76,15 @@ namespace RCM.ViewModels
         public int? PayableDay { get; set; }
         public int ExpectationClosedDay { get; set; }
         public int? ClosedDay { get; set; }
+        public double TimeRate { get; set; }
         public string CustomerName { get; set; }
         public string DebtorName { get; set; }
         public int DebtorId { get; set; }
         public bool IsConfirmed { get; set; }
         public IEnumerable<ContactVM> Contacts { get; set; }
         public int AssignDate { get; set; }
+        public string Stage { get; set; }
+        public string Action { get; set; }
     }
     public class ReceivableCloseModel
     {
