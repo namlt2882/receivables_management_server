@@ -21,5 +21,6 @@ namespace RCM.ViewModels
         public string Name { get; set; }
         public long DebtAmountFrom { get; set; }
         public long DebtAmountTo { get; set; }
+        public IEnumerable<ProfileStageVM> Stages { get; set; }
     }
 }

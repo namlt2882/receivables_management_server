@@ -90,13 +90,14 @@ namespace RCM.Controllers
             {
                 return BadRequest(ModelState);
             }
-
+            var stages = TransformStagesToDBM(profileUM.Stages).ToList();
             var profile = new Profile()
             {
                 Id = profileUM.Id,
                 Name = profileUM.Name,
                 DebtAmountFrom = profileUM.DebtAmountFrom,
-                DebtAmountTo = profileUM.DebtAmountTo
+                DebtAmountTo = profileUM.DebtAmountTo,
+                ProfileStages = stages
             };
             _profileService.EditProfile(profile);
             _profileService.SaveProfile();
@@ -195,25 +196,36 @@ namespace RCM.Controllers
         //Get profile from DB and transform to VM.
         private ProfileVM GetProfileDetail(int id)
         {
-            var profileDBM = _profileService.GetProfile(id);
-            if (profileDBM != null)
+            var originProfile = _profileService.GetProfile(id);
+            if (originProfile != null)
             {
-                var stagesVM = GetProfileStageForViewModel(profileDBM.Id);
-                if (stagesVM != null)
+                ProfileVM profile = new ProfileVM()
                 {
-                    ProfileVM profile = new ProfileVM()
+                    Id = originProfile.Id,
+                    DebtAmountFrom = originProfile.DebtAmountFrom,
+                    DebtAmountTo = originProfile.DebtAmountTo,
+                    Name = originProfile.Name,
+                    Stages = originProfile.ProfileStages.Where(x => x.IsDeleted == false)
+                    .Select(x => new ProfileStageVM()
                     {
-                        Id = profileDBM.Id,
-                        DebtAmountFrom = profileDBM.DebtAmountFrom,
-                        DebtAmountTo = profileDBM.DebtAmountTo,
-                        Name = profileDBM.Name,
-                        Stages = stagesVM
-                    };
-                    return profile;
-                }
-
+                        Id = x.Id,
+                        Name = x.Name,
+                        Duration = x.Duration,
+                        Sequence = x.Sequence,
+                        Actions = x.ProfileStageActions.Where(a => a.IsDeleted == false)
+                        .Select(a => new ProfileStageActionVM()
+                        {
+                            Id = a.Id,
+                            Name = a.Name,
+                            Frequency = a.Frequency,
+                            ProfileMessageFormId = a.ProfileMessageFormId,
+                            StartTime = a.StartTime,
+                            Type = a.Type
+                        })
+                    })
+                };
+                return profile;
             }
-
             return null;
         }
 
@@ -277,18 +289,26 @@ namespace RCM.Controllers
         //    }
         //}
 
-        private IEnumerable<ProfileStage> TransformStagesToDBM(IEnumerable<ProfileStageIM> stages)
+        private IEnumerable<ProfileStage> TransformStagesToDBM(IEnumerable<ProfileStageVM> stages)
         {
             if (stages != null)
             {
-                var result = stages.Select(x => new ProfileStage()
+                var result = stages.Select(x =>
                 {
-                    Name = x.Name,
-                    Duration = x.Duration,
-                    Sequence = x.Sequence,
-                    ProfileStageActions = TransformActionToDBM(x.Actions).ToList(),
-                    CreatedDate = DateTime.Now,
-                    IsDeleted = false
+                    var stage = new ProfileStage()
+                    {
+                        Name = x.Name,
+                        Duration = x.Duration,
+                        Sequence = x.Sequence,
+                        ProfileStageActions = TransformActionToDBM(x.Actions).ToList(),
+                        CreatedDate = DateTime.Now,
+                        IsDeleted = false
+                    };
+                    if (x.Id != null)
+                    {
+                        stage.Id = x.Id.Value;
+                    }
+                    return stage;
                 });
                 return result;
             }
@@ -299,15 +319,23 @@ namespace RCM.Controllers
         {
             if (actions != null)
             {
-                var result = actions.Select(x => new ProfileStageAction()
+                var result = actions.Select(x =>
                 {
-                    Name = x.Name,
-                    Frequency = x.Frequency,
-                    StartTime = x.StartTime,
-                    Type = x.Type,
-                    ProfileMessageFormId = x.ProfileMessageFormId,
-                    CreatedDate = DateTime.Now,
-                    IsDeleted = false
+                    var action = new ProfileStageAction()
+                    {
+                        Name = x.Name,
+                        Frequency = x.Frequency,
+                        StartTime = x.StartTime,
+                        Type = x.Type,
+                        ProfileMessageFormId = x.ProfileMessageFormId,
+                        CreatedDate = DateTime.Now,
+                        IsDeleted = false
+                    };
+                    if (x.Id != null)
+                    {
+                        action.Id = x.Id.Value;
+                    }
+                    return action;
                 });
                 return result;
             }

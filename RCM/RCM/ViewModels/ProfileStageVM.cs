@@ -7,7 +7,7 @@ namespace RCM.ViewModels
 {
     public class ProfileStageVM : ProfileStageIM
     {
-        public int Id { get; set; }
+        public int? Id { get; set; }
     }
 
     public class ProfileStageIM

@@ -40,10 +40,8 @@ namespace RCM.Service
 
         public void EditProfileStageAction(ProfileStageAction profileStageAction)
         {
-            var entity = _profileStageActionRepository.GetById(profileStageAction.Id);
-            entity = profileStageAction;
-            entity.UpdatedDate = DateTime.Now;
-            _profileStageActionRepository.Update(entity);
+            profileStageAction.UpdatedDate = DateTime.Now;
+            _profileStageActionRepository.Update(profileStageAction);
         }
 
         public ProfileStageAction GetProfileStageAction(int id)
@@ -71,7 +69,7 @@ namespace RCM.Service
         {
             profileStageAction.IsDeleted = true;
             profileStageAction.UpdatedDate = DateTime.Now;
-            _profileStageActionRepository.Delete(profileStageAction);
+            _profileStageActionRepository.Update(profileStageAction);
         }
 
         public void SaveProfileStageAction()
