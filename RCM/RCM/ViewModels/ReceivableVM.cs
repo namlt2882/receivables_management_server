@@ -84,7 +84,13 @@ namespace RCM.ViewModels
         public IEnumerable<ContactVM> Contacts { get; set; }
         public int AssignDate { get; set; }
         public string Stage { get; set; }
-        public string Action { get; set; }
+        public LastAction Action { get; set; }
+        
+    }
+    public class LastAction
+    {
+        public string Name { get; set; }
+        public DateTime Time { get; set; } 
     }
     public class ReceivableCloseModel
     {

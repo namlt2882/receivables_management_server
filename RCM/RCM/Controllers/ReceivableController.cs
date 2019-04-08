@@ -66,7 +66,7 @@ namespace RCM.Controllers
                 CustomerName = x.Customer.Name,
                 DebtorName = x.Contacts.Where(contact => contact.Type == Constant.CONTACT_DEBTOR_CODE).SingleOrDefault().Name,
                 DebtorId = x.Contacts.Where(contact => contact.Type == Constant.CONTACT_DEBTOR_CODE).SingleOrDefault().Id,
-                ProgressPercent = GetProgressReached(x),
+                ProgressPercent = GetPercent(x),
                 HaveLateAction = HaveLateActions(x),
                 IsConfirmed = x.IsConfirmed,
                 Stage = GetStageName(x),
@@ -291,34 +291,68 @@ namespace RCM.Controllers
             receivable.IsConfirmed = model.IsConfirmed;
             receivable.AssignDate = Utility.ConvertDatimeToInt(model.AssignedCollectors.SingleOrDefault(ac => ac.ReceivableId == receivable.Id && ac.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE && !ac.IsDeleted).CreatedDate);
             receivable.Stage = GetStageName(model);
-            receivable.Action = GetStageActionName(model);
-            ///Time
-            if (model.CollectionProgress.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE)
-            {
-                receivable.TimeRate = GetPercent((DateTime.Now - Utility.ConvertIntToDatetime(model.PayableDay.Value)).TotalDays, (model.ExpectationClosedDay.Value - Utility.ConvertIntToDatetime(model.PayableDay.Value)).TotalDays);
-            }
-            else if (model.CollectionProgress.Status == Constant.COLLECTION_STATUS_WAIT_CODE || model.CollectionProgress.Receivable.PayableDay > Utility.ConvertDatimeToInt(DateTime.Now))
-            {
-                receivable.TimeRate = 0;
-            }
-            else
-            {
-                receivable.TimeRate = GetPercent((Utility.ConvertIntToDatetime(model.ClosedDay.Value) - Utility.ConvertIntToDatetime(model.PayableDay.Value)).TotalDays, (model.ExpectationClosedDay.Value - Utility.ConvertIntToDatetime(model.PayableDay.Value)).TotalDays);
-            }
-            ///
-
+            receivable.Action = GetStageAction(model);
+            receivable.TimeRate = GetPercent(model);
             return receivable;
+        }
+
+        private LastAction GetStageAction(Receivable receivable)
+        {
+            LastAction result = new LastAction();
+            //Receivable not start yet
+            if (receivable.CollectionProgress.Receivable.PayableDay > Utility.ConvertDatimeToInt(DateTime.Now) || receivable.CollectionProgress.Status == Constant.COLLECTION_STATUS_WAIT_CODE)
+            {
+                var action = receivable.CollectionProgress.ProgressStages.First().ProgressStageAction.First();
+                result.Name = action.Name;
+                result.Time = Utility.ConvertIntToDatetime(action.ExcutionDay).Add(Utility.ConvertIntToTimeSpan(action.StartTime)); 
+                return result;
+            }
+            //
+            var stage = receivable.CollectionProgress.ProgressStages.Where(cp => cp.ProgressStageAction.Where(psa => psa.ExcutionDay <= Utility.ConvertDatimeToInt(DateTime.Now)).FirstOrDefault() != null).Last();
+            if (stage != null)
+            {
+                var action = stage.ProgressStageAction.Last(psa => psa.ExcutionDay <= Utility.ConvertDatimeToInt(DateTime.Now));
+                if (action != null)
+                {
+                    if (action.Status != Constant.COLLECTION_STATUS_DONE_CODE)
+                    {
+                        result.Name = action.Name + "(Not yet)";
+                        result.Time = Utility.ConvertIntToDatetime(action.ExcutionDay).Add(Utility.ConvertIntToTimeSpan(action.StartTime));
+                        return result;
+                    }
+                    result.Name = action.Name;
+                    result.Time = Utility.ConvertIntToDatetime(action.ExcutionDay).Add(Utility.ConvertIntToTimeSpan(action.StartTime));
+                    return result;
+                }
+            }
+            //Receivable already close
+            return null;
         }
         #endregion
 
-        private double GetPercent(double numberOfDays, double totalDays)
+        private int GetPercent(Receivable receivable)
         {
+
+            if (receivable.CollectionProgress.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE)
+            {
+                return CalculatePercent((DateTime.Now - Utility.ConvertIntToDatetime(receivable.PayableDay.Value)).TotalDays, (receivable.ExpectationClosedDay.Value - Utility.ConvertIntToDatetime(receivable.PayableDay.Value)).TotalDays);
+            }
+            else if (receivable.CollectionProgress.Status == Constant.COLLECTION_STATUS_WAIT_CODE || receivable.CollectionProgress.Receivable.PayableDay > Utility.ConvertDatimeToInt(DateTime.Now))
+            {
+                return 0;
+            }
+            else
+            {
+                return CalculatePercent((Utility.ConvertIntToDatetime(receivable.ClosedDay.Value) - Utility.ConvertIntToDatetime(receivable.PayableDay.Value)).TotalDays, (receivable.ExpectationClosedDay.Value - Utility.ConvertIntToDatetime(receivable.PayableDay.Value)).TotalDays);
+            }
+            
+        }
+        private int CalculatePercent(double numberOfDays, double totalDays){
             var result = numberOfDays / totalDays * 100;
             if (result < 0)
                 return 0;
-            return Math.Round(result, MidpointRounding.AwayFromZero);
+            return (int)Math.Round(result, MidpointRounding.AwayFromZero);
         }
-
         [HttpPut("OpenReceivable")]
         public IActionResult OpenReceivable([FromBody] ReceivableOpenModel receivableOM)
         {
@@ -742,6 +776,7 @@ namespace RCM.Controllers
                         receivable.CollectionProgress.Status = Constant.COLLECTION_STATUS_COLLECTION_CODE;
                         receivable.PayableDay = receivableAM.PayableDay;
                         receivable.AssignedCollectors.Add(TransformAssignedCollectorToDBM(receivableAM.CollectorId));
+                        receivable.ExpectationClosedDay = CalculateEndDay(receivable.CollectionProgress.ProgressStages, (int)receivable.PayableDay);
                         //Convert contact to contactIM
                         var contacts = new List<ContactIM>();
                         foreach (var contact in receivable.Contacts)
@@ -755,7 +790,7 @@ namespace RCM.Controllers
                                 Type = contact.Type,
                             });
                         }
-
+                        
                         if (contacts.Any())
                         {
                             var stages = TransformProgressStageToDBM(receivable.CollectionProgress.Profile.ProfileStages, receivableAM.PayableDay, GetDebtorName(contacts), receivable.DebtAmount);
