@@ -46,10 +46,12 @@ namespace RCM.Helpers
     public class NotifyJob : IJob
     {
         private IProgressStageActionService _progressStageActionService;
+        private IReceivableService _receivableService;
 
-        public NotifyJob(IProgressStageActionService progressStageActionService)
+        public NotifyJob(IProgressStageActionService progressStageActionService, IReceivableService receivableService)
         {
             _progressStageActionService = progressStageActionService;
+            _receivableService = receivableService;
         }
 
         public void SendNotify()
@@ -71,10 +73,10 @@ namespace RCM.Helpers
                 ));
 
             //Execute action.
-            //if (actionsToExecute.Any())
-            //{
-            //    ExecuteAction(actionsToExecute);
-            //}
+            if (actionsToExecute.Any())
+            {
+                //ExecuteAction(actionsToExecute);
+            }
 
             var actionsToMarkAsLate = _progressStageActionService.GetProgressStageActions()
                 .Where(x => (
@@ -93,6 +95,23 @@ namespace RCM.Helpers
                     _progressStageActionService.SaveProgressStageAction();
                 }
             }
+
+            //var receivableToMarkAsLate = _receivableService.GetReceivables()
+            //    .Where(x => (
+            //    x.IsDeleted == false
+            //    && x.CollectionProgress.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE
+            //    && x.ExpectationClosedDay < DateTime.Now.Date
+            //    ));
+
+            //if (receivableToMarkAsLate.Any())
+            //{
+            //    foreach (var receivable in receivableToMarkAsLate)
+            //    {
+            //        receivable.CollectionProgress.Status = Constant.COLLECTION_STATUS_DONE_CODE;
+            //        _receivableService.EditReceivable(receivable);
+            //        _receivableService.SaveReceivable();
+            //    }
+            //}
         }
 
         private void ExecuteAction(IEnumerable<ProgressStageAction> actions)
@@ -105,8 +124,8 @@ namespace RCM.Helpers
                         NotifyVisit();
                         break;
                     case Constant.ACTION_PHONECALL_CODE:
-                        //MakePhoneCallAsync(action);
-                        SendSMS(action);
+                        MakePhoneCallAsync(action);
+                        //SendSMS(action);
                         break;
                     case Constant.ACTION_REPORT_CODE:
                         NotifyReport();

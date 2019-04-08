@@ -140,7 +140,7 @@ namespace RCM.Controllers
                 });
                 return result;
             }
-            return null;
+            return new List<ProfileUM>();
         }
 
         //[HttpPost]
@@ -182,7 +182,7 @@ namespace RCM.Controllers
 
             //Add Profile to DB
             var stages = TransformStagesToDBM(profileVM.Stages).ToList();
-            if (stages != null)
+            if (stages.Any())
             {
                 var profile = new Profile()
                 {
@@ -289,7 +289,7 @@ namespace RCM.Controllers
 
         private IEnumerable<ProfileStage> TransformStagesToDBM(IEnumerable<ProfileStageIM> stages)
         {
-            if (stages != null)
+            if (stages.Any())
             {
                 var result = stages.Select(x => new ProfileStage()
                 {
@@ -302,7 +302,7 @@ namespace RCM.Controllers
                 });
                 return result;
             }
-            return null;
+            return new List<ProfileStage>();
         }
 
         private IEnumerable<ProfileStageAction> TransformActionToDBM(IEnumerable<ProfileStageActionVM> actions)
