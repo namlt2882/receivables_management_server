@@ -144,6 +144,7 @@ namespace RCM.Helpers
             //Send
             await NotificationUtility.NotificationUtility.SendNotification(notification, _hubService, _hubContext, _firebaseTokenService);
             #endregion
+
         }
 
         private void ExecuteAction(IEnumerable<ProgressStageAction> actions)
@@ -157,6 +158,7 @@ namespace RCM.Helpers
                         break;
                     case Constant.ACTION_PHONECALL_CODE:
                         MakePhoneCall(action);
+
                         break;
                     case Constant.ACTION_REPORT_CODE:
                         NotifyReport();

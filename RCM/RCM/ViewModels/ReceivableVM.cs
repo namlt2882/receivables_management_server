@@ -45,6 +45,7 @@ namespace RCM.ViewModels
         public int? PayableDay { get; set; }
         public int ProfileId { get; set; }
         public string CollectorId { get; set; }
+        public ProfileIM Profile { get; set; }
     }
 
     public class ReceivableLM : ReceivableCM
@@ -107,6 +108,6 @@ namespace RCM.ViewModels
         public int Id { get; set; }
         public string CollectorId { get; set; }
         public int PayableDay { get; set; }
-
+        public ProfileIM Profile { get; set; }
     }
 }

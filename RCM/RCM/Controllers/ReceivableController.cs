@@ -867,7 +867,7 @@ namespace RCM.Controllers
 
                         if (contacts.Any())
                         {
-                            var stages = TransformProgressStageToDBM(receivable.CollectionProgress.Profile.ProfileStages, receivableAM.PayableDay, GetDebtorName(contacts), receivable.DebtAmount);
+                            var stages = TransformProgressStageToDBM(receivableAM.Profile.Stages, receivableAM.PayableDay, GetDebtorName(contacts), receivable.DebtAmount);
                             if (stages.Any())
                             {
                                 receivable.CollectionProgress.ProgressStages = stages.ToList();
@@ -1126,7 +1126,7 @@ namespace RCM.Controllers
                     CollectionProgress collectionProgress = null;
                     DateTime? endDay = null;
 
-                    //Receivable is not assigned to Collector
+                    //Receivable is assigned to Collector
                     if (receivable.CollectorId != null)
                     {
                         //Generate assigned collector
@@ -1139,7 +1139,7 @@ namespace RCM.Controllers
                         assignedCollectors.Add(assignedCollector);
 
                         //Generate collectionProgress with full stage and action.
-                        collectionProgress = TransformCollectionProgressToDBM(receivable.ProfileId, (int)receivable.PayableDay, receivable.DebtAmount, GetDebtorName(receivable.Contacts));
+                        collectionProgress = TransformCollectionProgressToDBM(receivable.Profile, (int)receivable.PayableDay, receivable.DebtAmount, GetDebtorName(receivable.Contacts), receivable.ProfileId);
                         if (collectionProgress == null)
                         {
                             return null;
@@ -1149,7 +1149,7 @@ namespace RCM.Controllers
                         //End if !collectionProgress.Any()
                     }
                     else
-                    //Receivable is assigned to Collector
+                    //Receivable is not assigned to Collector
                     {
                         collectionProgress = TransfromCollectionProgressToDBMWithoutStage(receivable.ProfileId);
                         if (collectionProgress == null)
@@ -1227,19 +1227,18 @@ namespace RCM.Controllers
             return null;
         }
 
-        private CollectionProgress TransformCollectionProgressToDBM(int profileId, int payableDay, long debtAmount, string debtorName)
+        private CollectionProgress TransformCollectionProgressToDBM(ProfileIM profile, int payableDay, long debtAmount, string debtorName, int profileId)
         {
             if (debtorName != null)
             {
-                var profile = GetProfileFromDB(profileId);
                 if (profile != null)
                 {
-                    var stages = TransformProgressStageToDBM(profile.ProfileStages, payableDay, debtorName, debtAmount);
+                    var stages = TransformProgressStageToDBM(profile.Stages, payableDay, debtorName, debtAmount);
                     if (stages.Any())
                     {
                         var collectionProgress = new CollectionProgress()
                         {
-                            Profile = profile,
+                            ProfileId = profileId,
                             Status = Constant.COLLECTION_STATUS_COLLECTION_CODE,
                             IsDeleted = false,
                             CreatedDate = DateTime.Now,
@@ -1273,7 +1272,7 @@ namespace RCM.Controllers
             return null;
         }
 
-        private IEnumerable<ProgressStage> TransformProgressStageToDBM(IEnumerable<ProfileStage> profileStages, int payableDay, string debtorName, long debtAmount)
+        private IEnumerable<ProgressStage> TransformProgressStageToDBM(IEnumerable<ProfileStageVM> profileStages, int payableDay, string debtorName, long debtAmount)
         {
             if (profileStages.Any())
             {
@@ -1285,7 +1284,7 @@ namespace RCM.Controllers
                     Status = Constant.COLLECTION_STATUS_COLLECTION_CODE,
                     IsDeleted = false,
                     CreatedDate = DateTime.Now,
-                    ProgressStageAction = TransformProgressStageActionToDBM(x.ProfileStageActions, x.Duration, GetStageStartDay(payableDay, x.Sequence, profileStages), debtorName, debtAmount).ToList()
+                    ProgressStageAction = TransformProgressStageActionToDBM(x.Actions, x.Duration, GetStageStartDay(payableDay, x.Sequence, profileStages), debtorName, debtAmount).ToList()
                 });
                 return result.ToList();
             }
@@ -1293,7 +1292,7 @@ namespace RCM.Controllers
             return null;
         }
 
-        private DateTime GetStageStartDay(int payableDay, int sequence, IEnumerable<ProfileStage> profileStages)
+        private DateTime GetStageStartDay(int payableDay, int sequence, IEnumerable<ProfileStageVM> profileStages)
         {
             int day = 0;
             for (int i = 0; i < sequence - 1; i++)
@@ -1307,7 +1306,7 @@ namespace RCM.Controllers
             return startDate;
         }
 
-        private IEnumerable<ProgressStageAction> TransformProgressStageActionToDBM(IEnumerable<ProfileStageAction> profileStageActions, int stageDuration, DateTime stageStartDate, string debtorName, long debtAmount)
+        private IEnumerable<ProgressStageAction> TransformProgressStageActionToDBM(IEnumerable<ProfileStageActionVM> profileStageActions, int stageDuration, DateTime stageStartDate, string debtorName, long debtAmount)
         {
             List<ProgressStageAction> result = new List<ProgressStageAction>();
             if (profileStageActions.Any())
@@ -1358,7 +1357,7 @@ namespace RCM.Controllers
             return null;
         }
 
-        private IEnumerable<ProgressStageAction> SplitProfileStageAction(ProfileStageAction profileStageAction, int stageDuration, DateTime startDate, string debtorName, long debtAmount)
+        private IEnumerable<ProgressStageAction> SplitProfileStageAction(ProfileStageActionVM profileStageAction, int stageDuration, DateTime startDate, string debtorName, long debtAmount)
         {
             if (profileStageAction != null)
             {
@@ -1402,9 +1401,9 @@ namespace RCM.Controllers
             return null;
         }
 
-        private int GetTotalProgressDay(Receivable receivable)
+        private long GetTotalProgressDay(Receivable receivable)
         {
-            int result = 0;
+            long result = 0;
             foreach (var stage in receivable.CollectionProgress.ProgressStages)
             {
                 result += stage.Duration;
@@ -1414,20 +1413,29 @@ namespace RCM.Controllers
 
         private int GetProgressReached(Receivable receivable)
         {
+
+            //Receivable is not assigned.
             if (receivable.PayableDay == null)
             {
                 return 0;
             }
 
-            var result = 0;
-            var totalDayInMiliSecond = GetTotalProgressDay(receivable) * 24 * 60 * 60 * 1000;
-            if (receivable.PayableDay != null)
+            double result = 0;
+            long totalDayInMiliSecond = GetTotalProgressDay(receivable) * 24 * 60 * 60 * 1000;
+
+            //Receivable is closed.
+            if (receivable.ClosedDay != null)
             {
-                result = (int)((DateTime.Now - Utility.ConvertIntToDatetime((int)receivable.PayableDay)).TotalMilliseconds);
+                result = ((Utility.ConvertIntToDatetime((int)receivable.ClosedDay) - Utility.ConvertIntToDatetime((int)receivable.PayableDay)).TotalMilliseconds);
                 result = (int)((double)result * 100 / totalDayInMiliSecond);
+                return (int)result;
             }
 
-            return result;
+            //Receivable is in collection progress.
+            result = (int)((DateTime.Now - Utility.ConvertIntToDatetime((int)receivable.PayableDay)).TotalMilliseconds);
+            result = (int)((double)result * 100 / totalDayInMiliSecond);
+
+            return (int) result;
         }
 
         private bool HaveLateActions(Receivable receivable)

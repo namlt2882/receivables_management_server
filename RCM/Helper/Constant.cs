@@ -5,7 +5,7 @@
         public const string SPEEDSMS_TOKEN = "H-TVWpn8KOmBc_mO9D1WOTKkV0IDWexj";
         public const string STRINGEE_TOKEN = "eyJjdHkiOiJzdHJpbmdlZS1hcGk7dj0xIiwidHlwIjoiSldUIiwiYWxnIjoiSFMyNTYifQ.eyJqdGkiOiJTSzdCUlpiQXZZU3FDRjRsQmRvcTNES3NETWNjR3pvTy0xNTU0MDM4OTU3IiwiaXNzIjoiU0s3QlJaYkF2WVNxQ0Y0bEJkb3EzREtzRE1jY0d6b08iLCJleHAiOjE1NTY2MzA5NTcsInJlc3RfYXBpIjp0cnVlfQ.ETVB2D70cNpvtDwo0uY8UEFp21V09UXvQbuinFFjQyY";
 
-        public const string SCHEDULER_CRON = "0 0/5 7-22 * * ?";
+        public const string SCHEDULER_CRON = "0 0/2 7-22 * * ?";
 
         public const string CONTACT_DEBTOR = "Debtor";
         public const int CONTACT_DEBTOR_CODE = 0;
