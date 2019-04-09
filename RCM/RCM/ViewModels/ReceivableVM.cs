@@ -62,7 +62,6 @@ namespace RCM.ViewModels
         public bool HaveLateAction { get; set; }
         public bool IsConfirmed { get; set; }
         public string Stage { get; set; }
-        public string Action { get; set; }
 
     }
 
@@ -84,10 +83,10 @@ namespace RCM.ViewModels
         public IEnumerable<ContactVM> Contacts { get; set; }
         public int AssignDate { get; set; }
         public string Stage { get; set; }
-        public LastAction Action { get; set; }
+        public NextAction Action { get; set; }
         
     }
-    public class LastAction
+    public class NextAction
     {
         public string Name { get; set; }
         public DateTime Time { get; set; } 
