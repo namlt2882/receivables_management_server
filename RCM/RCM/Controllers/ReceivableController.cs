@@ -845,6 +845,7 @@ namespace RCM.Controllers
                 var receivable = _receivableService.GetReceivable(receivableAM.Id);
                 if (receivable != null)
                 {
+                    DateTime? endDay = null;
                     if (receivable.CollectionProgress.Status == Constant.COLLECTION_STATUS_WAIT_CODE)
                     {
                         receivable.CollectionProgress.Status = Constant.COLLECTION_STATUS_COLLECTION_CODE;
@@ -868,9 +869,12 @@ namespace RCM.Controllers
                         if (contacts.Any())
                         {
                             var stages = TransformProgressStageToDBM(receivableAM.Profile.Stages, receivableAM.PayableDay, GetDebtorName(contacts), receivable.DebtAmount);
+                            endDay = CalculateEndDay(stages, (int)receivable.PayableDay);
+
                             if (stages.Any())
                             {
                                 receivable.CollectionProgress.ProgressStages = stages.ToList();
+                                receivable.ExpectationClosedDay = endDay;
                             }
 
                             _receivableService.EditReceivable(receivable);
@@ -1435,7 +1439,7 @@ namespace RCM.Controllers
             result = (int)((DateTime.Now - Utility.ConvertIntToDatetime((int)receivable.PayableDay)).TotalMilliseconds);
             result = (int)((double)result * 100 / totalDayInMiliSecond);
 
-            return (int) result;
+            return (int)result;
         }
 
         private bool HaveLateActions(Receivable receivable)
