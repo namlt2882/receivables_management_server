@@ -150,57 +150,81 @@ namespace RCM.Controllers
 
         private string GetStageName(Receivable receivable)
         {
-            //Receivable not start yet
-            if (receivable.CollectionProgress.Receivable.PayableDay > Utility.ConvertDatimeToInt(DateTime.Now))
-            {
-                var action = receivable.CollectionProgress.ProgressStages.FirstOrDefault();
-                return action.Name;
-            }
-            else if (receivable.CollectionProgress.Status == Constant.COLLECTION_STATUS_WAIT_CODE)
+
+            var result = new ProgressStageMobileVM();
+            if(receivable.CollectionProgress.Status== Constant.COLLECTION_STATUS_WAIT_CODE)
             {
                 return "";
             }
-            else
+            if (receivable.CollectionProgress.Receivable.PayableDay > Utility.ConvertDatimeToInt(DateTime.Now))
             {
-                //Receivable in collecting process
+                var progressStage = receivable.CollectionProgress.ProgressStages.FirstOrDefault();
+                return progressStage.Name;
+            }
+            //Receivable is closed=> get Last action
+            if (receivable.CollectionProgress.Status == Constant.COLLECTION_STATUS_CANCEL_CODE || receivable.CollectionProgress.Status == Constant.COLLECTION_STATUS_CLOSED_CODE)
+            {
+
                 var stages = receivable.CollectionProgress.ProgressStages.ToList();
-                var psalist = new List<ProgressStageAction>();
+                result.Actions = stages.Select(action => new ProgressStageActionMobileDM
+                {
+                    Name = action.Name
+                });
+                var psaList = new List<ProgressStageAction>();
                 foreach (var item in stages)
                 {
-                    var psas = item.ProgressStageAction.ToList();
-                    foreach (var psa in psas)
+                    foreach (var psa in item.ProgressStageAction.ToList())
                     {
-                        if (psa.ExcutionDay <= Utility.ConvertDatimeToInt(DateTime.Now))
+                        if (psa.ExcutionDay <= receivable.ClosedDay)
                         {
-                            psalist.Add(psa);
+                            psaList.Add(psa);
                         }
                     }
                 }
-                if (psalist.Any())
+                if (psaList.Any())
                 {
-                    foreach (var item in stages)
+                    for (var i = 0; i < stages.Count; i++)
                     {
-                        var psas = item.ProgressStageAction.ToList();
-                        foreach (var psa in psas)
+                        foreach (var psa in stages[i].ProgressStageAction.ToList())
                         {
-                            if (psa.Id == psalist.LastOrDefault().Id)
+                            if (psa.Id == psaList.LastOrDefault().Id)
                             {
-                                return item.Name;
+                                return stages[i].Name;
                             }
                         }
                     }
                 }
-                //var stages = receivable.CollectionProgress.ProgressStages.Where(cp => cp.ProgressStageAction.Where(psa => psa.ExcutionDay <= Utility.ConvertDatimeToInt(DateTime.Now)).FirstOrDefault() != null);
-                //Receivable already run but no action has been excute
-                if (receivable.CollectionProgress.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE)
-                {
-                    return receivable.CollectionProgress.ProgressStages.FirstOrDefault().Name;
-                }
+                //Don't excute any action
+                return stages[0].Name;
+
             }
-
-            //Receivable already close
-            return null;
-
+            //Receivable is in collecting
+            else
+            {
+                var stages = receivable.CollectionProgress.ProgressStages.ToList();
+                result.Actions = stages.Select(action => new ProgressStageActionMobileDM
+                {
+                    Name = action.Name
+                });
+                var psaList = new List<ProgressStageAction>();
+                foreach (var item in stages)
+                {
+                    foreach (var psa in item.ProgressStageAction.ToList())
+                    {
+                        if (psa.ExcutionDay >= Utility.ConvertDatimeToInt(DateTime.Now))
+                        {
+                            psaList.Add(psa);
+                        }
+                    }
+                }
+                if (psaList.Any())
+                {
+                    var psa = psaList.FirstOrDefault();
+                    return psa.ProgressStage.Name;
+                }
+                //Don't have any remaining action
+                return stages.LastOrDefault().Name;
+            }
         }
 
 
@@ -345,11 +369,110 @@ namespace RCM.Controllers
             receivable.ExpectationClosedDay = Utility.ConvertDatimeToInt((DateTime)model.ExpectationClosedDay);
             receivable.IsConfirmed = model.IsConfirmed;
             receivable.AssignDate = Utility.ConvertDatimeToInt(model.AssignedCollectors.SingleOrDefault(ac => ac.ReceivableId == receivable.Id && ac.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE && !ac.IsDeleted).CreatedDate);
-            receivable.Stage = GetStageName(model);
-            receivable.Action = GetStageAction(model);
+            receivable.Action = GetNextOrLastAction(model);
             receivable.TimeRate = GetPercent(model);
+            receivable.ProgressStage = GetProgressStage(model);
             return receivable;
         }
+
+        private ProgressStageMobileVM GetProgressStage(Receivable receivable)
+        {
+            var result = new ProgressStageMobileVM();
+            if (receivable.CollectionProgress.Receivable.PayableDay > Utility.ConvertDatimeToInt(DateTime.Now))
+            {
+                var progressStage = receivable.CollectionProgress.ProgressStages.FirstOrDefault();
+                result.CurrentStageIndex = 0;
+                result.CurrentStageName = progressStage.Name;
+                result.Actions = progressStage.ProgressStageAction.Select(action => new ProgressStageActionMobileDM
+                {
+                    Name = action.Name
+                });
+                return result;
+            }
+            //Receivable is closed=> get Last action
+            if (receivable.CollectionProgress.Status == Constant.COLLECTION_STATUS_CANCEL_CODE || receivable.CollectionProgress.Status == Constant.COLLECTION_STATUS_CLOSED_CODE)
+            {
+
+                var stages = receivable.CollectionProgress.ProgressStages.ToList();
+                result.Actions = stages.Select(action => new ProgressStageActionMobileDM
+                {
+                    Name = action.Name
+                });
+                var psaList = new List<ProgressStageAction>();
+                foreach (var item in stages)
+                {
+                    foreach (var psa in item.ProgressStageAction.ToList())
+                    {
+                        if (psa.ExcutionDay <= receivable.ClosedDay)
+                        {
+                            psaList.Add(psa);
+                        }
+                    }
+                }
+                if (psaList.Any())
+                {
+                    for (var i = 0; i < stages.Count; i++)
+                    {
+                        foreach (var psa in stages[i].ProgressStageAction.ToList())
+                        {
+                            if (psa.Id == psaList.LastOrDefault().Id)
+                            {
+                                result.CurrentStageName = stages[i].Name;
+                                result.CurrentStageIndex = i;
+                            }
+                        }
+                    }
+
+                    return result;
+                }
+                else
+                //Don't excute any action
+                {
+                    result.CurrentStageName = stages[0].Name;
+                    result.CurrentStageIndex = 0;
+                    return result;
+                }
+
+            }
+            //Receivable is in collecting
+            else
+            {
+                var stages = receivable.CollectionProgress.ProgressStages.ToList();
+                result.Actions = stages.Select(action => new ProgressStageActionMobileDM
+                {
+                    Name = action.Name
+                });
+                var psaList = new List<ProgressStageAction>();
+                foreach (var item in stages)
+                {
+                    foreach (var psa in item.ProgressStageAction.ToList())
+                    {
+                        if (psa.ExcutionDay >= Utility.ConvertDatimeToInt(DateTime.Now))
+                        {
+                            psaList.Add(psa);
+                        }
+                    }
+                }
+                if (psaList.Any())
+                {
+                    var psa = psaList.FirstOrDefault();
+                    result.CurrentStageName = psa.ProgressStage.Name;
+                    for (int i = 0; i < stages.Count; i++)
+                    {
+                        if (stages[i].Id == psa.ProgressStage.Id)
+                        {
+                            result.CurrentStageIndex = i;
+                        }
+                    }
+                    return result;
+                }
+                //Don't have any remaining action
+                result.CurrentStageIndex = stages.Count;
+                result.CurrentStageName = stages.LastOrDefault().Name;
+                return result;
+            }
+        }
+
         /// <summary>
         /// Get next Action if status of receivable is collecting, Last action if status is Cancel or Close
         /// </summary>
@@ -358,15 +481,67 @@ namespace RCM.Controllers
         private NextAction GetNextOrLastAction(Receivable receivable)
         {
             var result = new NextAction();
-
-            if (receivable.CollectionProgress.Status == Constant.COLLECTION_STATUS_WAIT_CODE)
+            //Receivable not start yet
+            if (receivable.CollectionProgress.Receivable.PayableDay > Utility.ConvertDatimeToInt(DateTime.Now))
             {
-                var action = receivable.CollectionProgress.ProgressStages.Last(ps => ps.ProgressStageAction.Last(psa => psa.ExcutionDay >= Utility.ConvertDatimeToInt(DateTime.Now)) != null);
-                result.Name = action.Name;
-                //result.Time = Utility.ConvertIntToDatetime(action.ExcutionDay).Add(Utility.ConvertIntToTimeSpan(action.StartTime));
+                var action = receivable.CollectionProgress.ProgressStages.FirstOrDefault().ProgressStageAction.FirstOrDefault();
+                result.Type = action.Type;
+                result.Time = Utility.ConvertIntToDatetime(action.ExcutionDay).Add(Utility.ConvertIntToTimeSpan(action.StartTime));
                 return result;
             }
-            return result;
+            //Receivable is closed=> get Last action
+            if (receivable.CollectionProgress.Status == Constant.COLLECTION_STATUS_CANCEL_CODE || receivable.CollectionProgress.Status == Constant.COLLECTION_STATUS_CLOSED_CODE)
+            {
+                var stages = receivable.CollectionProgress.ProgressStages.ToList();
+                var psaList = new List<ProgressStageAction>();
+                foreach (var item in stages)
+                {
+                    foreach (var psa in item.ProgressStageAction.ToList())
+                    {
+                        if (psa.ExcutionDay <= receivable.ClosedDay)
+                        {
+                            psaList.Add(psa);
+                        }
+                    }
+                }
+                if (psaList.Any())
+                {
+                    var psa = psaList.LastOrDefault();
+                    result.Type = psa.Type;
+                    result.Time = Utility.ConvertIntToDatetime(psa.ExcutionDay).Add(Utility.ConvertIntToTimeSpan(psa.StartTime));
+                    return result;
+                }
+                //Don't excute any action
+                result.Type = 0;
+                return result;
+            }
+            //Receivable is in collecting
+            else
+            {
+                var stages = receivable.CollectionProgress.ProgressStages.ToList();
+                var psaList = new List<ProgressStageAction>();
+                foreach (var item in stages)
+                {
+                    foreach (var psa in item.ProgressStageAction.ToList())
+                    {
+                        if (psa.ExcutionDay >= Utility.ConvertDatimeToInt(DateTime.Now))
+                        {
+                            psaList.Add(psa);
+                        }
+                    }
+                }
+                if (psaList.Any())
+                {
+                    var psa = psaList.FirstOrDefault();
+                    result.Type = psa.Type;
+                    result.Time = Utility.ConvertIntToDatetime(psa.ExcutionDay).Add(Utility.ConvertIntToTimeSpan(psa.StartTime));
+                    return result;
+                }
+                //Don't have any remaining action
+                result.Type = 0;
+                return result;
+            }
+
 
         }
         private NextAction GetStageAction(Receivable receivable)
@@ -376,7 +551,7 @@ namespace RCM.Controllers
             if (receivable.CollectionProgress.Receivable.PayableDay > Utility.ConvertDatimeToInt(DateTime.Now) || receivable.CollectionProgress.Status == Constant.COLLECTION_STATUS_WAIT_CODE)
             {
                 var action = receivable.CollectionProgress.ProgressStages.First().ProgressStageAction.First();
-                result.Name = action.Name;
+                result.Type = action.Type;
                 result.Time = Utility.ConvertIntToDatetime(action.ExcutionDay).Add(Utility.ConvertIntToTimeSpan(action.StartTime));
                 return result;
             }
@@ -389,11 +564,11 @@ namespace RCM.Controllers
                 {
                     if (action.Status != Constant.COLLECTION_STATUS_DONE_CODE)
                     {
-                        result.Name = action.Name + "(Not yet)";
+                        result.Type = action.Type;
                         result.Time = Utility.ConvertIntToDatetime(action.ExcutionDay).Add(Utility.ConvertIntToTimeSpan(action.StartTime));
                         return result;
                     }
-                    result.Name = action.Name;
+                    result.Type = action.Type;
                     result.Time = Utility.ConvertIntToDatetime(action.ExcutionDay).Add(Utility.ConvertIntToTimeSpan(action.StartTime));
                     return result;
                 }
@@ -1435,7 +1610,7 @@ namespace RCM.Controllers
             result = (int)((DateTime.Now - Utility.ConvertIntToDatetime((int)receivable.PayableDay)).TotalMilliseconds);
             result = (int)((double)result * 100 / totalDayInMiliSecond);
 
-            return (int) result;
+            return (int)result;
         }
 
         private bool HaveLateActions(Receivable receivable)

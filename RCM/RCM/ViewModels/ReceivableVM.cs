@@ -33,7 +33,7 @@ namespace RCM.ViewModels
     //Import succes model
     public class ReceivableISM : ReceivableCM
     {
-        public int Id{ get; set; }
+        public int Id { get; set; }
         public IEnumerable<ContactIM> Contacts { get; set; }
         public int? PayableDay { get; set; }
         public int ProfileId { get; set; }
@@ -83,14 +83,24 @@ namespace RCM.ViewModels
         public bool IsConfirmed { get; set; }
         public IEnumerable<ContactVM> Contacts { get; set; }
         public int AssignDate { get; set; }
-        public string Stage { get; set; }
         public NextAction Action { get; set; }
-        
+        public ProgressStageMobileVM ProgressStage { get; set; }
+    }
+    public class ProgressStageMobileVM
+    {
+        public string CurrentStageName { get; set; }
+        public int CurrentStageIndex { get; set; }
+        public IEnumerable<ProgressStageActionMobileDM> Actions;
+    }
+
+    public class ProgressStageActionMobileDM
+    {
+        public string Name { get; set; }
     }
     public class NextAction
     {
-        public string Name { get; set; }
-        public DateTime Time { get; set; } 
+        public int Type { get; set; }
+        public DateTime Time { get; set; }
     }
     public class ReceivableCloseModel
     {
