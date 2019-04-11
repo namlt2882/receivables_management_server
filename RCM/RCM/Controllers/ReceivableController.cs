@@ -809,7 +809,7 @@ namespace RCM.Controllers
                 {
                     Title = Constant.NOTIFICATION_TYPE_NEW_RECEIVABLE,
                     Type = Constant.NOTIFICATION_TYPE_NEW_RECEIVABLE_CODE,
-                    Body = $"You were assgined to {_.ReceivableList.Count}{JsonConvert.SerializeObject(_.ReceivableList)} reiceivable from {_customerService.GetCustomer(receivables.First().CustomerId).Name}",
+                    Body = $"You were assgined to {_.ReceivableList.Count} reiceivable from {_customerService.GetCustomer(receivables.First().CustomerId).Name}",
                     UserId = _.UserId,
                     NData = JsonConvert.SerializeObject(_.ReceivableList),
                     IsSeen = false,
@@ -848,7 +848,7 @@ namespace RCM.Controllers
             {
                 Title = Constant.NOTIFICATION_TYPE_CLOSE_RECEIVABLE,
                 Type = Constant.NOTIFICATION_TYPE_CLOSE_RECEIVABLE_CODE,
-                Body = $"You have reiceivable-{receivable.Id} from {receivable.Customer.Name} need to confirm!",
+                Body = $"You have reiceivable of {receivable.Contacts.FirstOrDefault().Name} from {receivable.Customer.Name} need to confirm!",
                 UserId = user.Id,
                 NData = JsonConvert.SerializeObject(receivable.Id),
                 IsSeen = false,
@@ -904,7 +904,7 @@ namespace RCM.Controllers
             {
                 Title = Constant.NOTIFICATION_TYPE_ASSIGN_RECEIVABLE,
                 Type = Constant.NOTIFICATION_TYPE_ASSIGN_RECEIVABLE_CODE,
-                Body = $"You were assigned to receivable[{receivable.Id}] from {receivable.Customer.Name}!",
+                Body = $"You were assigned to receivable of {receivable.Contacts.FirstOrDefault().Name} from {receivable.Customer.Name}!",
                 UserId = collectorId,
                 NData = JsonConvert.SerializeObject(receivable.Id),
                 IsSeen = false,

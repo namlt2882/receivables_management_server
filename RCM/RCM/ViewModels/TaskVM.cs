@@ -29,5 +29,7 @@ namespace RCM.ViewModels
         public int ReceivableId { get; set; }
         public string CollectorName { get; set; }
         public string UserId { get; set; }
+        public string Partner { get; set; }
+        public string Debtor { get; set; }
     }
 }

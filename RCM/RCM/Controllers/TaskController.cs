@@ -108,7 +108,7 @@ namespace RCM.Controllers
             var rawData = from action in _progressStageActionService.GetProgressStageActions()
                           where receivableIdList.Contains(action.ProgressStage.CollectionProgress.ReceivableId)
                           && action.ProgressStage.CollectionProgress.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE
-                          && (action.Type == Constant.ACTION_NOTIFICATION_CODE || action.Type == Constant.ACTION_REPORT_CODE)
+                          && (action.Type == Constant.ACTION_VISIT_CODE || action.Type == Constant.ACTION_REPORT_CODE)
                           select action;
 
             if (rawData.Any())
@@ -173,7 +173,7 @@ namespace RCM.Controllers
             var rawData = from action in _progressStageActionService.GetProgressStageActions()
                           where receivableIdList.Contains(action.ProgressStage.CollectionProgress.ReceivableId)
                           && action.ProgressStage.CollectionProgress.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE
-                          && (action.Type == Constant.ACTION_NOTIFICATION_CODE || action.Type == Constant.ACTION_REPORT_CODE)
+                          && (action.Type == Constant.ACTION_VISIT_CODE || action.Type == Constant.ACTION_NOTIFICATION_CODE || action.Type == Constant.ACTION_REPORT_CODE)
                           select action;
 
             rawData = rawData.Where(action =>
@@ -213,7 +213,7 @@ namespace RCM.Controllers
             var rawData = from action in _progressStageActionService.GetProgressStageActions()
                           where receivableIdList.Contains(action.ProgressStage.CollectionProgress.ReceivableId)
                           && action.ProgressStage.CollectionProgress.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE
-                          && (action.Type == Constant.ACTION_NOTIFICATION_CODE || action.Type == Constant.ACTION_REPORT_CODE)
+                          && (action.Type == Constant.ACTION_VISIT_CODE || action.Type == Constant.ACTION_REPORT_CODE)
                           select action;
 
             rawData = rawData.Where(action =>
@@ -254,7 +254,7 @@ namespace RCM.Controllers
                 &&
                 (psa.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE
                 || psa.Status == Constant.COLLECTION_STATUS_LATE_CODE)
-                && (psa.Type == Constant.ACTION_NOTIFICATION_CODE || psa.Type == Constant.ACTION_REPORT_CODE)
+                && (psa.Type == Constant.ACTION_VISIT_CODE || psa.Type == Constant.ACTION_NOTIFICATION_CODE || psa.Type == Constant.ACTION_REPORT_CODE)
                 );
             if (progressStageActions.Any())
             {
@@ -285,7 +285,7 @@ namespace RCM.Controllers
                     (psa =>
                     psa.ProgressStage.CollectionProgress.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE
                     && psa.Status == Constant.COLLECTION_STATUS_LATE_CODE
-                    && (psa.Type == Constant.ACTION_NOTIFICATION_CODE || psa.Type == Constant.ACTION_REPORT_CODE)
+                    && (psa.Type == Constant.ACTION_VISIT_CODE || psa.Type == Constant.ACTION_NOTIFICATION_CODE || psa.Type == Constant.ACTION_REPORT_CODE)
                     && psa.DoneAt == null);
             if (progressStageActions.Any())
             {
@@ -323,7 +323,7 @@ namespace RCM.Controllers
                     (psa =>
                     psa.ProgressStage.CollectionProgress.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE
                     && psa.Status == Constant.COLLECTION_STATUS_DONE_CODE
-                    && (psa.Type == Constant.ACTION_NOTIFICATION_CODE || psa.Type == Constant.ACTION_REPORT_CODE)
+                    && (psa.Type == Constant.ACTION_VISIT_CODE || psa.Type == Constant.ACTION_NOTIFICATION_CODE || psa.Type == Constant.ACTION_REPORT_CODE)
                     && psa.ExcutionDay <= Utility.ConvertDatimeToInt(DateTime.Now)
                     && psa.DoneAt != null);
             else
@@ -331,7 +331,7 @@ namespace RCM.Controllers
                     (psa =>
                     psa.ProgressStage.CollectionProgress.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE
                     && psa.Status == Constant.COLLECTION_STATUS_DONE_CODE
-                    && (psa.Type == Constant.ACTION_NOTIFICATION_CODE || psa.Type == Constant.ACTION_REPORT_CODE)
+                    && (psa.Type == Constant.ACTION_VISIT_CODE || psa.Type == Constant.ACTION_NOTIFICATION_CODE || psa.Type == Constant.ACTION_REPORT_CODE)
                     && psa.ExcutionDay == day
                     && psa.DoneAt != null);
             if (progressStageActions.Any())
@@ -380,7 +380,7 @@ namespace RCM.Controllers
                     &&
                     (psa.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE
                     || psa.Status == Constant.COLLECTION_STATUS_LATE_CODE)
-                    && (psa.Type == Constant.ACTION_NOTIFICATION_CODE || psa.Type == Constant.ACTION_REPORT_CODE)
+                    && (psa.Type == Constant.ACTION_VISIT_CODE || psa.Type == Constant.ACTION_NOTIFICATION_CODE || psa.Type == Constant.ACTION_REPORT_CODE)
                     && psa.ExcutionDay <= Utility.ConvertDatimeToInt(DateTime.Now)
                     && psa.DoneAt == null);
             else
@@ -392,7 +392,7 @@ namespace RCM.Controllers
                     &&
                     (psa.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE
                     || psa.Status == Constant.COLLECTION_STATUS_LATE_CODE)
-                    && (psa.Type == Constant.ACTION_NOTIFICATION_CODE || psa.Type == Constant.ACTION_REPORT_CODE)
+                    && (psa.Type == Constant.ACTION_VISIT_CODE || psa.Type == Constant.ACTION_NOTIFICATION_CODE || psa.Type == Constant.ACTION_REPORT_CODE)
                     && psa.ExcutionDay == day
                     && psa.DoneAt == null);
             if (progressStageActions.Any())
@@ -428,12 +428,9 @@ namespace RCM.Controllers
             var user = await _userManager.FindByNameAsync(User.Identity.Name);
             var progressStageActions = _progressStageActionService.GetProgressStageActions
                 (psa =>
-                (psa.ProgressStage.CollectionProgress.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE
-                || psa.ProgressStage.CollectionProgress.Status == Constant.COLLECTION_STATUS_LATE_CODE)
-                && psa.ProgressStage.CollectionProgress.ReceivableId == receivableId
+                psa.ProgressStage.CollectionProgress.ReceivableId == receivableId
                 && (psa.Status == Constant.COLLECTION_STATUS_DONE_CODE
                 || psa.Status == Constant.COLLECTION_STATUS_CANCEL_CODE)
-                && psa.ExcutionDay >= Utility.ConvertDatimeToInt(DateTime.Now)
                 && psa.Type != Constant.ACTION_PHONECALL_CODE
                 && psa.Type != Constant.ACTION_SMS_CODE);
             if (progressStageActions.Any())
@@ -488,7 +485,7 @@ namespace RCM.Controllers
             {
 
                 var result = new List<TaskMobileVM>();
-                progressStageActions.ToList().ForEach(async x =>
+                progressStageActions.Take(5).ToList().ForEach(async x =>
                 {
                     var vm = new TaskMobileVM()
                     {
@@ -520,7 +517,6 @@ namespace RCM.Controllers
         public async System.Threading.Tasks.Task<IActionResult> GetCollectorCalendarTasks()
         {
             var user = await _userManager.FindByNameAsync(User.Identity.Name);
-
             var receivableIdList = _assignedCollectorService.GetAssignedCollectors()
                 .Where(x =>
                 x.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE
@@ -535,7 +531,7 @@ namespace RCM.Controllers
                 || psa.ProgressStage.CollectionProgress.Status == Constant.COLLECTION_STATUS_LATE_CODE)
                 && psa.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE
                 || psa.Status == Constant.COLLECTION_STATUS_LATE_CODE)
-                && (psa.Type == Constant.ACTION_NOTIFICATION_CODE || psa.Type == Constant.ACTION_REPORT_CODE)
+                && (psa.Type == Constant.ACTION_VISIT_CODE || psa.Type == Constant.ACTION_NOTIFICATION_CODE || psa.Type == Constant.ACTION_REPORT_CODE)
                 && psa.ExcutionDay <= Int32.Parse(Utility.ConvertDatetimeToString(DateTime.Now.AddDays(DayOfWeek.Saturday - DateTime.Now.DayOfWeek)))
                 && psa.DoneAt == null
                 );
@@ -586,7 +582,7 @@ namespace RCM.Controllers
                     &&
                     (psa.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE
                     || psa.Status == Constant.COLLECTION_STATUS_LATE_CODE)
-                    && (psa.Type == Constant.ACTION_NOTIFICATION_CODE || psa.Type == Constant.ACTION_REPORT_CODE)
+                    && (psa.Type == Constant.ACTION_VISIT_CODE || psa.Type == Constant.ACTION_NOTIFICATION_CODE || psa.Type == Constant.ACTION_REPORT_CODE)
                     && psa.ExcutionDay == Utility.ConvertDatimeToInt(DateTime.Now)
                     && psa.DoneAt == null);
             else
@@ -598,7 +594,7 @@ namespace RCM.Controllers
                     &&
                     (psa.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE
                     || psa.Status == Constant.COLLECTION_STATUS_LATE_CODE)
-                    && (psa.Type == Constant.ACTION_NOTIFICATION_CODE || psa.Type == Constant.ACTION_REPORT_CODE)
+                    && (psa.Type == Constant.ACTION_VISIT_CODE || psa.Type == Constant.ACTION_NOTIFICATION_CODE || psa.Type == Constant.ACTION_REPORT_CODE)
                     && psa.ExcutionDay == day
                     && psa.DoneAt == null);
             if (progressStageActions.Any())
@@ -612,7 +608,9 @@ namespace RCM.Controllers
                     Evidence = x.Evidence,
                     Status = x.Status,
                     Type = x.Type,
-                    ReceivableId = x.ProgressStage.CollectionProgress.ReceivableId
+                    ReceivableId = x.ProgressStage.CollectionProgress.ReceivableId,
+                    Partner =x.ProgressStage.CollectionProgress.Receivable.Customer.Name,
+                    Debtor = x.ProgressStage.CollectionProgress.Receivable.Contacts.FirstOrDefault().Name
                 });
                 return Ok(result);
             }
