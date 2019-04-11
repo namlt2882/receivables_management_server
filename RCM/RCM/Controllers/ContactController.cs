@@ -4,6 +4,7 @@ using RCM.Helper;
 using RCM.Model;
 using RCM.Service;
 using RCM.ViewModels;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace RCM.Controllers
@@ -34,7 +35,6 @@ namespace RCM.Controllers
             {
                 return NotFound();
             }
-
             return Ok(contact.Adapt<ContactVM>());
         }
 
@@ -60,6 +60,18 @@ namespace RCM.Controllers
             return Ok(contacts);
         }
 
+        [HttpGet("GetDebtors/{name}")]
+        public IActionResult GetDebtors(string name)
+        {
+            var contacts = _contactService.GetContacts(x => x.Type == Constant.CONTACT_DEBTOR_CODE  && Utility.NonUnicode(x.Name.ToLower()).Contains(name.ToLower()));
+            if (contacts == null)
+            {
+                return NotFound();
+            }
+            return Ok(contacts.Adapt<List<ContactVM>>());
+        }
+
+
         [HttpPost]
         public IActionResult Create([FromBody] ContactIM contactIM)
         {
@@ -84,7 +96,7 @@ namespace RCM.Controllers
             };
             _contactService.CreateContact(contact);
             _contactService.SaveContact();
-            return StatusCode(201,contact.Adapt<ContactVM>());
+            return StatusCode(201, contact.Adapt<ContactVM>());
         }
 
         [HttpPut]

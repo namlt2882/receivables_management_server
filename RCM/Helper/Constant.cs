@@ -20,13 +20,13 @@
         public const int ACTION_PHONECALL_CODE = 1;
 
         public const string ACTION_NOTIFICATION = "Notification";
-        public const int ACTION_NOTIFICATION_CODE = 2;
+        public const int ACTION_NOTIFICATION_CODE = 3;
 
         public const string ACTION_VISIT = "Visit";
-        public const int ACTION_VISIT_CODE = 4;
+        public const int ACTION_VISIT_CODE = 2;
 
         public const string ACTION_REPORT = "Report";
-        public const int ACTION_REPORT_CODE = 3;
+        public const int ACTION_REPORT_CODE = 4;
 
         //Action is executed but response result is bad.
         //Collection progress is closed and not collected.

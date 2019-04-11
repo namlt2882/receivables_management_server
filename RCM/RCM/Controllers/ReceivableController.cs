@@ -751,7 +751,7 @@ namespace RCM.Controllers
         }
 
         [HttpPost]
-        public IActionResult AddReceivables([FromBody] IEnumerable<ReceivableIM> receivableIMs)
+        public async Task<IActionResult> AddReceivablesAsync([FromBody] IEnumerable<ReceivableIM> receivableIMs)
         {
             if (!ModelState.IsValid)
             {
@@ -767,13 +767,13 @@ namespace RCM.Controllers
                     _receivableService.SaveReceivable();
                 }
                 //var importedReceivables = _receivableService.GetReceivables().OrderByDescending(x => x.Id).Take(receivablesDBM.Count());
-                SendNewReceivableNotification(importList);
+                await SendNewReceivableNotificationAsync(importList);
                 return Ok(importList.ToList().Select(_ => _.Id));
             }
             return BadRequest(new { Message = "Error when trying to import" });
         }
 
-        private void SendNewReceivableNotification(List<Receivable> receivables)
+        private async Task SendNewReceivableNotificationAsync(List<Receivable> receivables)
         {
 
             #region Create New Receivable Notification
@@ -835,7 +835,7 @@ namespace RCM.Controllers
             _notificationService.SaveNotification();
             #endregion
             //Send
-            SendNotificationToClient(notifications);
+            await SendNotificationToClientAsync(notifications);
         }
 
 
@@ -861,9 +861,9 @@ namespace RCM.Controllers
             //Send
             await SendNotificationToClient(notification);
         }
-        private void SendNotificationToClient(List<Notification> notifications)
+        private async Task SendNotificationToClientAsync(List<Notification> notifications)
         {
-            NotificationUtility.NotificationUtility.SendNotification(notifications, _hubService, _hubContext, _firebaseTokenService);
+            await NotificationUtility.NotificationUtility.SendNotificationAsync(notifications, _hubService, _hubContext, _firebaseTokenService);
         }
 
         private async Task SendNotificationToClient(Notification notification)

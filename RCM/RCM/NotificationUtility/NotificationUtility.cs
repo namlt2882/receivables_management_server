@@ -15,13 +15,14 @@ namespace RCM.NotificationUtility
 {
     public static class NotificationUtility
     {
-        private static void SendNotificationToCurrentMobileClient(List<Notification> notifications, IFirebaseTokenService _firebaseTokenService)
+        private static async Task SendNotificationToCurrentMobileClientAsync(List<Notification> notifications, IFirebaseTokenService _firebaseTokenService)
         {
-            notifications.ForEach(async notification =>
+            foreach (var notification in notifications)
             {
-                _firebaseTokenService.GetFirebaseTokens(_ => _.UserId == notification.UserId).ToList().ForEach(async ft =>
+                var fbtokens = _firebaseTokenService.GetFirebaseTokens(_ => _.UserId == notification.UserId).ToList();
+                foreach (var ft in fbtokens)
                 {
-                    await SendFirebaseNotification.SendNotificationToMobileAsync(new FirebaseNotification()
+                    var fb = new FirebaseNotification()
                     {
                         to = ft.Token,
                         notification = new NotificationObject()
@@ -30,12 +31,34 @@ namespace RCM.NotificationUtility
                             body = notification.Body,
                         },
                         data = new Dictionary<string, string>()
-                        {
+                                        {
                             { "ReceivableList", notification.NData }
-                        }
-                    });
-                });
-            });
+                                        }
+                    };
+                    await SendFirebaseNotification.SendNotificationToMobileAsync(fb);
+                }
+
+                //.ForEach(async ft =>
+                //                {
+                //                    await SendFirebaseNotification.SendNotificationToMobileAsync(new FirebaseNotification()
+                //                    {
+                //                        to = ft.Token,
+                //                        notification = new NotificationObject()
+                //                        {
+                //                            title = notification.Title,
+                //                            body = notification.Body,
+                //                        },
+                //                        data = new Dictionary<string, string>()
+                //                        {
+                //            { "ReceivableList", notification.NData }
+                //                        }
+                //                    });
+                //                });
+            }
+            //notifications.ForEach(notification =>
+            //{
+
+            //});
         }
 
         private static void SendNotificationToCurrentWebClient(List<Notification> notifications, IHubUserConnectionService _hubService, IHubContext<CenterHub> _hubContext)
@@ -44,7 +67,7 @@ namespace RCM.NotificationUtility
             {
                 var connections = _hubService.GetHubUserConnections(_ => _.UserId.Equals(notification.UserId));
                 await _hubContext.Clients.Clients(connections.Select(_ => _.Connection).ToList())
-                            .SendAsync("Notify", JsonConvert.SerializeObject(notification.Adapt<NotificationVM>()));
+                           .SendAsync("Notify", JsonConvert.SerializeObject(notification.Adapt<NotificationVM>()));
             });
         }
 
@@ -86,9 +109,9 @@ namespace RCM.NotificationUtility
             await SendNotificationToCurrentWebClient(notification, _hubService, _hubContext);
         }
 
-        public static void SendNotification(List<Notification> notifications, IHubUserConnectionService _hubService, IHubContext<CenterHub> _hubContext, IFirebaseTokenService _firebaseTokenService)
+        public static async Task SendNotificationAsync(List<Notification> notifications, IHubUserConnectionService _hubService, IHubContext<CenterHub> _hubContext, IFirebaseTokenService _firebaseTokenService)
         {
-            SendNotificationToCurrentMobileClient(notifications, _firebaseTokenService);
+            await SendNotificationToCurrentMobileClientAsync(notifications, _firebaseTokenService);
             SendNotificationToCurrentWebClient(notifications, _hubService, _hubContext);
         }
     }

@@ -6,6 +6,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace RCM.Firebase
 {
@@ -35,6 +36,8 @@ namespace RCM.Firebase
             var stringContent = new StringContent(data, Encoding.UTF8, "application/json");
             var stringTask = await client.PostAsync("https://fcm.googleapis.com/fcm/send", stringContent);
             var msg = stringTask.Content.ReadAsStringAsync().Result;
+            JObject call = JObject.Parse(msg);
+            var a=  call.SelectToken($"success").ToString();
         }
     }
 
