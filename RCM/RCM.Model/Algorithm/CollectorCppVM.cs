@@ -10,6 +10,7 @@ namespace RCM.Model.Algorithm
         public string CollectorId { get; set; }
         public double CPP { get; set; }
         public int CurrentReceivable { get; set; }
+        public int TotalReceivableCount { get; set; }
     }
 
     public class CollectorCppFM : CollectorCppVM

@@ -14,7 +14,7 @@ namespace RCM.Service
     }
     public class PointService : IPointService
     {
-        public static readonly double DEFAULT_CPP = 4;
+        public static readonly double DEFAULT_CPP = 3;
         private readonly UserManager<User> _userManager;
         private readonly IPointRepository _pointRepository;
         private readonly IUnitOfWork _unitOfWork;
@@ -49,18 +49,9 @@ namespace RCM.Service
         {
             double rs = 0;
             int size = ppprs.Count;
-            if (size == 0)
+            if (size < 3)
             {
                 return DEFAULT_CPP;
-            }
-            if (size == 1)
-            {
-                return ppprs[0].PPPR;
-            }
-            if (size == 2)
-            {
-                rs = (ppprs[0].PPPR + ppprs[1].PPPR) / 2;
-                return rs;
             }
             ppprs.Sort((p1, p2) =>
             {

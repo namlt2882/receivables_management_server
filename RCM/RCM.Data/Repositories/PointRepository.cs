@@ -52,16 +52,17 @@ namespace RCM.Data.Repositories
                              ReceivableId = r.Id,
                              Weight = PerformancePointUtility.GetWeight(r.DebtAmount - r.PrepaidAmount),
                              ExpectedTimeRate = PerformancePointUtility.GetExpectedTime(r.DebtAmount - r.PrepaidAmount),
-                             TimeRate = PerformancePointUtility.GetReceivableTimeRate(r.PayableDay.Value, r.ClosedDay.Value, 
-                             r.CollectionProgress.ProgressStages.Select(stage=>stage.Duration).Sum()),
+                             TimeRate = PerformancePointUtility.GetReceivableTimeRate(r.PayableDay.Value, r.ClosedDay.Value,
+                             r.CollectionProgress.ProgressStages.Select(stage => stage.Duration).Sum()),
                              IsCancel = r.CollectionProgress.Status == 0,
                              IsFail = r.CollectionProgress.Status == 2
                          }).ToList();
+            ppprs = ppprs.Where(model => model.TimeRate >= 0.1).ToList();
             ppprs.ForEach(model =>
             {
                 if (model.IsCancel)
                 {
-                    model.PPPR = 0.5;
+                    model.PPPR = 0.3;
                 }
                 else if (model.IsFail)
                 {
@@ -69,11 +70,11 @@ namespace RCM.Data.Repositories
                 }
                 else
                 {
-                    //PPPR = 5 *[w / (1 + (t – t’)* 2 / 100)]
-                    double pppr = 5 * (model.Weight / (1 + (model.TimeRate - model.ExpectedTimeRate) * 2 / 100));
-                    if (pppr > 100)
+                    //PPPR = 3 *[w / (1 + (t – t’) / 100)]
+                    double pppr = 3 * (model.Weight / (1 + (model.TimeRate - model.ExpectedTimeRate) / 100));
+                    if (pppr > 10)
                     {
-                        pppr = 100;
+                        pppr = 10;
                     }
                     model.PPPR = pppr;
                 }

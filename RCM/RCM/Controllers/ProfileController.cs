@@ -117,6 +117,18 @@ namespace RCM.Controllers
             return Ok(new List<ProfileUM>());
         }
 
+        [HttpGet("GetAllWithDetail")]
+        public IActionResult GetAllWithDetail()
+        {
+            var profiles = GetAllProfilesWithDetail();
+            if (profiles.Any())
+            {
+                return Ok(profiles);
+            }
+
+            return Ok(new List<ProfileVM>());
+        }
+
         private IEnumerable<ProfileUM> GetProfiles()
         {
             var profiles = _profileService.GetProfiles();
@@ -132,6 +144,17 @@ namespace RCM.Controllers
                 return result;
             }
             return new List<ProfileUM>();
+        }
+
+        private IEnumerable<ProfileVM> GetAllProfilesWithDetail()
+        {
+            var profiles = _profileService.GetProfiles();
+            if (profiles.Any())
+            {
+                var result = profiles.Select(x => GetProfileDetail(x));
+                return result;
+            }
+            return new List<ProfileVM>();
         }
 
         //[HttpPost]
@@ -197,6 +220,11 @@ namespace RCM.Controllers
         private ProfileVM GetProfileDetail(int id)
         {
             var originProfile = _profileService.GetProfile(id);
+            return GetProfileDetail(originProfile);
+        }
+
+        private ProfileVM GetProfileDetail(Profile originProfile)
+        {
             if (originProfile != null)
             {
                 ProfileVM profile = new ProfileVM()

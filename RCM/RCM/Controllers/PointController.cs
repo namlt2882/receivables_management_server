@@ -24,7 +24,8 @@ namespace RCM.Controllers
             var rs = cpps.Select(cpp => new CollectorCppVM {
                 CollectorId = cpp.CollectorId,
                 CurrentReceivable = cpp.CurrentReceivable,
-                CPP = cpp.CPP
+                CPP = cpp.CPP,
+                TotalReceivableCount = cpp.PPPRs.Count()
             });
             return Ok(rs);
         }
