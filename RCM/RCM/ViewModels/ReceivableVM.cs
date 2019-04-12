@@ -63,7 +63,7 @@ namespace RCM.ViewModels
         public bool HaveLateAction { get; set; }
         public bool IsConfirmed { get; set; }
         public string Stage { get; set; }
-
+        public int? ProfileId { get; set; }
     }
 
     public class ReceivableMobileLM

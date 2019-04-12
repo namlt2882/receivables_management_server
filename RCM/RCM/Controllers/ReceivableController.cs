@@ -93,6 +93,7 @@ namespace RCM.Controllers
                 HaveLateAction = HaveLateActions(x),
                 IsConfirmed = x.IsConfirmed,
                 Stage = GetStageName(x),
+                ProfileId = x.CollectionProgress.ProfileId
             });
             return Ok(result);
         }
@@ -1092,7 +1093,8 @@ namespace RCM.Controllers
                 DebtorId = x.Contacts.Where(contact => contact.Type == Constant.CONTACT_DEBTOR_CODE).SingleOrDefault().Id,
                 ProgressPercent = GetProgressReached(x),
                 HaveLateAction = HaveLateActions(x),
-                IsConfirmed = x.IsConfirmed
+                IsConfirmed = x.IsConfirmed,
+                ProfileId = x.CollectionProgress.ProfileId
             });
 
             return Ok(result);
