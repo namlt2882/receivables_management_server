@@ -12,6 +12,7 @@ using System.Text;
 using Newtonsoft.Json;
 using RCM.SpeedSMS;
 using Newtonsoft.Json.Linq;
+using RCM.Service;
 
 namespace RCM.Controllers
 {
@@ -19,7 +20,12 @@ namespace RCM.Controllers
     [ApiController]
     public class UtilityController : ControllerBase
     {
+        private readonly ILocationService _locationService;
 
+        public UtilityController(ILocationService locationService)
+        {
+            this._locationService = locationService;
+        }
 
         [HttpGet("CustomerType")]
         public IActionResult CustomerType()
@@ -173,8 +179,21 @@ namespace RCM.Controllers
             */
 
             String response = api.sendSMS(phones, content, type, sender);
+            //JObject call = JObject.Parse(response);
+            //var tranId = call.SelectToken("data.tranId");
+            return Ok(SendSms.FromJson(response).Status);
+        }
 
-            return Ok(response);
+        [HttpPost("SMSDelivery")]
+        public IActionResult SMSDelivery([FromBody]DeliverySms sms)
+        {
+            _locationService.CreateLocation(new Location()
+            {
+                 Name = sms.Status,
+                 Description= $"{sms.TranId}: {sms.TranId}|{sms.Type}"
+            });
+            _locationService.SaveLocation();
+            return Ok(sms);
         }
 
         [HttpGet("GetServerDay")]

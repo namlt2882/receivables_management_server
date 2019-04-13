@@ -14,6 +14,9 @@ namespace RCM.ViewModels
         public int StartTime { get; set; }
         public int ExecutionDay { get; set; }
         public int ReceivableId { get; set; }
+        public string Evidence { get; set; }
+        public string Note { get; set; }
+
     }
     public class TaskMobileVM
     {

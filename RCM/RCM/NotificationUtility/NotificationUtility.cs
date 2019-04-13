@@ -109,7 +109,7 @@ namespace RCM.NotificationUtility
             await SendNotificationToCurrentWebClient(notification, _hubService, _hubContext);
         }
 
-        public static async Task SendNotificationAsync(List<Notification> notifications, IHubUserConnectionService _hubService, IHubContext<CenterHub> _hubContext, IFirebaseTokenService _firebaseTokenService)
+        public static async Task SendNotification(List<Notification> notifications, IHubUserConnectionService _hubService, IHubContext<CenterHub> _hubContext, IFirebaseTokenService _firebaseTokenService)
         {
             await SendNotificationToCurrentMobileClientAsync(notifications, _firebaseTokenService);
             SendNotificationToCurrentWebClient(notifications, _hubService, _hubContext);

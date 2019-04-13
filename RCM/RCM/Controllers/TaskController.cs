@@ -132,13 +132,9 @@ namespace RCM.Controllers
         [HttpGet("GetReceivableTodayTask")]
         public IActionResult GetReceivableTodayTask(int receivableId)
         {
-            var rawData = _progressStageActionService.GetProgressStageActions()
-                .Where(x =>
-                x.ProgressStage.CollectionProgress.ReceivableId == receivableId
-                && x.ExcutionDay == Int32.Parse(Utility.ConvertDatetimeToString(DateTime.Now)));
-
-            rawData = rawData.Where(x => x.ProgressStage.CollectionProgress.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE);
-
+            var rawData = _progressStageActionService.GetProgressStageActions(
+                x =>x.ProgressStage.CollectionProgress.ReceivableId == receivableId
+            &&x.ExcutionDay== Utility.ConvertDatimeToInt(DateTime.Now));
             if (rawData.Any())
             {
                 var result = rawData.Select(x => new TaskVM()
@@ -149,7 +145,9 @@ namespace RCM.Controllers
                     StartTime = x.StartTime,
                     Status = x.Status,
                     Type = x.Type,
-                    ReceivableId = x.ProgressStage.CollectionProgress.ReceivableId
+                    ReceivableId = x.ProgressStage.CollectionProgress.ReceivableId,
+                    Evidence=x.Evidence,
+                    Note=x.Note
                 });
                 return Ok(result);
             }
@@ -452,7 +450,7 @@ namespace RCM.Controllers
                         Note = x.Note,
                         Type = x.Type,
                         UserId = x.UserId,
-                        CollectorName = collector != null ? collector.FirstName + collector.LastName : "",
+                        CollectorName = collector != null ? collector.FirstName +" "+ collector.LastName : "",
                         ReceivableId = receivableId
                     };
                     result.Add(vm);
@@ -499,7 +497,7 @@ namespace RCM.Controllers
                         Note = x.Note,
                         Type = x.Type,
                         UserId = x.UserId,
-                        ReceivableId = receivableId
+                        ReceivableId = receivableId,
                     };
                     result.Add(vm);
                 });

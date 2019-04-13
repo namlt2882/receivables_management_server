@@ -11,6 +11,7 @@ using RCM.CenterHubs;
 using RCM.Helper;
 using RCM.Model;
 using RCM.Service;
+using RCM.SpeedSMS;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -88,10 +89,11 @@ namespace RCM.Helpers
                 ));
 
             //Execute action.
-            if (actionsToExecute.Any())
-            {
-                ExecuteAction(actionsToExecute);
-            }
+            //if (actionsToExecute.Any())
+            //{
+            //    ExecuteAction(actionsToExecute);
+            //}
+
             #endregion
 
             #region Late Action
@@ -116,36 +118,44 @@ namespace RCM.Helpers
 
         }
 
-        private async void SendPendingReceivableNotify()
+        private async void SendDoneReceivableNotify()
         {
-            #region Pending Receivable
-            var lateReceivableList = _receivableService.GetReceivables(
-                r => !r.IsDeleted
-                && r.CollectionProgress.Status == Constant.COLLECTION_STATUS_WAIT_CODE
-                && r.CreatedDate.AddDays(5) <= DateTime.Now
-            );
-            #region Create New Receivable Notification
-            var user = await _userManager.FindByNameAsync("manager");
-            //Create New Receivable Notification
-            Notification notification = new Notification()
-            {
-                Title = Constant.NOTIFICATION_TYPE_CLOSE_RECEIVABLE,
-                Type = Constant.NOTIFICATION_TYPE_CLOSE_RECEIVABLE_CODE,
-                Body = $"{lateReceivableList.Count()} receivable(s) already pending more than 5 days!",
-                UserId = user.Id,
-                NData = JsonConvert.SerializeObject(lateReceivableList.Select(r => r.Id)),
-                IsSeen = false,
-                CreatedDate = DateTime.Now,
-                IsDeleted = false,
-            };
-            _notificationService.CreateNotification(notification);
-            _notificationService.SaveNotification();
-            #endregion
-            //Send
-            await NotificationUtility.NotificationUtility.SendNotification(notification, _hubService, _hubContext, _firebaseTokenService);
+            #region Check Done Receivable
+            var doneReceivableList = _receivableService
+                .GetReceivables(
+                r => !r.IsDeleted 
+                && r.CollectionProgress.Status == Constant.COLLECTION_STATUS_DONE_CODE);
             #endregion
 
+            #region Create New Receivable Notification
+
+            //Create Done Receivable Notifications
+            List<Notification> notifications = new List<Notification>();
+            foreach (var receivable in doneReceivableList)
+            {
+                Notification notification = new Notification()
+                {
+                    Title = Constant.NOTIFICATION_TYPE_CLOSE_RECEIVABLE,
+                    Type = Constant.NOTIFICATION_TYPE_CLOSE_RECEIVABLE_CODE,
+                    Body = $"Collecting progress of {receivable.Contacts.First().Name} from {receivable.Customer.Name} already done!",
+                    UserId = receivable.AssignedCollectors.First(ac => ac.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE && !ac.IsDeleted).UserId,
+                    NData = JsonConvert.SerializeObject(receivable.Id),
+                    IsSeen = false,
+                    CreatedDate = DateTime.Now,
+                    IsDeleted = false,
+                };
+                var result = _notificationService.CreateNotification(notification);
+                _notificationService.SaveNotification();
+                notifications.Add(result);
+            }
+
+            #endregion
+            //Send
+            await NotificationUtility.NotificationUtility.SendNotification(notifications, _hubService, _hubContext, _firebaseTokenService);
         }
+
+
+
 
         private void ExecuteAction(IEnumerable<ProgressStageAction> actions)
         {
@@ -195,8 +205,8 @@ namespace RCM.Helpers
 
             //if (await Utility.CheckCall(callId, phoneNo))
             //{
-                _progressStageActionService.MarkAsDone(progressStageAction);
-                _progressStageActionService.SaveProgressStageAction();
+            _progressStageActionService.MarkAsDone(progressStageAction);
+            _progressStageActionService.SaveProgressStageAction();
             //}
         }
 
@@ -210,15 +220,29 @@ namespace RCM.Helpers
             var phoneNo = progressStageAction.ProgressStage.CollectionProgress
                 .Receivable
                 .Contacts.Where(x => x.Type == Constant.CONTACT_DEBTOR_CODE).FirstOrDefault().Phone;
-            //var messageContent = progressStageAction.ProgressMessageForm.Content;
+            var messageContent = progressStageAction.ProgressMessageForm.Content;
 
             //string response = Utility.SendSMS(phoneNo, messageContent);
+            //var result = SendSms.FromJson(response);
+            //if (result.Status.ToLower() != "success")
+            //{
+            //    var error = "";
+            //    switch (result.Code)
+            //    {
+            //        case SmsErrorCode.ACCOUNT_LOCKED_CODE: error = SmsErrorCode.ACCOUNT_LOCKED; break;
+            //        case SmsErrorCode.ACCOUNT_NOT_ALLOW_CODE: error = SmsErrorCode.ACCOUNT_NOT_ALLOW; break;
+            //        case SmsErrorCode.ACCOUNT_NOT_ENOUGH_BALANCE_CODE: error = SmsErrorCode.ACCOUNT_NOT_ENOUGH_BALANCE; break;
+            //        case SmsErrorCode.CONTENT_NOT_SUPPORT_CODE: error = SmsErrorCode.CONTENT_NOT_SUPPORT; break;
+            //        case SmsErrorCode.CONTENT_TOO_LONG_CODE: error = SmsErrorCode.CONTENT_TOO_LONG_CODE; break;
+            //        case SmsErrorCode.INVALID_PHONE_CODE: error = SmsErrorCode.INVALID_PHONE; break;
+            //        case SmsErrorCode.IP_LOCKED_CODE: error = SmsErrorCode.IP_LOCKED; break;
+            //        case SmsErrorCode.PROVIDER_ERROR_CODE: error = SmsErrorCode.PROVIDER_ERROR; break;
+
+            //    }
+            //    progressStageAction.Note = error;
+            //}
             _progressStageActionService.MarkAsDone(progressStageAction);
             _progressStageActionService.SaveProgressStageAction();
-            //if (response.Contains("success"))
-            //{
-                //_progressStageActionService.MarkAsDone(progressStageAction);
-            //}
         }
 
         public Task Execute(IJobExecutionContext context)

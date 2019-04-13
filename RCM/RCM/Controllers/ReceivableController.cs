@@ -864,7 +864,7 @@ namespace RCM.Controllers
         }
         private async Task SendNotificationToClientAsync(List<Notification> notifications)
         {
-            await NotificationUtility.NotificationUtility.SendNotificationAsync(notifications, _hubService, _hubContext, _firebaseTokenService);
+            await NotificationUtility.NotificationUtility.SendNotification(notifications, _hubService, _hubContext, _firebaseTokenService);
         }
 
         private async Task SendNotificationToClient(Notification notification)
