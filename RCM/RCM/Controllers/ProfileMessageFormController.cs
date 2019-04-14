@@ -51,9 +51,9 @@ namespace RCM.Controllers
                 return BadRequest(ModelState);
             }
 
-            if (!profileMessageFrom.Content.Contains(Constant.MESSAGE_PARAMETER_DEBTAMOUNT) || !profileMessageFrom.Content.Contains(Constant.MESSAGE_PARAMETER_NAME))
+            if (!profileMessageFrom.Content.Contains(Constant.MESSAGE_PARAMETER_DEBTAMOUNT) || !profileMessageFrom.Content.Contains(Constant.MESSAGE_PARAMETER_NAME) || !profileMessageFrom.Content.Contains(Constant.MESSAGE_PARAMETER_PARTNERNAME))
             {
-                return BadRequest(new { Message = "Message form must contain " + Constant.MESSAGE_PARAMETER_DEBTAMOUNT + " and " + Constant.MESSAGE_PARAMETER_NAME + "." });
+                return BadRequest(new { Message = "Message form must contain " + Constant.MESSAGE_PARAMETER_DEBTAMOUNT + "," + Constant.MESSAGE_PARAMETER_PARTNERNAME  +" and " + Constant.MESSAGE_PARAMETER_NAME + "." });
             }
 
             //Add messge to Db

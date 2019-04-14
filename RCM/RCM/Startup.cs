@@ -46,7 +46,7 @@ namespace RCM
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddDbContext<RCMContext>();
+            services.AddDbContext<RCMContext>(ServiceLifetime.Transient);
             #region DI Solutions
             //add for data
             services.AddScoped<IDbFactory, DbFactory>();
@@ -129,6 +129,7 @@ namespace RCM
             services.AddTransient<IJobFactory, NotifyJobFactory>((provider) => new NotifyJobFactory(services.BuildServiceProvider()));
             services.AddTransient<NotifyJob>();
 
+            services.AddSingleton<IConfiguration>(Configuration);
             #region Auth
             var jwtAppSettingOptions = Configuration.GetSection(nameof(JwtIssuerOptions));
 

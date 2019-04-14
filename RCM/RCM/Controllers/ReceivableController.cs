@@ -1,11 +1,9 @@
-﻿using Mapster;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Newtonsoft.Json;
 using RCM.CenterHubs;
-using RCM.Data.Utilities;
 using RCM.Helper;
 using RCM.Model;
 using RCM.Service;
@@ -89,7 +87,7 @@ namespace RCM.Controllers
                 CustomerName = x.Customer.Name,
                 DebtorName = x.Contacts.Where(contact => contact.Type == Constant.CONTACT_DEBTOR_CODE).SingleOrDefault().Name,
                 DebtorId = x.Contacts.Where(contact => contact.Type == Constant.CONTACT_DEBTOR_CODE).SingleOrDefault().Id,
-                ProgressPercent = GetPercent(x),
+                ProgressPercent = GetProgressReached(x),
                 HaveLateAction = HaveLateActions(x),
                 IsConfirmed = x.IsConfirmed,
                 Stage = GetStageName(x),
@@ -1424,6 +1422,16 @@ namespace RCM.Controllers
                 return 0;
             }
 
+            if (DateTime.Today < Utility.ConvertIntToDatetime((int)receivable.PayableDay))
+            {
+                return 0;
+            }
+
+            if (DateTime.Today == receivable.ExpectationClosedDay.Value.Date)
+            {
+                return 100;
+            }
+
             double result = 0;
             long totalDayInMiliSecond = GetTotalProgressDay(receivable) * 24 * 60 * 60 * 1000;
 
@@ -1436,8 +1444,9 @@ namespace RCM.Controllers
             }
 
             //Receivable is in collection progress.
-            result = (int)((DateTime.Now - Utility.ConvertIntToDatetime((int)receivable.PayableDay)).TotalMilliseconds);
-            result = (int)((double)result * 100 / totalDayInMiliSecond);
+            TimeSpan tmp = DateTime.Now - Utility.ConvertIntToDatetime((int)receivable.PayableDay);
+            double tmpResult = tmp.TotalMilliseconds;
+            result = (int)(tmpResult * 100 / totalDayInMiliSecond);
 
             return (int)result;
         }
