@@ -173,7 +173,7 @@ namespace RCM.Helpers
                 {
                     Title = Constant.NOTIFICATION_TYPE_DONE_RECEIVABLE,
                     Type = Constant.NOTIFICATION_TYPE_DONE_RECEIVABLE_CODE,
-                    Body = $"Collecting progress of {receivable.Contacts.First().Name} from {receivable.Customer.Name} already done!",
+                    Body = $"Collecting progress of {receivable.Contacts.First().Name} from {receivable.Customer.Name} is done!",
                     UserId = receivable.AssignedCollectors.First(ac => ac.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE && !ac.IsDeleted).UserId,
                     NData = JsonConvert.SerializeObject(receivable.Id),
                     IsSeen = false,
