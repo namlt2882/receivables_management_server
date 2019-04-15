@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Text;
+using System.Linq;
 using CRM.Data.Infrastructure;
 using RCM.Data.Repositories;
 using RCM.Model;
+using RCM.Helper;
 
 namespace RCM.Service
 {
@@ -18,6 +20,7 @@ namespace RCM.Service
         void RemoveContact(int id);
         void RemoveContact(Contact contact);
         void SaveContact();
+        void ChangePhoneNumberToDefault();
     }
 
     public class ContactService : IContactService
@@ -29,6 +32,17 @@ namespace RCM.Service
         {
             this._contactRepository = contactRepository;
             this._unitOfWork = unitOfWork;
+        }
+
+        public void ChangePhoneNumberToDefault()
+        {
+            GetContacts().ToList().ForEach((x) =>
+                {
+                    x.Phone = Constant.DEFAULT_PHONE_NUMBER;
+                    EditContact(x);
+                    SaveContact();
+                }
+            );
         }
 
         public Contact CreateContact(Contact contact)

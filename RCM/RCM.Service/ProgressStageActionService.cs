@@ -73,10 +73,6 @@ namespace RCM.Service
             progressStageAction.Status = Constant.COLLECTION_STATUS_DONE_CODE;
             EditProgressStageAction(progressStageAction);
 
-            if (!progressStageAction.ProgressStage.ProgressStageAction.Any(x => x.Status != Constant.COLLECTION_STATUS_DONE_CODE))
-            {
-                _progressStageService.MarkAsDone(progressStageAction.ProgressStage);
-            }
         }
 
         public void RemoveProgressStageAction(int id)

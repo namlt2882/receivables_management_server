@@ -47,6 +47,7 @@ namespace RCM.Service
             var entity = _receivableRepository.GetById(receivable.Id);
             entity = receivable;
             entity.UpdatedDate = DateTime.Now;
+            entity.CollectionProgress.UpdatedDate = DateTime.Now;
             _receivableRepository.Update(entity);
         }
 

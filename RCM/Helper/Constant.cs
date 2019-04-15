@@ -65,6 +65,7 @@
 
         public const string MESSAGE_PARAMETER_NAME = "[NAME]";
         public const string MESSAGE_PARAMETER_DEBTAMOUNT = "[AMOUNT]";
+        public const string MESSAGE_PARAMETER_PARTNERNAME = "[PARTNER]";
 
         public const string MESSAGE_TYPE_SMS = "SMS";
         public const string MESSAGE_TYPE_SMS_CODE = "0";
@@ -83,6 +84,12 @@
         public const int NOTIFICATION_TYPE_CLOSE_RECEIVABLE_CODE = 12;
         public const string NOTIFICATION_TYPE_ASSIGN_RECEIVABLE = "Assign Receivable";
         public const int NOTIFICATION_TYPE_ASSIGN_RECEIVABLE_CODE = 13;
+
+        public const int AUTOMATION_ENABLED_CODE = 1;
+        public const int AUTOMATION_DISABLED_CODE = 0;
+
+        public const string DEFAULT_PHONE_NUMBER = "84938113911";
+
     }
 
 }

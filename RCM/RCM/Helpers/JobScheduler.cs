@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using Quartz;
 using Quartz.Impl;
 using Quartz.Spi;
@@ -57,9 +57,11 @@ namespace RCM.Helpers
         private readonly IReceivableService _receivableService;
         private readonly INotificationService _notificationService;
         private readonly UserManager<User> _userManager;
+        private readonly IConfiguration _configuration;
 
-        public NotifyJob(IProgressStageActionService progressStageActionService, IHubContext<CenterHub> hubContext, IHubUserConnectionService hubService, IFirebaseTokenService firebaseTokenService, IReceivableService receivableService, INotificationService notificationService, UserManager<User> userManager)
+        public NotifyJob(IConfiguration configuration, IProgressStageActionService progressStageActionService, IHubContext<CenterHub> hubContext, IHubUserConnectionService hubService, IFirebaseTokenService firebaseTokenService, IReceivableService receivableService, INotificationService notificationService, UserManager<User> userManager)
         {
+            _configuration = configuration;
             _progressStageActionService = progressStageActionService;
             _hubContext = hubContext;
             _hubService = hubService;
@@ -78,6 +80,21 @@ namespace RCM.Helpers
             long date = Int64.Parse(Utility.ConvertDatetimeToString(DateTime.Now.Date));
 
             #region Phone/SMS
+            Task notification = Task.Factory.StartNew(() => SendNotificationToDebtor(date, time));
+            #endregion
+
+            #region Late Action
+            Task markAction = notification.ContinueWith((task) => MarkActionAsLate(date, time));
+            #endregion
+
+            #region Close Receivable
+            Task closeRecivable = markAction.ContinueWith((task) => CloseReceivable(date, time));
+            #endregion
+
+        }
+
+        private void SendNotificationToDebtor(long date, int time)
+        {
             var actionsToExecute = _progressStageActionService.GetProgressStageActions()
                 .Where(x => (
                 x.IsDeleted == false
@@ -89,14 +106,15 @@ namespace RCM.Helpers
                 ));
 
             //Execute action.
-            //if (actionsToExecute.Any())
-            //{
-            //    ExecuteAction(actionsToExecute);
-            //}
 
-            #endregion
+            if (actionsToExecute.Any())
+            {
+                //ExecuteAction(actionsToExecute);
+            }
+        }
 
-            #region Late Action
+        private void MarkActionAsLate(long date, int time)
+        {
             var actionsToMarkAsLate = _progressStageActionService.GetProgressStageActions()
                 .Where(x => (
                 x.IsDeleted == false
@@ -111,11 +129,29 @@ namespace RCM.Helpers
                 {
                     action.Status = Constant.COLLECTION_STATUS_LATE_CODE;
                     _progressStageActionService.EditProgressStageAction(action);
-                    _progressStageActionService.SaveProgressStageAction();
                 }
+                _progressStageActionService.SaveProgressStageAction();
             }
-            #endregion
+        }
 
+        private void CloseReceivable(long date, int time)
+        {
+            var receivableToClose = _receivableService.GetReceivables().
+               Where(x =>
+               x.IsDeleted == false
+               && x.CollectionProgress.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE
+               && x.ExpectationClosedDay.HasValue
+               && x.ExpectationClosedDay.Value.Date < DateTime.Now.Date);
+
+            if (receivableToClose.Any())
+            {
+                foreach (var receivable in receivableToClose)
+                {
+                    receivable.CollectionProgress.Status = Constant.COLLECTION_STATUS_DONE_CODE;
+                    _receivableService.EditReceivable(receivable);
+                }
+                _receivableService.SaveReceivable();
+            }
         }
 
         private async void SendDoneReceivableNotify()
@@ -135,8 +171,8 @@ namespace RCM.Helpers
             {
                 Notification notification = new Notification()
                 {
-                    Title = Constant.NOTIFICATION_TYPE_CLOSE_RECEIVABLE,
-                    Type = Constant.NOTIFICATION_TYPE_CLOSE_RECEIVABLE_CODE,
+                    Title = Constant.NOTIFICATION_TYPE_DONE_RECEIVABLE,
+                    Type = Constant.NOTIFICATION_TYPE_DONE_RECEIVABLE_CODE,
                     Body = $"Collecting progress of {receivable.Contacts.First().Name} from {receivable.Customer.Name} already done!",
                     UserId = receivable.AssignedCollectors.First(ac => ac.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE && !ac.IsDeleted).UserId,
                     NData = JsonConvert.SerializeObject(receivable.Id),
@@ -161,23 +197,29 @@ namespace RCM.Helpers
         {
             foreach (var action in actions)
             {
-                switch (action.Type)
+                int isEnable = Int32.Parse(_configuration["IsEnabled"]);
+                if (isEnable == Constant.AUTOMATION_ENABLED_CODE)
                 {
-                    case Constant.ACTION_VISIT_CODE:
-                        NotifyVisit();
-                        break;
-                    case Constant.ACTION_PHONECALL_CODE:
-                        MakePhoneCall(action);
-
-                        break;
-                    case Constant.ACTION_REPORT_CODE:
-                        NotifyReport();
-                        break;
-                    case Constant.ACTION_SMS_CODE:
-                        SendSMS(action);
-                        break;
+                    switch (action.Type)
+                    {
+                        case Constant.ACTION_VISIT_CODE:
+                            NotifyVisit();
+                            break;
+                        case Constant.ACTION_PHONECALL_CODE:
+                            MakePhoneCall(action);
+                            break;
+                        case Constant.ACTION_REPORT_CODE:
+                            NotifyReport();
+                            break;
+                        case Constant.ACTION_SMS_CODE:
+                            SendSMS(action);
+                            break;
+                    }
                 }
+                _progressStageActionService.MarkAsDone(action);
             }
+            _progressStageActionService.SaveProgressStageAction();
+
         }
 
         private void NotifyVisit()
@@ -185,7 +227,7 @@ namespace RCM.Helpers
 
         }
 
-        private async void MakePhoneCall(ProgressStageAction progressStageAction)
+        private int MakePhoneCall(ProgressStageAction progressStageAction)
         {
             //Get information
             var phoneNo = progressStageAction.ProgressStage.CollectionProgress
@@ -193,8 +235,14 @@ namespace RCM.Helpers
                 .Contacts.Where(x => x.Type == Constant.CONTACT_DEBTOR_CODE).FirstOrDefault().Phone;
             var messageContent = progressStageAction.ProgressMessageForm.Content;
 
-            ////Make phone call
-            //var stringeeMsg = await Utility.MakePhoneCallAsync(phoneNo, messageContent);
+            if (phoneNo != Constant.DEFAULT_PHONE_NUMBER)
+            {
+                System.Diagnostics.Debug.WriteLine("Tin nhan duoc gui di");
+                ////Make phone call
+                var stringeeMsg = Task.Run(() => Utility.MakePhoneCallAsync(phoneNo, messageContent));
+            }
+
+
             #region get CallId
             //JObject call = JObject.Parse(stringeeMsg);
             //var callId = call.SelectToken("call_id").ToString();
@@ -208,6 +256,7 @@ namespace RCM.Helpers
             _progressStageActionService.MarkAsDone(progressStageAction);
             _progressStageActionService.SaveProgressStageAction();
             //}
+            return Constant.COLLECTION_STATUS_DONE_CODE;
         }
 
         private void NotifyReport()
@@ -215,34 +264,45 @@ namespace RCM.Helpers
 
         }
 
-        private void SendSMS(ProgressStageAction progressStageAction)
+        private int SendSMS(ProgressStageAction progressStageAction)
         {
             var phoneNo = progressStageAction.ProgressStage.CollectionProgress
                 .Receivable
                 .Contacts.Where(x => x.Type == Constant.CONTACT_DEBTOR_CODE).FirstOrDefault().Phone;
             var messageContent = progressStageAction.ProgressMessageForm.Content;
 
-            //string response = Utility.SendSMS(phoneNo, messageContent);
-            //var result = SendSms.FromJson(response);
-            //if (result.Status.ToLower() != "success")
-            //{
-            //    var error = "";
-            //    switch (result.Code)
-            //    {
-            //        case SmsErrorCode.ACCOUNT_LOCKED_CODE: error = SmsErrorCode.ACCOUNT_LOCKED; break;
-            //        case SmsErrorCode.ACCOUNT_NOT_ALLOW_CODE: error = SmsErrorCode.ACCOUNT_NOT_ALLOW; break;
-            //        case SmsErrorCode.ACCOUNT_NOT_ENOUGH_BALANCE_CODE: error = SmsErrorCode.ACCOUNT_NOT_ENOUGH_BALANCE; break;
-            //        case SmsErrorCode.CONTENT_NOT_SUPPORT_CODE: error = SmsErrorCode.CONTENT_NOT_SUPPORT; break;
-            //        case SmsErrorCode.CONTENT_TOO_LONG_CODE: error = SmsErrorCode.CONTENT_TOO_LONG_CODE; break;
-            //        case SmsErrorCode.INVALID_PHONE_CODE: error = SmsErrorCode.INVALID_PHONE; break;
-            //        case SmsErrorCode.IP_LOCKED_CODE: error = SmsErrorCode.IP_LOCKED; break;
-            //        case SmsErrorCode.PROVIDER_ERROR_CODE: error = SmsErrorCode.PROVIDER_ERROR; break;
+            
 
-            //    }
-            //    progressStageAction.Note = error;
-            //}
-            _progressStageActionService.MarkAsDone(progressStageAction);
-            _progressStageActionService.SaveProgressStageAction();
+            if (phoneNo != Constant.DEFAULT_PHONE_NUMBER)
+            {
+                System.Diagnostics.Debug.WriteLine("Tin nhan duoc gui di");
+                ////Make phone call
+                string response = Utility.SendSMS(phoneNo, messageContent);
+                //string response = Utility.SendSMS(phoneNo, messageContent);
+                //var result = SendSms.FromJson(response);
+                //if (result.Status.ToLower() != "success")
+                //{
+                //    var error = "";
+                //    switch (result.Code)
+                //    {
+                //        case SmsErrorCode.ACCOUNT_LOCKED_CODE: error = SmsErrorCode.ACCOUNT_LOCKED; break;
+                //        case SmsErrorCode.ACCOUNT_NOT_ALLOW_CODE: error = SmsErrorCode.ACCOUNT_NOT_ALLOW; break;
+                //        case SmsErrorCode.ACCOUNT_NOT_ENOUGH_BALANCE_CODE: error = SmsErrorCode.ACCOUNT_NOT_ENOUGH_BALANCE; break;
+                //        case SmsErrorCode.CONTENT_NOT_SUPPORT_CODE: error = SmsErrorCode.CONTENT_NOT_SUPPORT; break;
+                //        case SmsErrorCode.CONTENT_TOO_LONG_CODE: error = SmsErrorCode.CONTENT_TOO_LONG_CODE; break;
+                //        case SmsErrorCode.INVALID_PHONE_CODE: error = SmsErrorCode.INVALID_PHONE; break;
+                //        case SmsErrorCode.IP_LOCKED_CODE: error = SmsErrorCode.IP_LOCKED; break;
+                //        case SmsErrorCode.PROVIDER_ERROR_CODE: error = SmsErrorCode.PROVIDER_ERROR; break;
+
+                //    }
+                //    progressStageAction.Note = error;
+                //}
+                _progressStageActionService.MarkAsDone(progressStageAction);
+                _progressStageActionService.SaveProgressStageAction();
+            }
+
+            return Constant.COLLECTION_STATUS_DONE_CODE;
+
         }
 
         public Task Execute(IJobExecutionContext context)
