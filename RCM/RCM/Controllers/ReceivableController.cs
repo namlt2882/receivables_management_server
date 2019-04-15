@@ -264,14 +264,14 @@ namespace RCM.Controllers
 
                 if (isHistory)
                 {
-                    if (receivable.CollectionProgress.Status != Constant.COLLECTION_STATUS_COLLECTION_CODE)
+                    if (receivable.CollectionProgress.Status != Constant.COLLECTION_STATUS_COLLECTION_CODE && receivable.CollectionProgress.Status != Constant.COLLECTION_STATUS_DONE_CODE)
                     {
                         result.Add(ParseReceivableMobile(receivable));
                     }
                 }
                 else
                 {
-                    if (receivable.CollectionProgress.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE)
+                    if (receivable.CollectionProgress.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE || receivable.CollectionProgress.Status == Constant.COLLECTION_STATUS_DONE_CODE)
                     {
                         result.Add(ParseReceivableMobile(receivable));
                     }
@@ -369,7 +369,7 @@ namespace RCM.Controllers
             receivable.IsConfirmed = model.IsConfirmed;
             receivable.AssignDate = Utility.ConvertDatimeToInt(model.AssignedCollectors.SingleOrDefault(ac => ac.ReceivableId == receivable.Id && ac.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE && !ac.IsDeleted).CreatedDate);
             receivable.Action = GetNextOrLastAction(model);
-            receivable.TimeRate = GetPercent(model);
+            receivable.TimeRate = GetProgressReached(model);
             receivable.ProgressStage = GetProgressStage(model);
             return receivable;
         }
@@ -1604,7 +1604,7 @@ namespace RCM.Controllers
                 return 0;
             }
 
-            if (DateTime.Today == receivable.ExpectationClosedDay.Value.Date)
+            if (DateTime.Today == receivable.ExpectationClosedDay.Value.Date || receivable.CollectionProgress.Status==Constant.COLLECTION_STATUS_DONE_CODE)
             {
                 return 100;
             }
