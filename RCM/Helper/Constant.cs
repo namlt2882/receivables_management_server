@@ -82,8 +82,12 @@
 
         public const string NOTIFICATION_TYPE_CLOSE_RECEIVABLE = "Close Receivable";
         public const int NOTIFICATION_TYPE_CLOSE_RECEIVABLE_CODE = 12;
+
         public const string NOTIFICATION_TYPE_ASSIGN_RECEIVABLE = "Assign Receivable";
         public const int NOTIFICATION_TYPE_ASSIGN_RECEIVABLE_CODE = 13;
+
+        public const string NOTIFICATION_TYPE_DONE_RECEIVABLE = "Done Receivable";
+        public const int NOTIFICATION_TYPE_DONE_RECEIVABLE_CODE = 14;
 
         public const int AUTOMATION_ENABLED_CODE = 1;
         public const int AUTOMATION_DISABLED_CODE = 0;
