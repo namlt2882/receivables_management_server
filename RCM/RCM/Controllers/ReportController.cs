@@ -85,7 +85,7 @@ namespace RCM.Controllers
                                             .Where(x =>
                                             x.IsDeleted == false
                                             && (x.Type == Constant.ACTION_VISIT_CODE || x.Type == Constant.ACTION_REPORT_CODE)
-                                            && x.Status != Constant.COLLECTION_STATUS_COLLECTION_CODE
+                                            && (x.Status == Constant.COLLECTION_STATUS_LATE_CODE || x.Status ==  Constant.COLLECTION_STATUS_CANCEL_CODE)
                                             && x.UpdatedDate.HasValue
                                             ).OrderByDescending(x => x.UpdatedDate.Value);
 
@@ -115,7 +115,7 @@ namespace RCM.Controllers
             var recentUpdatedReceivables = receivables
                                             .Where(x =>
                                             x.IsDeleted == false
-                                            && (x.CollectionProgress.Status == Constant.COLLECTION_STATUS_CLOSED_CODE || x.CollectionProgress.Status == Constant.COLLECTION_STATUS_CANCEL_CODE)
+                                            && (x.CollectionProgress.Status == Constant.COLLECTION_STATUS_DONE_CODE || x.CollectionProgress.Status == Constant.COLLECTION_STATUS_CANCEL_CODE)
                                             && x.CollectionProgress.UpdatedDate.HasValue
                                             && x.IsConfirmed == false
                                             ).OrderByDescending(x => x.CollectionProgress.UpdatedDate.Value);
