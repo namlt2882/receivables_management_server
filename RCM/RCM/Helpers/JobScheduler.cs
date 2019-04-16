@@ -187,24 +187,14 @@ namespace RCM.Helpers
         {
             foreach (var action in actions)
             {
-                int isEnable = Int32.Parse(_configuration["IsEnabled"]);
-                if (isEnable == Constant.AUTOMATION_ENABLED_CODE)
+                switch (action.Type)
                 {
-                    switch (action.Type)
-                    {
-                        case Constant.ACTION_VISIT_CODE:
-                            NotifyVisit();
-                            break;
-                        case Constant.ACTION_PHONECALL_CODE:
-                            MakePhoneCall(action);
-                            break;
-                        case Constant.ACTION_REPORT_CODE:
-                            NotifyReport();
-                            break;
-                        case Constant.ACTION_SMS_CODE:
-                            SendSMS(action);
-                            break;
-                    }
+                    case Constant.ACTION_PHONECALL_CODE:
+                        MakePhoneCall(action);
+                        break;
+                    case Constant.ACTION_SMS_CODE:
+                        SendSMS(action);
+                        break;
                 }
                 _progressStageActionService.MarkAsDone(action);
             }

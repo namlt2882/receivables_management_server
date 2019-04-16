@@ -1,20 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using RCM.Model;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
+using Newtonsoft.Json.Linq;
 using RCM.Helper;
+using RCM.Service;
+using System;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
-using Newtonsoft.Json;
-using RCM.SpeedSMS;
-using Newtonsoft.Json.Linq;
+using System.Threading.Tasks;
 
 namespace RCM.Controllers
 {
+
     [Route("api/[controller]")]
     [ApiController]
     public class UtilityController : ControllerBase
@@ -143,7 +141,6 @@ namespace RCM.Controllers
             return Ok(dateTime);
         }
 
-
         [HttpPost("SendSMS")]
         public IActionResult SendSMS(string number, string content)
         {
@@ -211,7 +208,6 @@ namespace RCM.Controllers
             var msg = stringTask.Content.ReadAsStringAsync().Result;
             return Ok(msg);
         }
-
     }
 
 }
