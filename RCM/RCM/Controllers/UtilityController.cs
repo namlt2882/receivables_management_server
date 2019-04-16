@@ -184,17 +184,17 @@ namespace RCM.Controllers
             return Ok(SendSms.FromJson(response).Status);
         }
 
-        [HttpPost("SMSDelivery")]
-        public IActionResult SMSDelivery([FromBody]DeliverySms sms)
-        {
-            _locationService.CreateLocation(new Location()
-            {
-                Name = sms.Status,
-                Description = $"{sms.TranId}: {sms.TranId}|{sms.Type}"
-            });
-            _locationService.SaveLocation();
-            return Ok(sms);
-        }
+        //[HttpPost("SMSDelivery")]
+        //public IActionResult SMSDelivery([FromBody]DeliverySms sms)
+        //{
+        //    _locationService.CreateLocation(new Location()
+        //    {
+        //        Name = sms.Status,
+        //        Description = $"{sms.TranId}: {sms.TranId}|{sms.Type}"
+        //    });
+        //    _locationService.SaveLocation();
+        //    return Ok(sms);
+        //}
 
         [HttpGet("GetServerDay")]
         public IActionResult GetServerDay()
