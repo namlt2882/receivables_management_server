@@ -44,6 +44,11 @@ namespace RCM.Helper
             return result;
         }
 
+        public static string ConvertDateTimeToStringForView(DateTime date)
+        {
+            return ConvertIntToDateStringForView(ConvertDatimeToInt(date));
+        }
+
         //Ex Input: 700 to 07:00 or 1700 to 17:00
         public static TimeSpan ConvertIntToTimeSpan(int time)
         {
