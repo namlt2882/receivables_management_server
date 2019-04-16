@@ -488,10 +488,12 @@ namespace RCM.Controllers
             if (receivableCM.isPayed)
             {
                 receivable.CollectionProgress.Status = Constant.COLLECTION_STATUS_CLOSED_CODE;
+                receivable.CollectionProgress.UpdatedDate = DateTime.Now;
             }
             else
             {
                 receivable.CollectionProgress.Status = Constant.COLLECTION_STATUS_CANCEL_CODE;
+                receivable.CollectionProgress.UpdatedDate = DateTime.Now;
             }
 
             if (receivable == null)
@@ -524,6 +526,7 @@ namespace RCM.Controllers
             if (receivable.CollectionProgress.Status == Constant.COLLECTION_STATUS_CANCEL_CODE || receivable.CollectionProgress.Status == Constant.COLLECTION_STATUS_CLOSED_CODE)
             {
                 receivable.IsConfirmed = true;
+                receivable.UpdatedDate = DateTime.Now;
                 _receivableService.CloseReceivable(receivable);
                 _receivableService.SaveReceivable();
             }
