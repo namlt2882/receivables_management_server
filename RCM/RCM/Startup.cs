@@ -214,9 +214,9 @@ namespace RCM
                     .SetIsOriginAllowed((host) => true)
                     .AllowCredentials();
                 });
-                options.AddPolicy("AllowFuck", builder =>
+                options.AddPolicy("AllowF", builder =>
                 {
-                    builder.WithOrigins("http://202.78.227.91:8686")
+                    builder.WithOrigins("http://116.193.73.123:8686")
                     .AllowAnyMethod()
                     .AllowCredentials()
                     .AllowAnyHeader();
@@ -249,7 +249,7 @@ namespace RCM
                 }));
                 c.OperationProcessors.Add(new OperationSecurityScopeProcessor("JWT token"));
             });
-            services.AddHangfire(x => x.UseSqlServerStorage(@"Server=202.78.227.91;Database=rcm-hangfire;user id=rcm;password=zaq@123;Trusted_Connection=True;Integrated Security=false;"));
+            //services.AddHangfire(x => x.UseSqlServerStorage(@"Server=116.193.73.123;Database=rcm-hangfire;user id=rcm;password=zaq@123;Trusted_Connection=True;Integrated Security=false;"));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -308,8 +308,8 @@ namespace RCM
             map.Run();
             new InitIdentity().CreateRoles(serviceProvider, Configuration).Wait();
 
-            app.UseHangfireServer();
-            app.UseHangfireDashboard("/hangfire");
+            //app.UseHangfireServer();
+            //app.UseHangfireDashboard("/hangfire");
             app.UseQuartz((quartz) => quartz.AddJob<NotifyJob>("SendNotify", "Notify"));
         }
     }

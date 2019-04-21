@@ -8,7 +8,7 @@ namespace RCM.Data
     {
         public RCMContext() : base((new DbContextOptionsBuilder())
            .UseLazyLoadingProxies()
-           .UseSqlServer(@"Server=202.78.227.91;Database=RCM;user id=sa;password=zaq@123;Trusted_Connection=True;Integrated Security=false;", x => x.EnableRetryOnFailure())
+           .UseSqlServer(@"Server=116.193.73.123;Database=RCM;user id=sa;password=zaq@123;Trusted_Connection=True;Integrated Security=false;", x => x.EnableRetryOnFailure())
            .Options)
         {
 

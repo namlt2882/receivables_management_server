@@ -300,8 +300,12 @@ namespace RCM.Controllers
             {
                 result.Add(ParseReceivableMobile(_receivableService.GetReceivable(r => r.Id == _.ReceivableId)));
             });
+            //Sorting
+            //List<int> status = new List<int>() { Constant.COLLECTION_STATUS_DONE_CODE,Constant.COLLECTION_STATUS_CANCEL_CODE,Constant.COLLECTION_STATUS_COLLECTION_CODE,Constant.COLLECTION_STATUS_CLOSED_CODE };
             return Ok(result);
         }
+
+
 
         //public async Task<IActionResult> GetAssignedReceivables([FromBody]List<int> receivableIdList, [FromQuery] bool isHistory)
         //{
