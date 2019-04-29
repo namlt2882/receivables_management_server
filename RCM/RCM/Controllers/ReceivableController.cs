@@ -85,8 +85,8 @@ namespace RCM.Controllers
                 CollectionProgressId = x.CollectionProgress.Id,
                 AssignedCollectorId = x.AssignedCollectors.FirstOrDefault(assignedCollector => assignedCollector.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE) != null ? x.AssignedCollectors.FirstOrDefault(assignedCollector => assignedCollector.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE).UserId : "",
                 CustomerName = x.Customer.Name,
-                DebtorName = x.Contacts.Where(contact => contact.Type == Constant.CONTACT_DEBTOR_CODE).SingleOrDefault().Name,
-                DebtorId = x.Contacts.Where(contact => contact.Type == Constant.CONTACT_DEBTOR_CODE).SingleOrDefault().Id,
+                DebtorName = x.Contacts.Where(contact => contact.Type == Constant.CONTACT_DEBTOR_CODE).FirstOrDefault().Name,
+                DebtorId = x.Contacts.Where(contact => contact.Type == Constant.CONTACT_DEBTOR_CODE).FirstOrDefault().Id,
                 ProgressPercent = GetProgressReached(x),
                 HaveLateAction = HaveLateActions(x),
                 IsConfirmed = x.IsConfirmed,
@@ -117,8 +117,8 @@ namespace RCM.Controllers
                 CollectionProgressId = x.CollectionProgress.Id,
                 AssignedCollectorId = x.AssignedCollectors.FirstOrDefault(assignedCollector => assignedCollector.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE).UserId,
                 CustomerName = x.Customer.Name,
-                DebtorName = x.Contacts.Where(contact => contact.Type == Constant.CONTACT_DEBTOR_CODE).SingleOrDefault().Name,
-                DebtorId = x.Contacts.Where(contact => contact.Type == Constant.CONTACT_DEBTOR_CODE).SingleOrDefault().Id,
+                DebtorName = x.Contacts.Where(contact => contact.Type == Constant.CONTACT_DEBTOR_CODE).FirstOrDefault().Name,
+                DebtorId = x.Contacts.Where(contact => contact.Type == Constant.CONTACT_DEBTOR_CODE).FirstOrDefault().Id,
                 ProgressPercent = GetProgressReached(x),
                 HaveLateAction = HaveLateActions(x),
                 IsConfirmed = x.IsConfirmed,
@@ -151,7 +151,7 @@ namespace RCM.Controllers
         {
 
             var result = new ProgressStageMobileVM();
-            if(receivable.CollectionProgress.Status== Constant.COLLECTION_STATUS_WAIT_CODE)
+            if (receivable.CollectionProgress.Status == Constant.COLLECTION_STATUS_WAIT_CODE)
             {
                 return "";
             }
@@ -365,13 +365,13 @@ namespace RCM.Controllers
             receivable.DebtAmount = model.DebtAmount;
             receivable.ClosedDay = model.ClosedDay;
             receivable.CustomerName = model.Customer.Name;
-            receivable.DebtorId = model.Contacts.Where(contact => contact.Type == Constant.CONTACT_DEBTOR_CODE && !contact.IsDeleted).SingleOrDefault().Id;
-            receivable.DebtorName = model.Contacts.Where(contact => contact.Type == Constant.CONTACT_DEBTOR_CODE && !contact.IsDeleted).SingleOrDefault().Name;
+            receivable.DebtorId = model.Contacts.Where(contact => contact.Type == Constant.CONTACT_DEBTOR_CODE && !contact.IsDeleted).FirstOrDefault().Id;
+            receivable.DebtorName = model.Contacts.Where(contact => contact.Type == Constant.CONTACT_DEBTOR_CODE && !contact.IsDeleted).FirstOrDefault().Name;
             receivable.Contacts = GetReceivableContactsForDetailView(model.Contacts.Where(con => !con.IsDeleted));
             receivable.CollectionProgressStatus = model.CollectionProgress.Status;
             receivable.ExpectationClosedDay = Utility.ConvertDatimeToInt((DateTime)model.ExpectationClosedDay);
             receivable.IsConfirmed = model.IsConfirmed;
-            receivable.AssignDate = Utility.ConvertDatimeToInt(model.AssignedCollectors.SingleOrDefault(ac => ac.ReceivableId == receivable.Id && ac.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE && !ac.IsDeleted).CreatedDate);
+            receivable.AssignDate = Utility.ConvertDatimeToInt(model.AssignedCollectors.FirstOrDefault(ac => ac.ReceivableId == receivable.Id && ac.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE && !ac.IsDeleted).CreatedDate);
             receivable.Action = GetNextOrLastAction(model);
             receivable.TimeRate = GetProgressReached(model);
             receivable.ProgressStage = GetProgressStage(model);
@@ -620,7 +620,7 @@ namespace RCM.Controllers
             return NotFound();
         }
 
-        [HttpGet("GetReceivaleByCollectorId")]
+        [HttpGet("GetReceivaleByCollectorId/{collectorId}")]
         public IActionResult GetReceivableByCollectorId(string collectorId)
         {
             var rawList = _receivableService.GetReceivables().Select(x => new ReceivableLM()
@@ -636,11 +636,13 @@ namespace RCM.Controllers
                 CollectionProgressId = x.CollectionProgress.Id,
                 AssignedCollectorId = x.AssignedCollectors.FirstOrDefault(assignedCollector => assignedCollector.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE) != null ? x.AssignedCollectors.FirstOrDefault(assignedCollector => assignedCollector.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE).UserId : "",
                 CustomerName = x.Customer.Name,
-                DebtorName = x.Contacts.Where(contact => contact.Type == Constant.CONTACT_DEBTOR_CODE).SingleOrDefault().Name,
-                DebtorId = x.Contacts.Where(contact => contact.Type == Constant.CONTACT_DEBTOR_CODE).SingleOrDefault().Id,
+                DebtorName = x.Contacts.Where(contact => contact.Type == Constant.CONTACT_DEBTOR_CODE).FirstOrDefault().Name,
+                DebtorId = x.Contacts.Where(contact => contact.Type == Constant.CONTACT_DEBTOR_CODE).FirstOrDefault().Id,
                 ProgressPercent = GetProgressReached(x),
                 HaveLateAction = HaveLateActions(x),
-                IsConfirmed = x.IsConfirmed
+                IsConfirmed = x.IsConfirmed,
+                Stage = GetStageName(x),
+                ProfileId = x.CollectionProgress.ProfileId
             });
 
             if (rawList.Any())
@@ -716,6 +718,91 @@ namespace RCM.Controllers
             }
 
             return Ok(new { ClosedTime = receivable.ClosedDay, DebtAmount = receivable.DebtAmount, Status = receivable.CollectionProgress.Status, IsConfirmed = receivable.IsConfirmed });
+        }
+
+        [HttpGet("GetReceivableGroupByCollector")]
+        public IActionResult GetReceivableGroupByCollector()
+        {
+            var result = new List<ReceivableGroupByCollectorModel>();
+            var userList = _userManager.GetUsersInRoleAsync("Collector").Result;
+            if (userList.Any())
+            {
+                foreach (var user in userList)
+                {
+                    var collectorReceivable = GetReceivablesByCollector(user.Id);
+                    var collectorActiveReceivable = GetReceivablesCollectingByCollectorFilterByAssignedStatus(Constant.ASSIGNED_STATUS_ACTIVE_CODE, collectorReceivable);
+
+                    result.Add(new ReceivableGroupByCollectorModel()
+                    {
+                        CollectorId = user.Id,
+                        CollectorName = user.LastName + " " + user.FirstName,
+                        NumberOfAssignedReceivable = collectorReceivable.Count(),
+                        NumberOfReceivableInCollectingProgress = collectorActiveReceivable.Count(),
+                        rate = GetRate(collectorReceivable)
+                    });
+                }
+                return Ok(result);
+            }
+
+            return Ok();
+        }
+
+        private Rate GetRate(IEnumerable<Receivable> receivables)
+        {
+            Rate rate = new Rate();
+            if (receivables.Any())
+            {
+                var closedOrCanceledAmount = receivables
+                    .Where(receivable =>
+                    receivable.CollectionProgress.Status == Constant.COLLECTION_STATUS_CLOSED_CODE
+                    || receivable.CollectionProgress.Status == Constant.COLLECTION_STATUS_CANCEL_CODE
+                ).Count();
+                if (closedOrCanceledAmount > 0)
+                {
+                    var closedAmount = receivables
+                   .Where(receivable =>
+                        receivable.CollectionProgress.Status == Constant.COLLECTION_STATUS_CLOSED_CODE
+                         ).Count();
+
+                    var canceledAmount = receivables
+                        .Where(receivable =>
+                        receivable.CollectionProgress.Status == Constant.COLLECTION_STATUS_CANCEL_CODE
+                         ).Count();
+
+                    rate.FailRate = Math.Round(((double)canceledAmount / closedOrCanceledAmount) * 100, MidpointRounding.AwayFromZero);
+                    rate.SuccessRate = Math.Round(((double)closedAmount / closedOrCanceledAmount)  * 100, MidpointRounding.AwayFromZero);
+                }
+            }
+            return rate;
+        }
+
+        private IEnumerable<Receivable> GetReceivablesByCollector(string CollectorId)
+        {
+            var result = _receivableService.GetReceivables()
+                .Where(receivable =>
+                    receivable.AssignedCollectors
+                    .Any(x =>
+                    x.UserId == CollectorId
+                    && x.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE)
+                );
+            return result;
+        }
+
+        private IEnumerable<Receivable> GetReceivablesCollectingByCollectorFilterByAssignedStatus(int assignStatus, IEnumerable<Receivable> receivablesByCollector)
+        {
+            if (receivablesByCollector.Any())
+            {
+                var result = receivablesByCollector
+                    .Where(receivable =>
+                        receivable.CollectionProgress.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE
+                        && receivable.AssignedCollectors
+                        .Any(x =>
+                            x.Status == assignStatus
+                        )
+                    );
+                return result;
+            }
+            return new List<Receivable>();
         }
 
         [HttpGet("{id}")]
@@ -1094,8 +1181,8 @@ namespace RCM.Controllers
                 CollectionProgressId = x.CollectionProgress.Id,
                 AssignedCollectorId = x.AssignedCollectors.FirstOrDefault(assignedCollector => assignedCollector.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE) != null ? x.AssignedCollectors.FirstOrDefault(assignedCollector => assignedCollector.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE).UserId : "",
                 CustomerName = x.Customer.Name,
-                DebtorName = x.Contacts.Where(contact => contact.Type == Constant.CONTACT_DEBTOR_CODE).SingleOrDefault().Name,
-                DebtorId = x.Contacts.Where(contact => contact.Type == Constant.CONTACT_DEBTOR_CODE).SingleOrDefault().Id,
+                DebtorName = x.Contacts.Where(contact => contact.Type == Constant.CONTACT_DEBTOR_CODE).FirstOrDefault().Name,
+                DebtorId = x.Contacts.Where(contact => contact.Type == Constant.CONTACT_DEBTOR_CODE).FirstOrDefault().Id,
                 ProgressPercent = GetProgressReached(x),
                 HaveLateAction = HaveLateActions(x),
                 IsConfirmed = x.IsConfirmed,
@@ -1611,7 +1698,7 @@ namespace RCM.Controllers
                 return 0;
             }
 
-            if (DateTime.Today == receivable.ExpectationClosedDay.Value.Date || receivable.CollectionProgress.Status==Constant.COLLECTION_STATUS_DONE_CODE)
+            if (DateTime.Today == receivable.ExpectationClosedDay.Value.Date || receivable.CollectionProgress.Status == Constant.COLLECTION_STATUS_DONE_CODE)
             {
                 return 100;
             }

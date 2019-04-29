@@ -120,4 +120,19 @@ namespace RCM.ViewModels
         public int PayableDay { get; set; }
         public ProfileIM Profile { get; set; }
     }
+
+    public class ReceivableGroupByCollectorModel
+    {
+        public string CollectorId { get; set; }
+        public string CollectorName { get; set; }
+        public int NumberOfReceivableInCollectingProgress { get; set; }
+        public int NumberOfAssignedReceivable { get; set; }
+        public Rate rate { get; set; }
+    }
+
+    public class Rate {
+        public double SuccessRate { get; set; } = -1;
+        public double FailRate { get; set; } = -1;
+    }
+
 }

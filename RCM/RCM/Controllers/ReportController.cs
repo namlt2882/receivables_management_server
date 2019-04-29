@@ -85,7 +85,7 @@ namespace RCM.Controllers
                                             .Where(x =>
                                             x.IsDeleted == false
                                             && (x.Type == Constant.ACTION_VISIT_CODE || x.Type == Constant.ACTION_REPORT_CODE)
-                                            && (x.Status == Constant.COLLECTION_STATUS_LATE_CODE || x.Status ==  Constant.COLLECTION_STATUS_CANCEL_CODE)
+                                            && (x.Status == Constant.COLLECTION_STATUS_LATE_CODE || x.Status == Constant.COLLECTION_STATUS_CANCEL_CODE)
                                             && x.UpdatedDate.HasValue
                                             ).OrderByDescending(x => x.UpdatedDate.Value);
 
@@ -223,18 +223,95 @@ namespace RCM.Controllers
 
         private IEnumerable<ReceivableMonthlyReportModel> GetReceivableMonthlyReports(IEnumerable<Receivable> receivables, DateTime date)
         {
-            var result = receivables.
+            var reportCreatedReceivable = receivables.
                 Where(receivable => receivable.IsDeleted == false)
                 .GroupBy(
-                receivable => new { receivable.CreatedDate.Month, receivable.CreatedDate.Year },
+                receivable => new { receivable.CreatedDate.Year, receivable.CreatedDate.Month },
                 (key, g) => new ReceivableMonthlyReportModel()
                 {
-                    Milestone = new DateTime(g.FirstOrDefault().CollectionProgress.CreatedDate.Year, g.FirstOrDefault().CollectionProgress.CreatedDate.Month, g.FirstOrDefault().CollectionProgress.CreatedDate.Day),
-                    NumberOfCreatedReceivable = g.ToList().Where(receivable => receivable.CreatedDate == date).Count(),
-                    NumberOfCanceledReceivable = g.ToList().Where(receivable => receivable.CollectionProgress.Status == Constant.COLLECTION_STATUS_CANCEL_CODE).Count()
+                    Milestone = new DateTime(key.Year, key.Month, 01),
+                    NumberOfCreatedReceivable = g.Count(),
                 });
 
-            return result;
+            var reportCanceledOrClosedReceivable = receivables.
+                Where(receivable =>
+                receivable.IsDeleted == false
+                && receivable.IsConfirmed == true
+                && (receivable.CollectionProgress.Status == Constant.COLLECTION_STATUS_CLOSED_CODE || receivable.CollectionProgress.Status == Constant.COLLECTION_STATUS_CANCEL_CODE)
+                && receivable.CollectionProgress.UpdatedDate.HasValue
+                )
+                .GroupBy(
+                receivable => new { receivable.CollectionProgress.UpdatedDate.Value.Year, receivable.CollectionProgress.UpdatedDate.Value.Month },
+                (key, g) => new ReceivableMonthlyReportModel()
+                {
+                    Milestone = new DateTime(key.Year, key.Month, 01),
+                    NumberofClosedReceivable = g.Where(x => x.CollectionProgress.Status == Constant.COLLECTION_STATUS_CLOSED_CODE).Count(),
+                    NumberOfCanceledReceivable = g.Where(x => x.CollectionProgress.Status == Constant.COLLECTION_STATUS_CANCEL_CODE).Count(),
+                });
+
+            var reportDoneReceivable = receivables
+                .Where(receivable =>
+                    receivable.IsDeleted == false
+                    && receivable.ExpectationClosedDay.HasValue
+                ).GroupBy(
+                receivable => new { receivable.ExpectationClosedDay.Value.Year, receivable.ExpectationClosedDay.Value.Month },
+                (key, g) => new ReceivableMonthlyReportModel()
+                {
+                    Milestone = new DateTime(key.Year, key.Month, 01),
+                    NumberOfDoneReceivable = g.Count(),
+                });
+            var result = MappingMonthlyReport(reportCreatedReceivable, reportCanceledOrClosedReceivable, reportDoneReceivable);
+
+            return result.OrderBy(x => x.Milestone);
+        }
+
+        private IEnumerable<ReceivableMonthlyReportModel> MappingMonthlyReport(IEnumerable<ReceivableMonthlyReportModel> created, IEnumerable<ReceivableMonthlyReportModel> closedOrCanceled, IEnumerable<ReceivableMonthlyReportModel> done)
+        {
+
+            List<ReceivableMonthlyReportModel> milestones = new List<ReceivableMonthlyReportModel>();
+
+            created.ToList()
+                .ForEach(x =>
+                milestones
+                    .Add(new ReceivableMonthlyReportModel()
+                    {
+                        Milestone = x.Milestone,
+                        NumberOfCreatedReceivable = x.NumberOfCreatedReceivable
+                    })
+                );
+
+            foreach (var closedOrCanceledReceivable in closedOrCanceled)
+            {
+                if (milestones.Any(x => x.Milestone.Month == closedOrCanceledReceivable.Milestone.Month && x.Milestone.Year == closedOrCanceledReceivable.Milestone.Year))
+                {
+                    milestones.First(x => x.Milestone.Month == closedOrCanceledReceivable.Milestone.Month && x.Milestone.Year == closedOrCanceledReceivable.Milestone.Year).NumberofClosedReceivable = closedOrCanceledReceivable.NumberofClosedReceivable;
+                } else
+                {
+                    milestones.Add(new ReceivableMonthlyReportModel()
+                    {
+                        Milestone = closedOrCanceledReceivable.Milestone,
+                        NumberofClosedReceivable = closedOrCanceledReceivable.NumberofClosedReceivable,
+                        NumberOfCanceledReceivable = closedOrCanceledReceivable.NumberOfCanceledReceivable
+                    });
+                }
+            }
+
+            foreach (var doneReceivable in done)
+            {
+                if (milestones.Any(x => x.Milestone.Month == doneReceivable.Milestone.Month && x.Milestone.Year == doneReceivable.Milestone.Year))
+                {
+                    milestones.First(x => x.Milestone.Month == doneReceivable.Milestone.Month && x.Milestone.Year == doneReceivable.Milestone.Year).NumberOfDoneReceivable = doneReceivable.NumberOfDoneReceivable;
+                } else
+                {
+                    milestones.Add(new ReceivableMonthlyReportModel()
+                    {
+                        Milestone = doneReceivable.Milestone,
+                        NumberOfDoneReceivable = doneReceivable.NumberOfDoneReceivable
+                    });
+                }
+            }
+
+            return milestones;
         }
     }
 }

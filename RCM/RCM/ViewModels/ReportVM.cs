@@ -83,5 +83,7 @@ namespace RCM.ViewModels
     {
         public int NumberOfCreatedReceivable { get; set; }
         public int NumberOfCanceledReceivable { get; set; }
+        public int NumberofClosedReceivable { get; set; }
+        public int NumberOfDoneReceivable { get; set; }
     }
 }

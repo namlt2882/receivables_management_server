@@ -11,7 +11,6 @@ using RCM.CenterHubs;
 using RCM.Helper;
 using RCM.Model;
 using RCM.Service;
-using RCM.SpeedSMS;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -83,13 +82,15 @@ namespace RCM.Helpers
             Task notification = Task.Factory.StartNew(() => SendNotificationToDebtor(date, time));
             #endregion
 
-            #region Late Action
-            Task markAction = notification.ContinueWith((task) => MarkActionAsLate(date, time));
+            #region Close Receivable
+            Task closeRecivable = notification.ContinueWith((task) => CloseReceivable(date, time));
             #endregion
 
-            #region Close Receivable
-            Task closeRecivable = markAction.ContinueWith((task) => CloseReceivable(date, time));
+            #region Late Action
+            Task markAction = closeRecivable.ContinueWith((task) => MarkActionAsLate(date, time));
             #endregion
+
+
 
         }
 
@@ -109,7 +110,7 @@ namespace RCM.Helpers
 
             if (actionsToExecute.Any())
             {
-                //ExecuteAction(actionsToExecute);
+                ExecuteAction(actionsToExecute);
             }
         }
 
@@ -159,7 +160,7 @@ namespace RCM.Helpers
             #region Check Done Receivable
             var doneReceivableList = _receivableService
                 .GetReceivables(
-                r => !r.IsDeleted 
+                r => !r.IsDeleted
                 && r.CollectionProgress.Status == Constant.COLLECTION_STATUS_DONE_CODE);
             #endregion
 
@@ -261,7 +262,7 @@ namespace RCM.Helpers
                 .Contacts.Where(x => x.Type == Constant.CONTACT_DEBTOR_CODE).FirstOrDefault().Phone;
             var messageContent = progressStageAction.ProgressMessageForm.Content;
 
-            
+
 
             if (phoneNo != Constant.DEFAULT_PHONE_NUMBER)
             {
