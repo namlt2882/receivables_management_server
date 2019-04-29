@@ -152,23 +152,18 @@ namespace RCM.Helpers
                     _receivableService.EditReceivable(receivable);
                 }
                 _receivableService.SaveReceivable();
+                SendDoneReceivableNotify(receivableToClose);
             }
         }
 
-        private async void SendDoneReceivableNotify()
+        private async void SendDoneReceivableNotify(IEnumerable<Receivable> receivables)
         {
-            #region Check Done Receivable
-            var doneReceivableList = _receivableService
-                .GetReceivables(
-                r => !r.IsDeleted
-                && r.CollectionProgress.Status == Constant.COLLECTION_STATUS_DONE_CODE);
-            #endregion
 
             #region Create New Receivable Notification
 
             //Create Done Receivable Notifications
             List<Notification> notifications = new List<Notification>();
-            foreach (var receivable in doneReceivableList)
+            foreach (var receivable in receivables)
             {
                 Notification notification = new Notification()
                 {
