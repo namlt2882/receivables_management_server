@@ -79,7 +79,7 @@ namespace RCM.Helpers
             long date = Int64.Parse(Utility.ConvertDatetimeToString(DateTime.Now.Date));
 
             #region Phone/SMS
-            Task notification = Task.Factory.StartNew(() => SendNotificationToDebtor(date, time));
+            Task notification = Task.Factory.StartNew(async () => await SendNotificationToDebtor(date, time));
             #endregion
 
             #region Close Receivable
@@ -94,7 +94,7 @@ namespace RCM.Helpers
 
         }
 
-        private void SendNotificationToDebtor(long date, int time)
+        private async Task SendNotificationToDebtor(long date, int time)
         {
             var actionsToExecute = _progressStageActionService.GetProgressStageActions()
                 .Where(x => (
@@ -102,6 +102,7 @@ namespace RCM.Helpers
                 && x.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE
                 && x.ExcutionDay == date
                 && x.StartTime < time
+                && CheckNote(x.Note)
                 && x.ProgressStage.CollectionProgress.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE
                 && (x.Type == Constant.ACTION_PHONECALL_CODE || x.Type == Constant.ACTION_SMS_CODE)
                 ));
@@ -110,9 +111,32 @@ namespace RCM.Helpers
 
             if (actionsToExecute.Any())
             {
-                ExecuteAction(actionsToExecute);
+                await ExecuteAction(actionsToExecute);
             }
         }
+        #region process fail sms/phone call
+        private bool CheckNote(string note)
+        {
+            try
+            {
+                var result = int.Parse(note);
+                if (result < 3) return true;
+                return false;
+            }
+            catch (Exception)
+            {
+                return true;
+            }
+        }
+
+        private string MakeFailNote(string note)
+        {
+            if (string.IsNullOrEmpty(note)) return "1";
+            var result = int.Parse(note);
+            result = result + 1;
+            return result.ToString();
+        }
+        #endregion
 
         private void MarkActionAsLate(long date, int time)
         {
@@ -152,11 +176,11 @@ namespace RCM.Helpers
                     _receivableService.EditReceivable(receivable);
                 }
                 _receivableService.SaveReceivable();
-                SendDoneReceivableNotify(receivableToClose);
+                SendDoneReceivableNotification(receivableToClose);
             }
         }
 
-        private async void SendDoneReceivableNotify(IEnumerable<Receivable> receivables)
+        private async void SendDoneReceivableNotification(IEnumerable<Receivable> receivables)
         {
 
             #region Create New Receivable Notification
@@ -186,26 +210,48 @@ namespace RCM.Helpers
             await NotificationUtility.NotificationUtility.SendNotification(notifications, _hubService, _hubContext, _firebaseTokenService);
         }
 
+        private async void SendFailAutoActionNotification(ProgressStageAction progressStageAction)
+        {
+
+            #region Create New Receivable Notification
+
+            //Create Done Receivable Notifications
+            var receivable = progressStageAction.ProgressStage.CollectionProgress.Receivable;
+            Notification notification = new Notification()
+            {
+                Title = Constant.NOTIFICATION_TYPE_FAIL_AUTO_ACTION,
+                Type = Constant.NOTIFICATION_TYPE_FAIL_AUTO_ACTION_CODE,
+                Body = $"Action {Constant.GetActionType(progressStageAction.Type)} could not deliver to {receivable.Contacts.First().Name} from {receivable.Customer.Name}!",
+                UserId = receivable.AssignedCollectors.First(ac => ac.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE && !ac.IsDeleted).UserId,
+                NData = JsonConvert.SerializeObject(receivable.Id),
+                IsSeen = false,
+                CreatedDate = DateTime.Now,
+                IsDeleted = false,
+            };
+            var result = _notificationService.CreateNotification(notification);
+            _notificationService.SaveNotification();
+
+            #endregion
+            //Send
+            await NotificationUtility.NotificationUtility.SendNotification(notification, _hubService, _hubContext, _firebaseTokenService);
+        }
 
 
 
-        private void ExecuteAction(IEnumerable<ProgressStageAction> actions)
+        private async Task ExecuteAction(IEnumerable<ProgressStageAction> actions)
         {
             foreach (var action in actions)
             {
                 switch (action.Type)
                 {
                     case Constant.ACTION_PHONECALL_CODE:
-                        MakePhoneCall(action);
+                        await MakePhoneCall(action);
                         break;
                     case Constant.ACTION_SMS_CODE:
                         SendSMS(action);
                         break;
                 }
-                _progressStageActionService.MarkAsDone(action);
             }
-            _progressStageActionService.SaveProgressStageAction();
-
         }
 
         private void NotifyVisit()
@@ -213,7 +259,7 @@ namespace RCM.Helpers
 
         }
 
-        private int MakePhoneCall(ProgressStageAction progressStageAction)
+        private async Task MakePhoneCall(ProgressStageAction progressStageAction)
         {
             //Get information
             var phoneNo = progressStageAction.ProgressStage.CollectionProgress
@@ -225,13 +271,15 @@ namespace RCM.Helpers
             {
                 System.Diagnostics.Debug.WriteLine("Tin nhan duoc gui di");
                 ////Make phone call
-                var stringeeMsg = Task.Run(() => Utility.MakePhoneCallAsync(phoneNo, messageContent));
+                var stringeeMsg = await Utility.MakePhoneCallAsync(phoneNo, messageContent);
+
             }
 
-
             #region get CallId
+
             //JObject call = JObject.Parse(stringeeMsg);
             //var callId = call.SelectToken("call_id").ToString();
+
             #endregion
             //progressStageAction.NData = callId;
 
@@ -242,7 +290,6 @@ namespace RCM.Helpers
             _progressStageActionService.MarkAsDone(progressStageAction);
             _progressStageActionService.SaveProgressStageAction();
             //}
-            return Constant.COLLECTION_STATUS_DONE_CODE;
         }
 
         private void NotifyReport()
@@ -250,7 +297,7 @@ namespace RCM.Helpers
 
         }
 
-        private int SendSMS(ProgressStageAction progressStageAction)
+        private void SendSMS(ProgressStageAction progressStageAction)
         {
             var phoneNo = progressStageAction.ProgressStage.CollectionProgress
                 .Receivable
@@ -265,29 +312,39 @@ namespace RCM.Helpers
                 ////Make phone call
                 string response = Utility.SendSMS(phoneNo, messageContent);
                 //string response = Utility.SendSMS(phoneNo, messageContent);
-                //var result = SendSms.FromJson(response);
-                //if (result.Status.ToLower() != "success")
-                //{
-                //    var error = "";
-                //    switch (result.Code)
-                //    {
-                //        case SmsErrorCode.ACCOUNT_LOCKED_CODE: error = SmsErrorCode.ACCOUNT_LOCKED; break;
-                //        case SmsErrorCode.ACCOUNT_NOT_ALLOW_CODE: error = SmsErrorCode.ACCOUNT_NOT_ALLOW; break;
-                //        case SmsErrorCode.ACCOUNT_NOT_ENOUGH_BALANCE_CODE: error = SmsErrorCode.ACCOUNT_NOT_ENOUGH_BALANCE; break;
-                //        case SmsErrorCode.CONTENT_NOT_SUPPORT_CODE: error = SmsErrorCode.CONTENT_NOT_SUPPORT; break;
-                //        case SmsErrorCode.CONTENT_TOO_LONG_CODE: error = SmsErrorCode.CONTENT_TOO_LONG_CODE; break;
-                //        case SmsErrorCode.INVALID_PHONE_CODE: error = SmsErrorCode.INVALID_PHONE; break;
-                //        case SmsErrorCode.IP_LOCKED_CODE: error = SmsErrorCode.IP_LOCKED; break;
-                //        case SmsErrorCode.PROVIDER_ERROR_CODE: error = SmsErrorCode.PROVIDER_ERROR; break;
-
-                //    }
-                //    progressStageAction.Note = error;
-                //}
+                var result = SpeedSMS.SendSms.FromJson(response);
+                if (result.Status.ToLower() != "success")
+                {
+                    //var error = "";
+                    //switch (result.Code)
+                    //{
+                    //    case SmsErrorCode.ACCOUNT_LOCKED_CODE: error = SmsErrorCode.ACCOUNT_LOCKED; break;
+                    //    case SmsErrorCode.ACCOUNT_NOT_ALLOW_CODE: error = SmsErrorCode.ACCOUNT_NOT_ALLOW; break;
+                    //    case SmsErrorCode.ACCOUNT_NOT_ENOUGH_BALANCE_CODE: error = SmsErrorCode.ACCOUNT_NOT_ENOUGH_BALANCE; break;
+                    //    case SmsErrorCode.CONTENT_NOT_SUPPORT_CODE: error = SmsErrorCode.CONTENT_NOT_SUPPORT; break;
+                    //    case SmsErrorCode.CONTENT_TOO_LONG_CODE: error = SmsErrorCode.CONTENT_TOO_LONG_CODE; break;
+                    //    case SmsErrorCode.INVALID_PHONE_CODE: error = SmsErrorCode.INVALID_PHONE; break;
+                    //    case SmsErrorCode.IP_LOCKED_CODE: error = SmsErrorCode.IP_LOCKED; break;
+                    //    case SmsErrorCode.PROVIDER_ERROR_CODE: error = SmsErrorCode.PROVIDER_ERROR; break;
+                    //}
+                    progressStageAction.Note = MakeFailNote(progressStageAction.Note);
+                    if (int.Parse(progressStageAction.Note) == 3)
+                    {
+                        progressStageAction.Status = Constant.COLLECTION_STATUS_CANCEL_CODE;
+                    }
+                    _progressStageActionService.EditProgressStageAction(progressStageAction);
+                    _progressStageActionService.SaveProgressStageAction();
+                    //Notify to user
+                    if (int.Parse(progressStageAction.Note) == 3)
+                    {
+                        SendFailAutoActionNotification(progressStageAction);
+                    }
+                    return;
+                }
                 _progressStageActionService.MarkAsDone(progressStageAction);
                 _progressStageActionService.SaveProgressStageAction();
             }
 
-            return Constant.COLLECTION_STATUS_DONE_CODE;
 
         }
 

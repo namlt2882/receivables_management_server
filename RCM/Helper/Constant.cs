@@ -16,7 +16,7 @@
         public const string ACTION_SMS = "SMS";
         public const int ACTION_SMS_CODE = 0;
 
-        public const string ACTION_PHONECALL = "PhoneCall";
+        public const string ACTION_PHONECALL = "Phone Call";
         public const int ACTION_PHONECALL_CODE = 1;
 
         public const string ACTION_NOTIFICATION = "Notification";
@@ -89,11 +89,22 @@
         public const string NOTIFICATION_TYPE_DONE_RECEIVABLE = "Done Receivable";
         public const int NOTIFICATION_TYPE_DONE_RECEIVABLE_CODE = 14;
 
+        public const string NOTIFICATION_TYPE_FAIL_AUTO_ACTION = "Fail auto action";
+        public const int NOTIFICATION_TYPE_FAIL_AUTO_ACTION_CODE = 15;
+
         public const int AUTOMATION_ENABLED_CODE = 1;
         public const int AUTOMATION_DISABLED_CODE = 0;
 
         public const string DEFAULT_PHONE_NUMBER = "84938113911";
-
+        public static string GetActionType(int type)
+        {
+            switch (type)
+            {
+                case ACTION_SMS_CODE: return ACTION_SMS;
+                case ACTION_PHONECALL_CODE: return ACTION_PHONECALL;
+            }
+            return "";
+        }
     }
 
 }
