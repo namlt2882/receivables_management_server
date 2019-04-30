@@ -118,7 +118,7 @@ namespace RCM.Controllers
                 _contactService.EditContact(contact);
                 _contactService.SaveContact();
 
-                return Ok(contact);
+                return Ok(contact.Adapt<ContactVM>());
             }
             return NotFound();
         }
