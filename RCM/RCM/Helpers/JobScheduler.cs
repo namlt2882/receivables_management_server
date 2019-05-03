@@ -163,6 +163,8 @@ namespace RCM.Helpers
                 .Where(x => (
                 x.IsDeleted == false
                 && x.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE
+                && x.Type != Constant.ACTION_PHONECALL_CODE
+                && x.Type != Constant.ACTION_SMS_CODE
                 && x.ExcutionDay < date
                 && x.ProgressStage.CollectionProgress.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE
                 && (x.Type == Constant.ACTION_REPORT_CODE || x.Type == Constant.ACTION_NOTIFICATION_CODE)

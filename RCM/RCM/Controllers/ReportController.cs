@@ -87,6 +87,7 @@ namespace RCM.Controllers
                                             x.IsDeleted == false
                                             && (x.Type == Constant.ACTION_VISIT_CODE || x.Type == Constant.ACTION_REPORT_CODE)
                                             && (x.Status == Constant.COLLECTION_STATUS_LATE_CODE || x.Status == Constant.COLLECTION_STATUS_CANCEL_CODE)
+                                            && (x.ProgressStage.CollectionProgress.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE)
                                             && x.UpdatedDate.HasValue
                                             ).OrderByDescending(x => x.UpdatedDate.Value);
 
@@ -98,7 +99,7 @@ namespace RCM.Controllers
                     {
                         Id = task.Id,
                         CollectorName = task.UserId != null ? task.User.FirstName + " " + task.User.LastName : "",
-                        UpdatedTime = Utility.ConvertDateTimeToStringForView((DateTime)task.UpdatedDate),
+                        UpdatedTime = task.UpdatedDate.Value.ToString("HH:mm dd/MM/yyyy"),
                         ReceivableId = task.ProgressStage.CollectionProgress.ReceivableId,
                         TaskName = task.Name + " " + task.ProgressStage.CollectionProgress.Receivable.Contacts.Where(x => x.Type == Constant.CONTACT_DEBTOR_CODE).FirstOrDefault().Name,
                         Status = task.Status
@@ -133,7 +134,8 @@ namespace RCM.Controllers
                         DebtorName = receivable.Contacts.FirstOrDefault(contact => contact.Type == Constant.CONTACT_DEBTOR_CODE).Name,
                         CollectorName = receivable.AssignedCollectors.Any() ?
                                         GetName(receivable.AssignedCollectors.FirstOrDefault(assignedCollector => assignedCollector.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE).User)
-                                        : ""
+                                        : "",
+                        UpdatedTime = receivable.CollectionProgress.UpdatedDate.Value.ToString("HH:mm dd/MM/yyyy")
                     });
                 }
             }
@@ -151,7 +153,7 @@ namespace RCM.Controllers
             var recentUpdatedReceivables = receivables
                                             .Where(x =>
                                             x.IsDeleted == false
-                                            && (x.CollectionProgress.Status == Constant.COLLECTION_STATUS_CLOSED_CODE || x.CollectionProgress.Status == Constant.COLLECTION_STATUS_CANCEL_CODE)
+                                            && (x.CollectionProgress.Status == Constant.COLLECTION_STATUS_DONE_CODE || x.CollectionProgress.Status == Constant.COLLECTION_STATUS_CANCEL_CODE)
                                             && x.CollectionProgress.UpdatedDate.HasValue
                                             && x.CollectionProgress.UpdatedDate.Value.Date == date
                                             && x.IsConfirmed == false
@@ -166,6 +168,7 @@ namespace RCM.Controllers
                                             x.IsDeleted == false
                                             && (x.Type == Constant.ACTION_VISIT_CODE || x.Type == Constant.ACTION_REPORT_CODE)
                                             && (x.Status == Constant.COLLECTION_STATUS_CANCEL_CODE || x.Status == Constant.COLLECTION_STATUS_LATE_CODE)
+                                            && (x.ProgressStage.CollectionProgress.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE)
                                             && x.UpdatedDate.HasValue
                                             && x.UpdatedDate.Value.Date == date
                                             ).Count();

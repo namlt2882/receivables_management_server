@@ -52,6 +52,7 @@ namespace RCM.ViewModels
         public string PartnerName { get; set; }
         public string DebtorName { get; set; }
         public int Status { get; set; }
+        public string UpdatedTime { get; set; }
     }
 
     public class MonthlyReportModel
