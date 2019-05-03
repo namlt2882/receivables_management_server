@@ -97,7 +97,7 @@ namespace RCM.Helper
 
         public static async Task<string> MakePhoneCallAsync(string phoneNo, string content)
         {
-            string data = "{\"from\":{\"type\":\"external\",\"number\":\"84901701062\",\"alias\":\"STRINGEE_NUMBER\"},\"to\":[{\"type\":\"external\",\"number\":\"" + phoneNo + "\",\"alias\":\"Thong\"}],\"answer_url\":\"https://example.com/answerurl\",\"actions\":[{\"action\":\"talk\",\"voice\":\"hatieumai\",\"text\":\"" + content + "\",\"speed\":-3,\"silenceTime\":1000}]}";
+            string data = "{\"from\":{\"type\":\"external\",\"number\":\"84901707010\",\"alias\":\"STRINGEE_NUMBER\"},\"to\":[{\"type\":\"external\",\"number\":\"" + phoneNo + "\",\"alias\":\"Thong\"}],\"answer_url\":\"https://example.com/answerurl\",\"actions\":[{\"action\":\"talk\",\"voice\":\"hatieumai\",\"text\":\"" + content + "\",\"speed\":-3,\"silenceTime\":1000}]}";
             var stringContent = new StringContent(data, Encoding.UTF8, "application/json");
             var stringTask = await GetStringeeClient().PostAsync("https://api.stringee.com/v1/call2/callout", stringContent);
             var msg = stringTask.Content.ReadAsStringAsync().Result;
@@ -114,6 +114,11 @@ namespace RCM.Helper
             JObject call = JObject.Parse(stringeeMessage);
             return call.SelectToken($"data.calls[0].{value}").ToString();
         }
+        private static string CheckNoOfCall(string stringeeMessage)
+        {
+            JObject call = JObject.Parse(stringeeMessage);
+            return call.SelectToken($"data.totalCalls").ToString();
+        }
         public static async Task<bool> CheckCall(string callId, string phoneNumber)
         {
 
@@ -121,7 +126,10 @@ namespace RCM.Helper
 
             var stringTask = await GetStringeeClient().GetAsync("https://api.stringee.com/v1/call/log?id=" + callId);
             var stringeeMessage = stringTask.Content.ReadAsStringAsync().Result;
-            var number= GetStringeeCallValue(stringeeMessage, "to_number");
+            //Check no of call >0 
+            if (int.Parse(CheckNoOfCall(stringeeMessage)) == 0) return false;
+            GetStringeeCallValue(stringeeMessage, "to_number");
+            var number = GetStringeeCallValue(stringeeMessage, "to_number");
             //var startTime = GetStringeeValue(msg, "start_time");
             //var answerTime = GetStringeeValue(msg, "answer_time");
             if (phoneNumber.Equals(number)) return true;
@@ -130,7 +138,7 @@ namespace RCM.Helper
             return false;
         }
 
-        
+
         public static DateTime ConvertEpochTimeToDateTimeFromMilliseconds(double milliseconds)
         {
             // Format our new DateTime object to start at the UNIX Epoch

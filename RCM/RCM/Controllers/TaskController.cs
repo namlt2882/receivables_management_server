@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json.Linq;
 using RCM.Helper;
 using RCM.Model;
 using RCM.Service;
@@ -663,22 +664,22 @@ namespace RCM.Controllers
             if (progressStageActions.Any())
             {
                 var result = new List<TaskMobileVM>();
-                progressStageActions.ToList().ForEach( x =>
-                {
-                    var vm = new TaskMobileVM()
-                    {
-                        Id = x.Id,
-                        ExecutionDay = Helper.Utility.ConvertIntToDatetime(x.ExcutionDay).Subtract(new TimeSpan(12, 0, 0)),
-                        Name = x.Name,
-                        StartTime = Helper.Utility.ConvertIntToTimeSpan(x.StartTime),
-                        Status = x.Status,
-                        Note = x.Note,
-                        Type = x.Type,
-                        ReceivableId = x.ProgressStage.CollectionProgress.ReceivableId,
-                        UpdateDay = x.UpdatedDate,
-                    };
-                    result.Add(vm);
-                });
+                progressStageActions.ToList().ForEach(x =>
+               {
+                   var vm = new TaskMobileVM()
+                   {
+                       Id = x.Id,
+                       ExecutionDay = Helper.Utility.ConvertIntToDatetime(x.ExcutionDay).Subtract(new TimeSpan(12, 0, 0)),
+                       Name = x.Name,
+                       StartTime = Helper.Utility.ConvertIntToTimeSpan(x.StartTime),
+                       Status = x.Status,
+                       Note = x.Note,
+                       Type = x.Type,
+                       ReceivableId = x.ProgressStage.CollectionProgress.ReceivableId,
+                       UpdateDay = x.UpdatedDate,
+                   };
+                   result.Add(vm);
+               });
                 return Ok(result);
             }
             return Ok(new List<TaskMobileVM>());
@@ -694,20 +695,35 @@ namespace RCM.Controllers
             }
             var user = await _userManager.FindByNameAsync(User.Identity.Name);
             var progressStageAction = _progressStageActionService.GetProgressStageAction(actionId);
+            var phoneNo = progressStageAction.ProgressStage.CollectionProgress
+                .Receivable
+                .Contacts.Where(x => x.Type == Constant.CONTACT_DEBTOR_CODE).FirstOrDefault().Phone;
+            var messageContent = progressStageAction.ProgressMessageForm.Content;
             if (progressStageAction != null)
             {
                 switch (progressStageAction.Type)
                 {
                     #region phonecall
                     case Constant.ACTION_PHONECALL_CODE:
+
+                        if (phoneNo != Constant.DEFAULT_PHONE_NUMBER)
+                        {
+                            ////Make phone call
+                            var stringeeMsg = await Utility.MakePhoneCallAsync(phoneNo, messageContent);
+                            JObject call = JObject.Parse(stringeeMsg);
+                            progressStageAction.NData = call.SelectToken("call_id").ToString();
+                            progressStageAction.Evidence = "";
+                        }
+                        else
+                        {
+                            _progressStageActionService.MarkAsDone(progressStageAction);
+                        }
                         break;
                     #endregion
 
                     #region SMS
                     case Constant.ACTION_SMS_CODE:
-                        var phoneNo = progressStageAction.ProgressStage.CollectionProgress.Receivable.Contacts
-                            .Where(x => x.Type == Constant.CONTACT_DEBTOR_CODE).FirstOrDefault().Phone;
-                        var messageContent = progressStageAction.ProgressMessageForm.Content;
+
                         if (phoneNo != Constant.DEFAULT_PHONE_NUMBER)
                         {
                             System.Diagnostics.Debug.WriteLine("Tin nhan duoc gui di");
@@ -730,7 +746,6 @@ namespace RCM.Controllers
                                 //    case SmsErrorCode.PROVIDER_ERROR_CODE: error = SmsErrorCode.PROVIDER_ERROR; break;
                                 //}
                                 progressStageAction.Note = MakeFailNote(progressStageAction.Note);
-                                _progressStageActionService.EditProgressStageAction(progressStageAction);
                             }
                             else
                             {
@@ -738,11 +753,16 @@ namespace RCM.Controllers
                             }
 
                         }
+                        else
+                        {
+                            _progressStageActionService.MarkAsDone(progressStageAction);
+                        }
                         break;
                         #endregion
 
                 }
                 progressStageAction.UserId = user.Id;
+                _progressStageActionService.EditProgressStageAction(progressStageAction);
                 _progressStageActionService.SaveProgressStageAction();
                 return Ok(new TaskVM()
                 {

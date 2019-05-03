@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Quartz;
 using Quartz.Impl;
 using Quartz.Spi;
@@ -89,11 +90,29 @@ namespace RCM.Helpers
             #region Late Action
             Task markAction = closeRecivable.ContinueWith((task) => MarkActionAsLate(date, time));
             #endregion
-
-
-
+            #region fail phone call
+            Task failPhoneCall = markAction.ContinueWith((task) => CheckFailPhoneCallScheduler(date, time));
+            #endregion
         }
+        private async Task CheckFailPhoneCallScheduler(long date, int time)
+        {
+            var actionsToExecute = _progressStageActionService.GetProgressStageActions()
+                .Where(x => (
+                x.IsDeleted == false
+                && x.Status == Constant.COLLECTION_STATUS_CANCEL_CODE
+                && x.ExcutionDay == date
+                && x.StartTime < time
+                && x.Evidence!=null
+                && x.ProgressStage.CollectionProgress.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE
+                && (x.Type == Constant.ACTION_PHONECALL_CODE)
+                ));
+            //Execute action.
 
+            if (actionsToExecute.Any())
+            {
+                await CheckFailPhoneCall(actionsToExecute);
+            }
+        }
         private async Task SendNotificationToDebtor(long date, int time)
         {
             var actionsToExecute = _progressStageActionService.GetProgressStageActions()
@@ -146,7 +165,7 @@ namespace RCM.Helpers
                 && x.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE
                 && x.ExcutionDay < date
                 && x.ProgressStage.CollectionProgress.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE
-                ));
+                && (x.Type != Constant.ACTION_PHONECALL_CODE || x.Type != Constant.ACTION_SMS_CODE)));
 
             if (actionsToMarkAsLate.Any())
             {
@@ -236,7 +255,13 @@ namespace RCM.Helpers
             await NotificationUtility.NotificationUtility.SendNotification(notification, _hubService, _hubContext, _firebaseTokenService);
         }
 
-
+        private async Task CheckFailPhoneCall(IEnumerable<ProgressStageAction> actions)
+        {
+            foreach (var action in actions)
+            {
+                await CheckFail(action);
+            }
+        }
 
         private async Task ExecuteAction(IEnumerable<ProgressStageAction> actions)
         {
@@ -259,6 +284,26 @@ namespace RCM.Helpers
 
         }
 
+        private async Task CheckFail(ProgressStageAction progressStageAction)
+        {
+            //Get information
+            var phoneNo = progressStageAction.ProgressStage.CollectionProgress
+                .Receivable
+                .Contacts.Where(x => x.Type == Constant.CONTACT_DEBTOR_CODE).FirstOrDefault().Phone;
+            var messageContent = progressStageAction.ProgressMessageForm.Content;
+
+            //check last call
+            if (await Utility.CheckCall(progressStageAction.NData, phoneNo))
+            {
+                _progressStageActionService.MarkAsDone(progressStageAction);
+                _progressStageActionService.SaveProgressStageAction();
+                return;
+            }
+            progressStageAction.Note = MakeFailNote(progressStageAction.Note);
+            progressStageAction.Evidence = null;
+            _progressStageActionService.SaveProgressStageAction();
+        }
+
         private async Task MakePhoneCall(ProgressStageAction progressStageAction)
         {
             //Get information
@@ -269,12 +314,40 @@ namespace RCM.Helpers
 
             if (phoneNo != Constant.DEFAULT_PHONE_NUMBER)
             {
-                System.Diagnostics.Debug.WriteLine("Tin nhan duoc gui di");
+                //check last call
+                if (string.IsNullOrEmpty(progressStageAction.Note))
+                {
+                    progressStageAction.Note = "0";
+                }
+                else if (await Utility.CheckCall(progressStageAction.NData, phoneNo))
+                {
+                    _progressStageActionService.MarkAsDone(progressStageAction);
+                    _progressStageActionService.SaveProgressStageAction();
+                    return;
+                }
+                else
+                {
+                    progressStageAction.Note = MakeFailNote(progressStageAction.Note);
+                    if (int.Parse(progressStageAction.Note) == 3)
+                    {
+
+                        progressStageAction.Status = Constant.COLLECTION_STATUS_CANCEL_CODE;
+                        _progressStageActionService.EditProgressStageAction(progressStageAction);
+                        _progressStageActionService.SaveProgressStageAction();
+                        SendFailAutoActionNotification(progressStageAction);
+                        return;
+                    }
+                }
+
                 ////Make phone call
                 var stringeeMsg = await Utility.MakePhoneCallAsync(phoneNo, messageContent);
+                JObject call = JObject.Parse(stringeeMsg);
+                progressStageAction.NData = call.SelectToken("call_id").ToString();
 
+                _progressStageActionService.EditProgressStageAction(progressStageAction);
+                _progressStageActionService.SaveProgressStageAction();
+                return;
             }
-
             #region get CallId
 
             //JObject call = JObject.Parse(stringeeMsg);
@@ -303,8 +376,6 @@ namespace RCM.Helpers
                 .Receivable
                 .Contacts.Where(x => x.Type == Constant.CONTACT_DEBTOR_CODE).FirstOrDefault().Phone;
             var messageContent = progressStageAction.ProgressMessageForm.Content;
-
-
 
             if (phoneNo != Constant.DEFAULT_PHONE_NUMBER)
             {

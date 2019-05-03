@@ -3,7 +3,7 @@
     public static class Constant
     {
         public const string SPEEDSMS_TOKEN = "H-TVWpn8KOmBc_mO9D1WOTKkV0IDWexj";
-        public const string STRINGEE_TOKEN = "eyJjdHkiOiJzdHJpbmdlZS1hcGk7dj0xIiwidHlwIjoiSldUIiwiYWxnIjoiSFMyNTYifQ.eyJqdGkiOiJTSzdCUlpiQXZZU3FDRjRsQmRvcTNES3NETWNjR3pvTy0xNTU0MDM4OTU3IiwiaXNzIjoiU0s3QlJaYkF2WVNxQ0Y0bEJkb3EzREtzRE1jY0d6b08iLCJleHAiOjE1NTY2MzA5NTcsInJlc3RfYXBpIjp0cnVlfQ.ETVB2D70cNpvtDwo0uY8UEFp21V09UXvQbuinFFjQyY";
+        public const string STRINGEE_TOKEN = "eyJjdHkiOiJzdHJpbmdlZS1hcGk7dj0xIiwidHlwIjoiSldUIiwiYWxnIjoiSFMyNTYifQ.eyJqdGkiOiJTS2lTaTlsZDlDNTJjSHM2M1Z5eWh0QXFZbHlVSWF6SnFaLTE1NTY2MzE0MDkiLCJpc3MiOiJTS2lTaTlsZDlDNTJjSHM2M1Z5eWh0QXFZbHlVSWF6SnFaIiwiZXhwIjoxNTU5MjIzNDA5LCJyZXN0X2FwaSI6dHJ1ZX0.RHd8VzzIyB-U1FnveKJvgw99N_06ItOKFxyiwu5OEtQ";
 
         public const string SCHEDULER_CRON = "0 0/2 7-22 * * ?";
 

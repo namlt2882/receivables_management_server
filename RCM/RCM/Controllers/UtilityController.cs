@@ -108,8 +108,8 @@ namespace RCM.Controllers
             client.DefaultRequestHeaders.Accept.Add(
                 new MediaTypeWithQualityHeaderValue("application/json"));
             client.DefaultRequestHeaders.Add("cache-control", "no-cache");
-            client.DefaultRequestHeaders.Add("X-STRINGEE-AUTH", "eyJjdHkiOiJzdHJpbmdlZS1hcGk7dj0xIiwidHlwIjoiSldUIiwiYWxnIjoiSFMyNTYifQ.eyJqdGkiOiJTSzdCUlpiQXZZU3FDRjRsQmRvcTNES3NETWNjR3pvTy0xNTU0MDM4OTU3IiwiaXNzIjoiU0s3QlJaYkF2WVNxQ0Y0bEJkb3EzREtzRE1jY0d6b08iLCJleHAiOjE1NTY2MzA5NTcsInJlc3RfYXBpIjp0cnVlfQ.ETVB2D70cNpvtDwo0uY8UEFp21V09UXvQbuinFFjQyY");
-            string data = "{\"from\":{\"type\":\"external\",\"number\":\"84901701062\",\"alias\":\"STRINGEE_NUMBER\"},\"to\":[{\"type\":\"external\",\"number\":\"" + number + "\",\"alias\":\"Thong\"}],\"answer_url\":\"https://example.com/answerurl\",\"actions\":[{\"action\":\"talk\",\"voice\":\"hatieumai\",\"text\":\"" + content + "\",\"speed\":-3,\"silenceTime\":1000}]}";
+            client.DefaultRequestHeaders.Add("X-STRINGEE-AUTH", "eyJjdHkiOiJzdHJpbmdlZS1hcGk7dj0xIiwidHlwIjoiSldUIiwiYWxnIjoiSFMyNTYifQ.eyJqdGkiOiJTS2lTaTlsZDlDNTJjSHM2M1Z5eWh0QXFZbHlVSWF6SnFaLTE1NTY2MzE0MDkiLCJpc3MiOiJTS2lTaTlsZDlDNTJjSHM2M1Z5eWh0QXFZbHlVSWF6SnFaIiwiZXhwIjoxNTU5MjIzNDA5LCJyZXN0X2FwaSI6dHJ1ZX0.RHd8VzzIyB-U1FnveKJvgw99N_06ItOKFxyiwu5OEtQ");
+            string data = "{\"from\":{\"type\":\"external\",\"number\":\"84901707010\",\"alias\":\"STRINGEE_NUMBER\"},\"to\":[{\"type\":\"external\",\"number\":\"" + number + "\",\"alias\":\"Thong\"}],\"answer_url\":\"https://example.com/answerurl\",\"actions\":[{\"action\":\"talk\",\"voice\":\"hatieumai\",\"text\":\"" + content + "\",\"speed\":-3,\"silenceTime\":1000}]}";
             var stringContent = new StringContent(data, Encoding.UTF8, "application/json");
             var stringTask = await client.PostAsync("https://api.stringee.com/v1/call2/callout", stringContent);
             var msg = stringTask.Content.ReadAsStringAsync().Result;
