@@ -413,7 +413,7 @@ namespace RCM.Controllers
                     && psa.DoneAt == null);
             if (progressStageActions.Any())
             {
-                var result = progressStageActions.Select(x => new TaskMobileVM()
+                var result = progressStageActions.OrderByDescending(psa=>psa.ExcutionDay).Select(x => new TaskMobileVM()
                 {
                     Id = x.Id,
                     ExecutionDay = Helper.Utility.ConvertIntToDatetime(x.ExcutionDay),

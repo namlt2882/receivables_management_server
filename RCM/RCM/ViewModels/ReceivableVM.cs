@@ -76,7 +76,7 @@ namespace RCM.ViewModels
         public int? PayableDay { get; set; }
         public int ExpectationClosedDay { get; set; }
         public int? ClosedDay { get; set; }
-        public double TimeRate { get; set; }
+        public double Percent { get; set; }
         public string CustomerName { get; set; }
         public string DebtorName { get; set; }
         public int DebtorId { get; set; }

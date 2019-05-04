@@ -373,7 +373,7 @@ namespace RCM.Controllers
             receivable.IsConfirmed = model.IsConfirmed;
             receivable.AssignDate = Utility.ConvertDatimeToInt(model.AssignedCollectors.FirstOrDefault(ac => ac.ReceivableId == receivable.Id && ac.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE && !ac.IsDeleted).CreatedDate);
             receivable.Action = GetNextOrLastAction(model);
-            receivable.TimeRate = GetProgressReached(model);
+            receivable.Percent = GetProgressReached(model);
             receivable.ProgressStage = GetProgressStage(model);
             return receivable;
         }
