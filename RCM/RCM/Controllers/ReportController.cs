@@ -1,5 +1,4 @@
-﻿using Mapster;
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using RCM.Helper;
 using RCM.Model;
@@ -51,7 +50,7 @@ namespace RCM.Controllers
             result.ReceivableReports = new ReceivableReportModel();
 
             result.ReceivableReports.MonthlyReport = GetReceivableMonthlyReports(receivableList, date);
-            result.ReceivableReports.ReceivableWillEndInMonth = GetReceivableWillEndInMonth(receivableList, date);
+            //result.ReceivableReports.ReceivableWillEndInMonth = GetReceivableWillEndInMonth(receivableList, date);
 
             result.CollectorReports = CollectorReports;
 
@@ -98,7 +97,9 @@ namespace RCM.Controllers
                     result.Add(new DayUpdatedTaskReportModel()
                     {
                         Id = task.Id,
-                        CollectorName = task.UserId != null ? task.User.FirstName + " " + task.User.LastName : "",
+                        CollectorName = task.User != null ? GetName(task.User) : GetName(task.ProgressStage.CollectionProgress.Receivable.AssignedCollectors
+                                                                                                 .First(x =>
+                                                                                                    x.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE).User),
                         UpdatedTime = task.UpdatedDate.Value.ToString("HH:mm dd/MM/yyyy"),
                         ReceivableId = task.ProgressStage.CollectionProgress.ReceivableId,
                         TaskName = task.Name + " " + task.ProgressStage.CollectionProgress.Receivable.Contacts.Where(x => x.Type == Constant.CONTACT_DEBTOR_CODE).FirstOrDefault().Name,
@@ -215,14 +216,14 @@ namespace RCM.Controllers
             return result;
         }
 
-        private IEnumerable<ReceivableVM> GetReceivableWillEndInMonth(IEnumerable<Receivable> receivables, DateTime date)
+        private IEnumerable<Receivable> GetReceivableWillEndInMonth(IEnumerable<Receivable> receivables, DateTime date)
         {
             var result = receivables
                 .Where(receivable =>
                 receivable.ExpectationClosedDay.HasValue
                 && receivable.ExpectationClosedDay.Value.Date == date.Date
                 && receivable.IsConfirmed == false);
-            return result.Adapt<IEnumerable<ReceivableVM>>();
+            return result;
         }
 
         private IEnumerable<ReceivableMonthlyReportModel> GetReceivableMonthlyReports(IEnumerable<Receivable> receivables, DateTime date)

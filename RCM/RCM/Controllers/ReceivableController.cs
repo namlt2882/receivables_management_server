@@ -612,6 +612,17 @@ namespace RCM.Controllers
             if (receivable != null)
             {
                 receivable.CollectionProgress.Status = Constant.COLLECTION_STATUS_COLLECTION_CODE;
+                foreach (var stage in receivable.CollectionProgress.ProgressStages)
+                {
+                    foreach (var action in stage.ProgressStageAction)
+                    {
+                        if (action.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE && action.ExcutionDay < Utility.ConvertDatimeToInt(DateTime.Now))
+                        {
+                            action.Status = Constant.COLLECTION_STATUS_CANCEL_CODE;
+                            action.Note = "Receivable was canceled or closed";
+                        }
+                    }
+                }
                 _receivableService.EditReceivable(receivable);
                 _receivableService.SaveReceivable();
                 return Ok();
@@ -770,7 +781,7 @@ namespace RCM.Controllers
                          ).Count();
 
                     rate.FailRate = Math.Round(((double)canceledAmount / closedOrCanceledAmount) * 100, MidpointRounding.AwayFromZero);
-                    rate.SuccessRate = Math.Round(((double)closedAmount / closedOrCanceledAmount)  * 100, MidpointRounding.AwayFromZero);
+                    rate.SuccessRate = Math.Round(((double)closedAmount / closedOrCanceledAmount) * 100, MidpointRounding.AwayFromZero);
                 }
             }
             return rate;
