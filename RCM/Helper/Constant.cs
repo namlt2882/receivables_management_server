@@ -92,6 +92,9 @@
         public const string NOTIFICATION_TYPE_FAIL_AUTO_ACTION = "Fail auto action";
         public const int NOTIFICATION_TYPE_FAIL_AUTO_ACTION_CODE = 15;
 
+        public const string NOTIFICATION_TYPE_RE_OPEN_RECEIVABLE = "Re Open Receivable";
+        public const int NOTIFICATION_TYPE_RE_OPEN_RECEIVABLE_CODE = 16;
+
         public const int AUTOMATION_ENABLED_CODE = 1;
         public const int AUTOMATION_DISABLED_CODE = 0;
 

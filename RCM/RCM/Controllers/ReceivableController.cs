@@ -606,7 +606,7 @@ namespace RCM.Controllers
             return (int)Math.Round(result, MidpointRounding.AwayFromZero);
         }
         [HttpPut("OpenReceivable")]
-        public IActionResult OpenReceivable([FromBody] ReceivableOpenModel receivableOM)
+        public async Task<IActionResult> OpenReceivableAsync([FromBody] ReceivableOpenModel receivableOM)
         {
             var receivable = _receivableService.GetReceivable(receivableOM.Id);
             if (receivable != null)
@@ -625,11 +625,36 @@ namespace RCM.Controllers
                 }
                 _receivableService.EditReceivable(receivable);
                 _receivableService.SaveReceivable();
+                await SendReOpenReceivableNotificationToCollector(receivable);
                 return Ok();
             }
 
             return NotFound();
         }
+
+        private async Task SendReOpenReceivableNotificationToCollector(Receivable receivable)
+        {
+            #region Create New Receivable Notification
+            //Create New Receivable Notification
+            Notification notification = new Notification()
+            {
+                Title = Constant.NOTIFICATION_TYPE_RE_OPEN_RECEIVABLE,
+                Type = Constant.NOTIFICATION_TYPE_RE_OPEN_RECEIVABLE_CODE,
+                Body = $"Receivable {receivable.Contacts.FirstOrDefault().Name} from {receivable.Customer.Name} was re-opened",
+                UserId = receivable.AssignedCollectors.FirstOrDefault(assignedCollector => assignedCollector.Status == Constant.ASSIGNED_STATUS_ACTIVE_CODE).UserId,
+                NData = JsonConvert.SerializeObject(receivable.Id),
+                IsSeen = false,
+                CreatedDate = DateTime.Now,
+                IsDeleted = false,
+            };
+            _notificationService.CreateNotification(notification);
+            _notificationService.SaveNotification();
+            #endregion
+            //Send
+            await SendNotificationToClient(notification);
+        }
+       
+        
 
         [HttpGet("GetReceivaleByCollectorId/{collectorId}")]
         public IActionResult GetReceivableByCollectorId(string collectorId)
