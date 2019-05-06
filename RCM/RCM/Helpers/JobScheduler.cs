@@ -196,21 +196,20 @@ namespace RCM.Helpers
                 {
                     receivable.CollectionProgress.Status = Constant.COLLECTION_STATUS_DONE_CODE;
                     _receivableService.EditReceivable(receivable);
+                    SendDoneReceivableNotification(receivable);
                 }
                 _receivableService.SaveReceivable();
-                SendDoneReceivableNotification(receivableToClose);
             }
         }
 
-        private async void SendDoneReceivableNotification(IEnumerable<Receivable> receivables)
+        private async void SendDoneReceivableNotification(Receivable receivable)
         {
 
             #region Create New Receivable Notification
 
             //Create Done Receivable Notifications
             List<Notification> notifications = new List<Notification>();
-            foreach (var receivable in receivables)
-            {
+            
                 Notification notification = new Notification()
                 {
                     Title = Constant.NOTIFICATION_TYPE_DONE_RECEIVABLE,
@@ -225,7 +224,6 @@ namespace RCM.Helpers
                 var result = _notificationService.CreateNotification(notification);
                 _notificationService.SaveNotification();
                 notifications.Add(result);
-            }
 
             #endregion
             //Send
