@@ -188,7 +188,7 @@ namespace RCM.Helpers
                x.IsDeleted == false
                && x.CollectionProgress.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE
                && x.ExpectationClosedDay.HasValue
-               && x.ExpectationClosedDay.Value.Date < DateTime.Now.Date);
+               && x.ExpectationClosedDay.Value.Date < DateTime.Now.Date).ToList();
 
             if (receivableToClose.Any())
             {
@@ -196,20 +196,21 @@ namespace RCM.Helpers
                 {
                     receivable.CollectionProgress.Status = Constant.COLLECTION_STATUS_DONE_CODE;
                     _receivableService.EditReceivable(receivable);
-                    SendDoneReceivableNotification(receivable);
                 }
                 _receivableService.SaveReceivable();
+                SendDoneReceivableNotification(receivableToClose);
             }
         }
 
-        private async void SendDoneReceivableNotification(Receivable receivable)
+        private async void SendDoneReceivableNotification(List<Receivable> receivables)
         {
 
             #region Create New Receivable Notification
 
             //Create Done Receivable Notifications
             List<Notification> notifications = new List<Notification>();
-            
+            foreach (var receivable in receivables)
+            {
                 Notification notification = new Notification()
                 {
                     Title = Constant.NOTIFICATION_TYPE_DONE_RECEIVABLE,
@@ -224,7 +225,7 @@ namespace RCM.Helpers
                 var result = _notificationService.CreateNotification(notification);
                 _notificationService.SaveNotification();
                 notifications.Add(result);
-
+            }
             #endregion
             //Send
             await NotificationUtility.NotificationUtility.SendNotification(notifications, _hubService, _hubContext, _firebaseTokenService);
@@ -413,7 +414,7 @@ namespace RCM.Helpers
                     }
                     return;
                 }
-               
+
             }
             _progressStageActionService.MarkAsDone(progressStageAction);
             _progressStageActionService.SaveProgressStageAction();
