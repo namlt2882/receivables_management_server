@@ -275,6 +275,87 @@ namespace RCM.Controllers
             }
             return Ok(new List<TaskMobileVM>());
         }
+
+        [Authorize]
+        [HttpGet("GetAllCollectorLateTask")]
+        public IActionResult GetAllCollectorLateTask()
+        {
+            IEnumerable<ProgressStageAction> progressStageActions;
+                progressStageActions = _progressStageActionService.GetProgressStageActions
+                    (psa =>
+                    psa.ProgressStage.CollectionProgress.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE
+                    && psa.Status == Constant.COLLECTION_STATUS_LATE_CODE
+                    && (psa.Type == Constant.ACTION_NOTIFICATION_CODE || psa.Type == Constant.ACTION_REPORT_CODE)
+                    && psa.DoneAt == null);
+            if (progressStageActions.Any())
+            {
+                var result = progressStageActions.Select(x => new TaskMobileVM()
+                {
+                    Id = x.Id,
+                    ExecutionDay = Helper.Utility.ConvertIntToDatetime(x.ExcutionDay),
+                    Name = x.Name,
+                    StartTime = Helper.Utility.ConvertIntToTimeSpan(x.StartTime),
+                    Evidence = string.IsNullOrEmpty(x.Evidence) ? "" : "/Task/" + x.Evidence,
+                    UpdateDay = x.UpdatedDate,
+                    Status = x.Status,
+                    Type = x.Type,
+                    UserId = x.UserId,
+                    ReceivableId = x.ProgressStage.CollectionProgress.ReceivableId
+                });
+                return Ok(result);
+            }
+            return Ok(new List<TaskMobileVM>());
+        }
+
+        /// <summary>
+        ///  Manager get completed Task in day
+        /// </summary>
+        /// <param name="day"></param>
+        /// <param name="receivableId"></param>
+        /// <returns></returns>
+        [Authorize]
+        [HttpGet("GetCollectorCompletedTaskByAndDay/{day}")]
+        public IActionResult GetCollectorCompletedTaskByReceivableAndDay(int day)
+        {
+            IEnumerable<ProgressStageAction> progressStageActions;
+            if (day == 0)
+                progressStageActions = _progressStageActionService.GetProgressStageActions
+                    (psa =>
+                    psa.ProgressStage.CollectionProgress.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE
+                    && psa.Status == Constant.COLLECTION_STATUS_DONE_CODE
+                    && (psa.Type == Constant.ACTION_NOTIFICATION_CODE || psa.Type == Constant.ACTION_REPORT_CODE)
+                    && psa.ExcutionDay <= Utility.ConvertDatimeToInt(DateTime.Now)
+                    && psa.DoneAt != null);
+            else
+                progressStageActions = _progressStageActionService.GetProgressStageActions
+                    (psa =>
+                    psa.ProgressStage.CollectionProgress.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE
+                    && psa.Status == Constant.COLLECTION_STATUS_DONE_CODE
+                    && (psa.Type == Constant.ACTION_NOTIFICATION_CODE || psa.Type == Constant.ACTION_REPORT_CODE)
+                    && psa.ExcutionDay == day
+                    && psa.DoneAt != null);
+            if (progressStageActions.Any())
+            {
+                var result = progressStageActions.Select(x => new TaskMobileVM()
+                {
+                    Id = x.Id,
+                    ExecutionDay = Helper.Utility.ConvertIntToDatetime(x.ExcutionDay),
+                    Name = x.Name,
+                    StartTime = Helper.Utility.ConvertIntToTimeSpan(x.StartTime),
+                    Evidence = string.IsNullOrEmpty(x.Evidence) ? "" : "/Task/" + x.Evidence,
+                    UpdateDay = x.UpdatedDate,
+                    Status = x.Status,
+                    CollectorName = x.User.FirstName+" "+x.User.LastName,
+                    Type = x.Type,
+                    UserId = x.UserId,
+                    ReceivableId = x.ProgressStage.CollectionProgress.ReceivableId,
+                    Note =x.Note
+                });
+                return Ok(result);
+            }
+            return Ok(new List<TaskMobileVM>());
+        }
+
         /// <summary>
         /// Task were assign in a day classify by receivable for collector
         /// </summary>
@@ -429,6 +510,7 @@ namespace RCM.Controllers
             }
             return Ok(new List<TaskMobileVM>());
         }
+
         /// <summary>
         /// Get Calendar for collector trom day which is tasks not finish yet to days of recent week 
         /// </summary>

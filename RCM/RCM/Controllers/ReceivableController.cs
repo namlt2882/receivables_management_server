@@ -294,7 +294,7 @@ namespace RCM.Controllers
 
             _receivableService.CloseReceivable(receivable);
             _receivableService.SaveReceivable();
-            await SendManagerConfirmReceivableNotification(receivable);
+            await SendConfirmReceivableNotificationToManager(receivable);
 
             return Ok(new { ClosedTime = receivable.ClosedDay, DebtAmount = receivable.DebtAmount, Status = receivable.CollectionProgress.Status });
         }
@@ -455,7 +455,7 @@ namespace RCM.Controllers
         }
 
 
-        private async Task SendManagerConfirmReceivableNotification(Receivable receivable)
+        private async Task SendConfirmReceivableNotificationToManager(Receivable receivable)
         {
             #region Create New Receivable Notification
             var user = await _userManager.FindByNameAsync("manager");

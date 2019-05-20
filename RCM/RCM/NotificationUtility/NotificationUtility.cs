@@ -51,8 +51,8 @@ namespace RCM.NotificationUtility
         private static async Task SendNotificationToCurrentMobileClientAsync(Notification notification, IFirebaseTokenService _firebaseTokenService)
         {
 
-            var a = _firebaseTokenService.GetFirebaseTokens(_ => _.UserId == notification.UserId).ToList();
-            foreach (var ft in a)
+            var tokens = _firebaseTokenService.GetFirebaseTokens(_ => _.UserId == notification.UserId).ToList();
+            foreach (var ft in tokens)
             {
                 await SendFirebaseNotification.SendNotificationToMobileAsync(new FirebaseNotification()
                 {
