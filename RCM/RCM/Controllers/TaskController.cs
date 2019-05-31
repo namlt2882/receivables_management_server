@@ -51,6 +51,9 @@ namespace RCM.Controllers
             try
             {
                 var uploads = Path.Combine(_hostingEnvironment.WebRootPath, $"Task");
+                bool exists = System.IO.Directory.Exists(uploads);
+                if (!exists)
+                    System.IO.Directory.CreateDirectory(uploads);
                 var pictureName = $"{model.Id}-{DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss")}{Path.GetExtension(model.File.FileName)}";
                 using (var fileStream = new FileStream(Path.Combine(uploads, pictureName), FileMode.Create))
                 {
@@ -65,7 +68,21 @@ namespace RCM.Controllers
                 action.UserId = user.Id;
                 _progressStageActionService.EditProgressStageAction(action);
                 _progressStageActionService.SaveProgressStageAction();
-                return Ok();
+                return Ok(new TaskMobileVM()
+                {
+                    Id = action.Id,
+                    ExecutionDay = Helper.Utility.ConvertIntToDatetime(action.ExcutionDay),
+                    Name = action.Name,
+                    StartTime = Helper.Utility.ConvertIntToTimeSpan(action.StartTime),
+                    Evidence = string.IsNullOrEmpty(action.Evidence) ? "" : "/Task/" + action.Evidence,
+                    UpdateDay = action.UpdatedDate,
+                    Status = action.Status,
+                    CollectorName = action.User.FirstName + " " + action.User.LastName,
+                    Type = action.Type,
+                    UserId = action.UserId,
+                    ReceivableId = action.ProgressStage.CollectionProgress.ReceivableId,
+                    Note = action.Note
+                });
             }
             catch (Exception e)
             {
