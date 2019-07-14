@@ -1282,7 +1282,8 @@ namespace RCM.Controllers
                 Status = x.Status,
                 Type = x.Type,
                 ProgressStageId = x.ProgressStageId,
-                ProgressMessageFormId = x.ProgressMessageFormId
+                ProgressMessageFormId = x.ProgressMessageFormId,
+                Evidence = x.Evidence
             });
         }
 

@@ -28,6 +28,6 @@ namespace RCM.ViewModels
 
     public class ProgressStageActionDM : ProgressStageActionVM
     {
-
+        public string Evidence { get; set; }
     }
 }
