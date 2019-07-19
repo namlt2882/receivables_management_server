@@ -102,7 +102,7 @@ namespace RCM.Helpers
                 && x.Status == Constant.COLLECTION_STATUS_CANCEL_CODE
                 && x.ExcutionDay == date
                 && x.StartTime < time
-                && x.Evidence!=null
+                && x.Evidence != null
                 && x.ProgressStage.CollectionProgress.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE
                 && (x.Type == Constant.ACTION_PHONECALL_CODE)
                 ));
@@ -165,7 +165,8 @@ namespace RCM.Helpers
                 && x.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE
                 && x.ExcutionDay < date
                 && x.ProgressStage.CollectionProgress.Status == Constant.COLLECTION_STATUS_COLLECTION_CODE
-                && (x.Type != Constant.ACTION_PHONECALL_CODE || x.Type != Constant.ACTION_SMS_CODE)));
+                && (x.Type == Constant.ACTION_REPORT_CODE || x.Type == Constant.ACTION_NOTIFICATION_CODE)
+                ));
 
             if (actionsToMarkAsLate.Any())
             {
@@ -412,11 +413,10 @@ namespace RCM.Helpers
                     }
                     return;
                 }
-                _progressStageActionService.MarkAsDone(progressStageAction);
-                _progressStageActionService.SaveProgressStageAction();
+               
             }
-
-
+            _progressStageActionService.MarkAsDone(progressStageAction);
+            _progressStageActionService.SaveProgressStageAction();
         }
 
         public Task Execute(IJobExecutionContext context)

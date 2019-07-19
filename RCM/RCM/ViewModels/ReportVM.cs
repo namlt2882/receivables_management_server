@@ -75,7 +75,7 @@ namespace RCM.ViewModels
 
     public class ReceivableReportModel
     {
-        public IEnumerable<Receivable> ReceivableWillEndInMonth { get; set; }
+        public IEnumerable<ReceivableVM> ReceivableWillEndInMonth { get; set; }
         public IEnumerable<ReceivableMonthlyReportModel> MonthlyReport { get; set; }
     }
 

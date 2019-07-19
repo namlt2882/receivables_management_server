@@ -667,6 +667,43 @@ namespace RCM.Controllers
             }
             return Ok(new List<TaskMobileVM>());
         }
+
+        [Authorize]
+        [HttpGet("GetSuccessAutoActions/{receivableId}")]
+        public IActionResult GetSuccessAutoActions(int receivableId)
+        {
+            var progressStageActions = _progressStageActionService.GetProgressStageActions
+                (psa =>
+                psa.Status == Constant.COLLECTION_STATUS_DONE_CODE
+                && psa.UpdatedDate<=DateTime.Now
+                && psa.ProgressStage.CollectionProgress.ReceivableId == receivableId
+                && (psa.Type == Constant.ACTION_PHONECALL_CODE
+                || psa.Type == Constant.ACTION_SMS_CODE));
+
+            if (progressStageActions.Any())
+            {
+                var result = new List<TaskMobileVM>();
+                progressStageActions.ToList().ForEach(x =>
+                {
+                    var vm = new TaskMobileVM()
+                    {
+                        Id = x.Id,
+                        ExecutionDay = Helper.Utility.ConvertIntToDatetime(x.ExcutionDay).Subtract(new TimeSpan(12, 0, 0)),
+                        Name = x.Name,
+                        StartTime = Helper.Utility.ConvertIntToTimeSpan(x.StartTime),
+                        Status = x.Status,
+                        Note = x.Note,
+                        Type = x.Type,
+                        ReceivableId = x.ProgressStage.CollectionProgress.ReceivableId,
+                        UpdateDay = x.UpdatedDate,
+                    };
+                    result.Add(vm);
+                });
+                return Ok(result);
+            }
+            return Ok(new List<TaskMobileVM>());
+        }
+
         [Authorize]
         [HttpGet("GetFailAutoActions/{receivableId}")]
         public IActionResult GetFailAutoActions(int receivableId)
@@ -674,6 +711,7 @@ namespace RCM.Controllers
             var progressStageActions = _progressStageActionService.GetProgressStageActions
                 (psa =>
                 psa.Status == Constant.COLLECTION_STATUS_CANCEL_CODE
+                && psa.UpdatedDate <= DateTime.Now
                 && psa.ProgressStage.CollectionProgress.ReceivableId == receivableId
                 && (psa.Type == Constant.ACTION_PHONECALL_CODE
                 || psa.Type == Constant.ACTION_SMS_CODE));
@@ -781,16 +819,17 @@ namespace RCM.Controllers
                 progressStageAction.UserId = user.Id;
                 _progressStageActionService.EditProgressStageAction(progressStageAction);
                 _progressStageActionService.SaveProgressStageAction();
-                return Ok(new TaskVM()
+                return Ok(new TaskMobileVM()
                 {
                     Id = progressStageAction.Id,
-                    ExecutionDay = progressStageAction.ExcutionDay,
+                    ExecutionDay = Helper.Utility.ConvertIntToDatetime(progressStageAction.ExcutionDay).Subtract(new TimeSpan(12, 0, 0)),
                     Name = progressStageAction.Name,
-                    StartTime = progressStageAction.StartTime,
+                    StartTime = Helper.Utility.ConvertIntToTimeSpan(progressStageAction.StartTime),
                     Status = progressStageAction.Status,
                     Note = progressStageAction.Note,
                     Type = progressStageAction.Type,
-                    ReceivableId = progressStageAction.ProgressStage.CollectionProgress.ReceivableId
+                    ReceivableId = progressStageAction.ProgressStage.CollectionProgress.ReceivableId,
+                    UpdateDay = progressStageAction.UpdatedDate,
                 });
             }
             return BadRequest();

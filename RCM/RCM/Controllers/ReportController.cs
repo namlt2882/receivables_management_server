@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Mapster;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using RCM.Helper;
 using RCM.Model;
@@ -211,14 +212,14 @@ namespace RCM.Controllers
             return result;
         }
 
-        private IEnumerable<Receivable> GetReceivableWillEndInMonth(IEnumerable<Receivable> receivables, DateTime date)
+        private IEnumerable<ReceivableVM> GetReceivableWillEndInMonth(IEnumerable<Receivable> receivables, DateTime date)
         {
             var result = receivables
                 .Where(receivable =>
                 receivable.ExpectationClosedDay.HasValue
                 && receivable.ExpectationClosedDay.Value.Date == date.Date
                 && receivable.IsConfirmed == false);
-            return result;
+            return result.Adapt<IEnumerable<ReceivableVM>>();
         }
 
         private IEnumerable<ReceivableMonthlyReportModel> GetReceivableMonthlyReports(IEnumerable<Receivable> receivables, DateTime date)
